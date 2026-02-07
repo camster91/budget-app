@@ -31,7 +31,7 @@ const Dialog = React.forwardRef<
         <dialog
             ref={ref || dialogRef}
             className={cn(
-                "backdrop:bg-black/50 open:animate-in open:fade-in-0 open:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 fixed inset-0 z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
+                "backdrop:bg-black/60 backdrop:backdrop-blur-sm open:animate-in open:fade-in-0 open:zoom-in-95 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 grid w-full max-w-lg gap-4 border border-white/[0.1] bg-zinc-950 p-6 shadow-2xl duration-200 sm:rounded-2xl",
                 className
             )}
             onClick={handleclick}

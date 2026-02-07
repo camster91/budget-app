@@ -1,12 +1,18 @@
-import { getTransactions } from "@/app/_actions/transactions";
+import { getDashboardSummary } from "@/app/_actions/dashboard";
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-    const { data: transactions } = await getTransactions();
+    const { data } = await getDashboardSummary();
 
-    // In a real app, we'd fetch stats and growth data too.
-    // For now, we'll pass the real transactions to the client content.
-    return <DashboardContent transactions={transactions || []} />;
+    return <DashboardContent data={data || {
+        netWorth: 0,
+        monthlyIncome: 0,
+        monthlyExpenses: 0,
+        savingsRate: 0,
+        incomeTrend: "0%",
+        chartData: [],
+        transactions: []
+    }} />;
 }

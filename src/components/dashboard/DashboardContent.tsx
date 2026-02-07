@@ -7,16 +7,6 @@ import { motion } from "framer-motion";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 
-const chartData = [
-    { name: "Jan", total: 1500 },
-    { name: "Feb", total: 2300 },
-    { name: "Mar", total: 1800 },
-    { name: "Apr", total: 3200 },
-    { name: "May", total: 2800 },
-    { name: "Jun", total: 4500 },
-    { name: "Jul", total: 4200 },
-];
-
 const container = {
     hidden: { opacity: 0 },
     show: {
@@ -33,11 +23,19 @@ const item = {
 };
 
 interface DashboardContentProps {
-    transactions: any[];
+    data: {
+        netWorth: number;
+        monthlyIncome: number;
+        monthlyExpenses: number;
+        savingsRate: number;
+        incomeTrend: string;
+        chartData: any[];
+        transactions: any[];
+    };
 }
 
-export function DashboardContent({ transactions }: DashboardContentProps) {
-    const recentTransactions = transactions.slice(0, 5);
+export function DashboardContent({ data }: DashboardContentProps) {
+    const recentTransactions = data.transactions;
 
     return (
         <motion.div
@@ -65,13 +63,13 @@ export function DashboardContent({ transactions }: DashboardContentProps) {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {[
-                    { title: "Net Worth", value: 12345.67, trend: "+12%", icon: Wallet, color: "text-primary" },
-                    { title: "Monthly Income", value: 5432.00, trend: "+8.2%", icon: ArrowUpRight, color: "text-emerald-500" },
-                    { title: "Monthly Spending", value: 2100.00, trend: "-4.5%", icon: ArrowDownRight, color: "text-rose-500" },
-                    { title: "Savings Rate", value: "32%", trend: "+2.1%", icon: TrendingUp, color: "text-primary" },
+                    { title: "Net Worth", value: data.netWorth, trend: "+0%", icon: Wallet, color: "text-primary" },
+                    { title: "Monthly Income", value: data.monthlyIncome, trend: data.incomeTrend, icon: ArrowUpRight, color: "text-emerald-500" },
+                    { title: "Monthly Spending", value: data.monthlyExpenses, trend: "0%", icon: ArrowDownRight, color: "text-rose-500" },
+                    { title: "Savings Rate", value: Math.round(data.savingsRate) + "%", trend: "0%", icon: TrendingUp, color: "text-primary" },
                 ].map((stat, i) => (
                     <motion.div key={i} variants={item}>
-                        <Card className="relative overflow-hidden group">
+                        <Card className="relative overflow-hidden group border-white/[0.08] bg-white/[0.02]">
                             <div className={cn("absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity", stat.color)}>
                                 <stat.icon size={80} />
                             </div>
@@ -85,7 +83,7 @@ export function DashboardContent({ transactions }: DashboardContentProps) {
                                 <div className="text-3xl font-bold text-white mb-1 tracking-tight">
                                     {typeof stat.value === 'number' ? formatCurrency(stat.value) : stat.value}
                                 </div>
-                                <p className={cn("text-xs font-medium flex items-center gap-1", stat.trend.includes('+') ? "text-emerald-500" : "text-rose-500")}>
+                                <p className={cn("text-xs font-medium flex items-center gap-1", (stat.trend.startsWith('+') || parseFloat(stat.trend) > 0) ? "text-emerald-500" : "text-rose-500")}>
                                     {stat.trend} <span className="text-muted-foreground font-normal">than last month</span>
                                 </p>
                             </CardContent>
@@ -96,54 +94,60 @@ export function DashboardContent({ transactions }: DashboardContentProps) {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
                 <motion.div variants={item} className="col-span-4">
-                    <Card className="h-full">
+                    <Card className="h-full border-white/[0.08] bg-white/[0.02]">
                         <CardHeader>
                             <CardTitle>Wealth Growth</CardTitle>
                             <CardDescription>Visualizing your net worth trend over the last 6 months.</CardDescription>
                         </CardHeader>
                         <CardContent className="h-[350px] w-full mt-4">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: "#18181b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff" }}
-                                        itemStyle={{ color: "#fff" }}
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="total"
-                                        stroke="#6366f1"
-                                        strokeWidth={3}
-                                        fillOpacity={1}
-                                        fill="url(#colorTotal)"
-                                    />
-                                    <XAxis
-                                        dataKey="name"
-                                        stroke="#71717a"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                    />
-                                    <YAxis
-                                        stroke="#71717a"
-                                        fontSize={12}
-                                        tickLine={false}
-                                        axisLine={false}
-                                        tickFormatter={(value) => `$${value}`}
-                                    />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                            {data.chartData.length === 0 ? (
+                                <div className="h-full flex items-center justify-center opacity-30">
+                                    <p className="text-sm font-medium">No historical data yet</p>
+                                </div>
+                            ) : (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={data.chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: "#18181b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff" }}
+                                            itemStyle={{ color: "#fff" }}
+                                        />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="total"
+                                            stroke="#6366f1"
+                                            strokeWidth={3}
+                                            fillOpacity={1}
+                                            fill="url(#colorTotal)"
+                                        />
+                                        <XAxis
+                                            dataKey="name"
+                                            stroke="#71717a"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <YAxis
+                                            stroke="#71717a"
+                                            fontSize={12}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickFormatter={(value) => `$${value}`}
+                                        />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            )}
                         </CardContent>
                     </Card>
                 </motion.div>
 
                 <motion.div variants={item} className="col-span-3">
-                    <Card className="h-full">
+                    <Card className="h-full border-white/[0.08] bg-white/[0.02]">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
                                 <CardTitle>Recent Activity</CardTitle>
