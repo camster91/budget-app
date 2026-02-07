@@ -1,69 +1,61 @@
-# Budget App
+# Antigravity Finance
 
-A modern, full-stack personal finance application built with Next.js, Tailwind CSS, and Prisma.
+A premium, high-performance personal finance dashboard with a glassmorphism aesthetic. Built for speed, security, and visual excellence.
 
-## 🚀 Overview
+![Premium Dashboard](file:///C:/Users/camst/.gemini/antigravity/brain/453bc2fb-15ad-4232-b5b4-fa6994e27761/premium_budget_dashboard_mockup_1770429818390.png)
 
-This application aims to provide users with a clean and intuitive interface to manage their finances. Key features include:
+## ✨ Core Features
 
-- **Dashboard**: Real-time overview of your financial health.
-- **Transactions**: Easy tracking of income and expenses.
-- **Budgets**: Set and monitor spending limits per category.
-- **Analytics**: Visual reports on spending trends.
+- **Financial Pulse**: Real-time dashboard with animated wealth growth visualization.
+- **Glassmorphism UI**: A state-of-the-art dark mode interface with deep transparency and neon accents.
+- **Mobile First**: Fully responsive navigation with a high-performance Sheet overlay.
+- **Smart Budgets**: Category-based spending limits with dynamic progress tracking and overflow alerts.
+- **Robust Integrity**: Zod-validated forms and server-side sanitization for every transaction.
+- **Rich Feedback**: Integrated `sonner` notifications and fluid skeleton loading states.
 
 ## 🛠 Tech Stack
 
-- **Frontend**: Next.js 14+ (App Router), React, Tailwind CSS
-- **Backend**: Next.js API Routes (Server Actions)
-- **Database**: SQLite (via Prisma ORM)
-- **State Management**: React Context / Zustand
-- **Charts**: Recharts / Chart.js
+- **Framework**: [Next.js 16 (Turbopack)](https://nextjs.org/)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
+- **Database**: [Prisma ORM](https://www.prisma.io/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Charts**: [Recharts](https://recharts.org/)
+- **Components**: Radix UI & High-performance custom glass utilities
 
-## 📦 Getting Started
+## 📦 Quick Start
 
-### Prerequisites
+### 1. Prerequisites
 
 - Node.js 18+
-- npm / yarn / pnpm
+- Git
 
-### Installation
+### 2. Installation
 
-1. Clone the repository:
+```bash
+git clone https://github.com/camster91/budget-app.git
+cd budget-app
+npm install
+```
 
-    ```bash
-    git clone https://github.com/camster91/budget-app.git
-    cd budget-app
-    ```
+### 3. Initialize Database
 
-2. Install dependencies:
+```bash
+npx prisma generate
+npx prisma db push
+```
 
-    ```bash
-    npm install
-    # or
-    yarn install
-    # or
-    pnpm install
-    ```
+### 4. Launch
 
-3. Set up the database:
+```bash
+npm run dev
+```
 
-    ```bash
-    npx prisma generate
-    npx prisma db push
-    ```
-
-4. Run the development server:
-
-    ```bash
-    npm run dev
-    ```
-
-5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to experience the future of personal finance.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome. Please ensure all visual changes adhere to the Antigravity design system (glassmorphism tokens).
 
 ## License
 
-This project is open source and available under the [MIT License](LICENSE).
+MIT License - Open Source and Free to Use.
