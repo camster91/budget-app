@@ -1,42 +1,80 @@
 import { getBudgets } from "@/app/_actions/budgets";
 import { BudgetForm } from "@/components/budgets/BudgetForm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
+import { PiggyBank, PlusCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default async function BudgetsPage() {
     const { data: budgets } = await getBudgets();
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-8">
             <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold tracking-tight">Budgets</h2>
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight text-white mb-1">Budgets</h2>
+                    <p className="text-muted-foreground text-sm">Control your spending by category.</p>
+                </div>
                 <BudgetForm />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {budgets?.map((b) => (
-                    <Card key={b.id}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{b.category.name}</CardTitle>
-                            <span className="text-xs text-muted-foreground">{b.period}</span>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{formatCurrency(b.amount)}</div>
-                            <div className="mt-4 h-2 w-full rounded-full bg-secondary">
-                                <div className="h-2 w-1/3 rounded-full bg-primary" />
-                            </div>
-                            <p className="mt-2 text-xs text-muted-foreground">
-                                33% used (Placeholder)
-                            </p>
-                        </CardContent>
-                    </Card>
-                ))}
-                {!budgets?.length && (
-                    <div className="col-span-full text-center text-muted-foreground py-10">
-                        No budgets set. Create one to track your spending.
+            {!budgets?.length ? (
+                <Card className="flex flex-col items-center justify-center py-20 text-center border-dashed border-2 border-white/[0.1] bg-transparent">
+                    <div className="h-16 w-16 rounded-3xl glass flex items-center justify-center mb-6">
+                        <PiggyBank className="h-8 w-8 text-primary" />
                     </div>
-                )}
-            </div>
+                    <h3 className="text-white text-lg font-bold mb-2">No budgets set</h3>
+                    <p className="text-muted-foreground mb-8 max-w-sm">Setup monthly limits for your expense categories to keep your finances on track.</p>
+                    <BudgetForm />
+                </Card>
+            ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {budgets.map((b: any) => (
+                        <Card key={b.id} className="relative overflow-hidden">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                                <div>
+                                    <CardTitle className="text-base font-bold text-white mb-1">{b.category.name}</CardTitle>
+                                    <CardDescription className="text-[10px] uppercase font-bold tracking-wider">{b.period}</CardDescription>
+                                </div>
+                                <div className="p-2 rounded-xl glass text-primary">
+                                    <PiggyBank className="h-5 w-5" />
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex items-end justify-between mb-4">
+                                    <div className="text-3xl font-bold text-white tracking-tight">{formatCurrency(b.amount)}</div>
+                                    <div className="text-xs text-muted-foreground font-medium pb-1 flex items-center gap-2">
+                                        <div className="h-1 w-1 rounded-full bg-primary" />
+                                        Monthly Limit
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                                        <span>Progress</span>
+                                        <span className="text-white">35%</span>
+                                    </div>
+                                    <div className="h-2 w-full rounded-full bg-white/[0.05] overflow-hidden border border-white/[0.05]">
+                                        <div
+                                            className="h-full rounded-full bg-gradient-to-r from-primary to-violet-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                                            style={{ width: "35%" }}
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium pt-1">
+                                        <span>Spent: {formatCurrency(b.amount * 0.35)}</span>
+                                        <span>Remaining: {formatCurrency(b.amount * 0.65)}</span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+
+                    <button className="flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-white/[0.1] hover:border-primary/50 hover:bg-white/[0.02] transition-all group min-h-[220px]">
+                        <PlusCircle className="h-10 w-10 text-muted-foreground group-hover:text-primary transition-colors mb-4" />
+                        <span className="text-sm font-bold text-muted-foreground group-hover:text-white transition-colors">Create New Budget</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
