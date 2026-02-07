@@ -3,6 +3,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
+import { MobileNav } from "@/components/layout/mobile-nav";
 
 export default function DashboardLayout({
     children,
@@ -22,14 +23,17 @@ export default function DashboardLayout({
             </div>
 
             <div className="flex flex-1 flex-col overflow-hidden z-10">
-                <header className="flex h-20 items-center justify-between px-8 bg-transparent border-b border-white/[0.05]">
-                    <div>
-                        <h1 className="text-xl font-bold text-white/90 capitalize tracking-tight">
-                            {pathname === "/" ? "Overview" : pathname.replace("/", "").replace("-", " ")}
-                        </h1>
-                        <p className="text-xs text-muted-foreground font-medium">
-                            Welcome back, User.
-                        </p>
+                <header className="flex h-20 items-center justify-between px-4 md:px-8 bg-transparent border-b border-white/[0.05]">
+                    <div className="flex items-center gap-4">
+                        <MobileNav />
+                        <div>
+                            <h1 className="text-xl font-bold text-white/90 capitalize tracking-tight">
+                                {pathname === "/" ? "Overview" : pathname.replace("/", "").replace("-", " ")}
+                            </h1>
+                            <p className="text-xs text-muted-foreground font-medium hidden md:block">
+                                Welcome back, User.
+                            </p>
+                        </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-white">

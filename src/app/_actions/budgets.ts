@@ -10,11 +10,40 @@ export async function getBudgets() {
                 category: true,
             },
         });
-        // Calculate progress for each budget
-        // This requires aggregation of transactions.
-        // For MVP, simplistic fetch.
-        return { success: true, data: budgets };
+
+        // Enrich budgets with spending data
+        const enrichedBudgets = await Promise.all(budgets.map(async (budget: any) => {
+            const startDate = new Date(budget.period + "-01");
+            const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+
+            const transactions = await prisma.transaction.aggregate({
+                where: {
+                    categoryId: budget.categoryId,
+                    date: {
+                        gte: startDate,
+                        lte: endDate,
+                    },
+                    type: "expense",
+                },
+                _sum: {
+                    amount: true,
+                },
+            });
+
+            const spent = transactions._sum.amount || 0;
+            const progress = (spent / budget.amount) * 100;
+
+            return {
+                ...budget,
+                spent,
+                progress,
+                remaining: budget.amount - spent,
+            };
+        }));
+
+        return { success: true, data: enrichedBudgets };
     } catch (error) {
+        console.error("Failed to fetch budgets:", error);
         return { success: false, error: "Failed to fetch budgets" };
     }
 }

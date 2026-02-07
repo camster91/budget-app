@@ -1,7 +1,9 @@
+export const dynamic = "force-dynamic";
+
 import { getBudgets } from "@/app/_actions/budgets";
 import { BudgetForm } from "@/components/budgets/BudgetForm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { PiggyBank, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -52,17 +54,20 @@ export default async function BudgetsPage() {
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-muted-foreground">
                                         <span>Progress</span>
-                                        <span className="text-white">35%</span>
+                                        <span className="text-white">{Math.min(Math.round(b.progress || 0), 100)}%</span>
                                     </div>
                                     <div className="h-2 w-full rounded-full bg-white/[0.05] overflow-hidden border border-white/[0.05]">
                                         <div
-                                            className="h-full rounded-full bg-gradient-to-r from-primary to-violet-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
-                                            style={{ width: "35%" }}
+                                            className={cn(
+                                                "h-full rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)] transition-all duration-500",
+                                                (b.progress || 0) > 100 ? "bg-red-500 shadow-red-500/50" : "bg-gradient-to-r from-primary to-violet-500"
+                                            )}
+                                            style={{ width: `${Math.min(b.progress || 0, 100)}%` }}
                                         />
                                     </div>
                                     <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium pt-1">
-                                        <span>Spent: {formatCurrency(b.amount * 0.35)}</span>
-                                        <span>Remaining: {formatCurrency(b.amount * 0.65)}</span>
+                                        <span className={cn((b.progress || 0) > 100 && "text-red-400")}>Spent: {formatCurrency(b.spent || 0)}</span>
+                                        <span>Remaining: {formatCurrency(b.remaining || 0)}</span>
                                     </div>
                                 </div>
                             </CardContent>
