@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  amount      Float
+  description String
+  date        DateTime
+  type        String   @default("expense") // "income" or "expense"
+  
+  category    Category? @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  icon      String?  // Emoji or Lucide icon name
+  color     String?  // Hex code or Tailwind class
+  type      String   @default("expense") // "income" or "expense"
+  
+  transactions Transaction[]
+  budgets      Budget[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Budget {
+  id         String   @id @default(uuid())
+  amount     Float
+  period     String   // e.g., "2023-10"
+  
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([categoryId, period])
+}

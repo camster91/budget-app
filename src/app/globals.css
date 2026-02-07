@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #09090b; /* zinc-950 */
+    
+    --primary: #4f46e5; /* indigo-600 */
+    --primary-foreground: #ffffff;
+    
+    --secondary: #f4f4f5; /* zinc-100 */
+    --secondary-foreground: #18181b; /* zinc-900 */
+    
+    --muted: #f4f4f5; /* zinc-100 */
+    --muted-foreground: #71717a; /* zinc-500 */
+    
+    --accent: #f4f4f5; /* zinc-100 */
+    --accent-foreground: #18181b; /* zinc-900 */
+    
+    --destructive: #ef4444; /* red-500 */
+    --destructive-foreground: #ffffff;
+    
+    --border: #e4e4e7; /* zinc-200 */
+    --input: #e4e4e7; /* zinc-200 */
+    --ring: #4f46e5; /* indigo-600 */
+    
+    --radius: 0.5rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: #09090b; /* zinc-950 */
+      --foreground: #fafafa; /* zinc-50 */
+      
+      --primary: #6366f1; /* indigo-500 */
+      --primary-foreground: #ffffff;
+      
+      --secondary: #27272a; /* zinc-800 */
+      --secondary-foreground: #fafafa; /* zinc-50 */
+      
+      --muted: #27272a; /* zinc-800 */
+      --muted-foreground: #a1a1aa; /* zinc-400 */
+      
+      --accent: #27272a; /* zinc-800 */
+      --accent-foreground: #fafafa; /* zinc-50 */
+      
+      --destructive: #7f1d1d; /* red-900 */
+      --destructive-foreground: #fafafa; /* zinc-50 */
+      
+      --border: #27272a; /* zinc-800 */
+      --input: #27272a; /* zinc-800 */
+      --ring: #6366f1; /* indigo-500 */
+    }
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
