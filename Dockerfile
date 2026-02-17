@@ -1,4 +1,6 @@
 FROM node:20-alpine AS base
+# Install OpenSSL for Prisma compatibility
+RUN apk add --no-cache openssl
 
 # Install dependencies
 FROM base AS deps
@@ -53,7 +55,6 @@ USER nextjs
 
 EXPOSE 3000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
