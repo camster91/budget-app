@@ -3,8 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  binaryTargets = ["native"]
-  engineType = "binary"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -22,6 +21,19 @@ model Transaction {
   category    Category? @relation(fields: [categoryId], references: [id])
   categoryId  String?
 
+  // New fields for Mint-like features
+  isTransfer   Boolean  @default(false)
+  isRecurring  Boolean  @default(false)
+  recurringId  String?  // For grouping recurring transactions
+  
+  // For bank statement reconciliation
+  statementId  String?  // Identifier from bank statement
+  reconciled   Boolean  @default(false)
+  
+  // Account relation
+  account      Account? @relation(fields: [accountId], references: [id])
+  accountId    String?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -32,6 +44,14 @@ model Category {
   icon      String?  // Emoji or Lucide icon name
   color     String?  // Hex code or Tailwind class
   type      String   @default("expense") // "income" or "expense"
+  
+  // For nested categories
+  parentId  String?
+  parent    Category? @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryToCategory")
+  
+  // Rules for auto-categorization (stored as JSON string)
+  rules     String?   // JSON array of matching rules stored as text
   
   transactions Transaction[]
   budgets      Budget[]
@@ -52,4 +72,19 @@ model Budget {
   updatedAt  DateTime @updatedAt
 
   @@unique([categoryId, period])
+}
+
+model Account {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // checking, savings, credit, investment, cash
+  institution String?  // Tangerine, RBC, TD, etc.
+  balance     Float    @default(0)
+  color       String?  // Hex color for UI
+  isDefault   Boolean  @default(false) // Default account for transactions
+  
+  transactions Transaction[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
