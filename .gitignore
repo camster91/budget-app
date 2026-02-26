@@ -41,3 +41,17 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Data files
+*.db
+*.db-journal
+*.txt
+*.json
+*.csv
+*.gz
+*.tar.gz
+
+# Extracted statements
+*_extracted.txt
+*_transactions.json
+
