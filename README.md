@@ -1,61 +1,130 @@
-# Antigravity Finance
+# Budget App
 
-A premium, high-performance personal finance dashboard with a glassmorphism aesthetic. Built for speed, security, and visual excellence.
+A modern personal finance management application for tracking expenses and gaining insights into your spending habits.
 
-![Premium Dashboard](file:///C:/Users/camst/.gemini/antigravity/brain/453bc2fb-15ad-4232-b5b4-fa6994e27761/premium_budget_dashboard_mockup_1770429818390.png)
+## ✨ Features
 
-## ✨ Core Features
+- **Expense Tracking**: Log and categorize expenses with ease
+- **Analytics Dashboard**: Visualize spending patterns with interactive charts
+- **CSV Import**: Bulk import transactions from bank statements
+- **Category Management**: Custom categories for better organization
+- **Date Filtering**: View expenses by time period (daily, weekly, monthly, yearly)
+- **Real-time Updates**: Instant feedback on all financial operations
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
 
-- **Financial Pulse**: Real-time dashboard with animated wealth growth visualization.
-- **Glassmorphism UI**: A state-of-the-art dark mode interface with deep transparency and neon accents.
-- **Mobile First**: Fully responsive navigation with a high-performance Sheet overlay.
-- **Smart Budgets**: Category-based spending limits with dynamic progress tracking and overflow alerts.
-- **Robust Integrity**: Zod-validated forms and server-side sanitization for every transaction.
-- **Rich Feedback**: Integrated `sonner` notifications and fluid skeleton loading states.
+## 🚀 Quick Start
 
-## 🛠 Tech Stack
-
-- **Framework**: [Next.js 16 (Turbopack)](https://nextjs.org/)
-- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
-- **Database**: [Prisma ORM](https://www.prisma.io/)
-- **Animations**: [Framer Motion](https://www.framer.com/motion/)
-- **Charts**: [Recharts](https://recharts.org/)
-- **Components**: Radix UI & High-performance custom glass utilities
-
-## 📦 Quick Start
-
-### 1. Prerequisites
+### Prerequisites
 
 - Node.js 18+
-- Git
+- npm or yarn
 
-### 2. Installation
+### Installation
 
 ```bash
-git clone https://github.com/camster91/budget-app.git
+# Clone the repository
+git clone <repository-url>
 cd budget-app
+
+# Install dependencies
 npm install
-```
 
-### 3. Initialize Database
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your configuration
 
-```bash
+# Set up the database
 npx prisma generate
 npx prisma db push
-```
 
-### 4. Launch
-
-```bash
+# Start the development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to experience the future of personal finance.
+The application will be available at `http://localhost:3000`.
+
+### Usage
+
+```bash
+# Development
+npm run dev
+
+# Production build
+npm run build
+npm start
+
+# Linting
+npm run lint
+```
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 16.1.6 (App Router)
+- **Language**: TypeScript 5
+- **Database**: Prisma ORM
+- **UI Components**: Radix UI
+- **Styling**: Tailwind CSS 4
+- **Charts**: Recharts
+- **Forms**: React Hook Form + Zod validation
+- **Animations**: Framer Motion
+- **Icons**: Lucide React
+- **Notifications**: Sonner
+
+## 📁 Project Structure
+
+```
+budget-app/
+├── app/              # Next.js App Router pages
+├── components/       # React components
+├── lib/             # Utility functions and configurations
+├── prisma/          # Database schema and migrations
+├── public/          # Static assets
+└── types/           # TypeScript type definitions
+```
+
+## 🔒 Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+DATABASE_URL="your-database-url"
+# Add other environment variables as needed
+```
+
+## 📊 Features in Detail
+
+### Expense Tracking
+- Add individual transactions with amount, category, date, and description
+- Edit or delete existing transactions
+- Support for multiple categories
+
+### Analytics
+- Visual breakdown of spending by category
+- Time-based analysis (daily, weekly, monthly, yearly)
+- Interactive charts with hover details
+- Spending trends over time
+
+### CSV Import
+- Import transactions from bank statements
+- Automatic parsing and categorization
+- Validation and error handling
+
+## 🚧 Deployment
+
+See [DEPLOY.md](./DEPLOY.md) for detailed deployment instructions.
+
+## 📄 License
+
+**Private** - This project is proprietary and not licensed for public use.
 
 ## 🤝 Contributing
 
-Contributions are welcome. Please ensure all visual changes adhere to the Antigravity design system (glassmorphism tokens).
+This is a private project. Contributions are not currently accepted.
 
-## License
+## 📧 Contact
 
-MIT License - Open Source and Free to Use.
+For questions or issues, please contact the project maintainer.
+
+---
+
+Built with ❤️ using Next.js

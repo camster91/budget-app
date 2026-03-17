@@ -7,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -33,6 +33,10 @@ model Transaction {
   // Account relation
   account      Account? @relation(fields: [accountId], references: [id])
   accountId    String?
+  
+  // Bill relation
+  bill         Bill?    @relation(fields: [billId], references: [id])
+  billId       String?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -55,6 +59,8 @@ model Category {
   
   transactions Transaction[]
   budgets      Budget[]
+  bills        Bill[]
+  goals        Goal[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -84,7 +90,46 @@ model Account {
   isDefault   Boolean  @default(false) // Default account for transactions
   
   transactions Transaction[]
+  bills        Bill[]
   
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Bill {
+  id          String   @id @default(uuid())
+  name        String
+  amount      Float
+  dueDay      Int      // Day of month (1-31)
+  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  account     Account  @relation(fields: [accountId], references: [id])
+  accountId   String
+  
+  transactions Transaction[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Goal {
+  id          String   @id @default(uuid())
+  name        String
+  targetAmount Float
+  currentAmount Float @default(0)
+  targetDate  DateTime?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

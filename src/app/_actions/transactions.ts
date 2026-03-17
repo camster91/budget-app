@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { isTransfer } from "@/lib/utils/transactionUtils";
+import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
 
 export async function getTransactions() {
     try {
@@ -32,12 +34,13 @@ export async function createTransaction(formData: FormData) {
             return { success: false, error: "Missing required fields" };
         }
 
-        // specific logic: simple category handling (find or create)
-        // For MVP, we might just use text or a fixed set.
-        // Let's assume we pass categoryId if it exists, or name.
-
-        // For now, let's just create a category if it doesn't exist
         let categoryId = formData.get("categoryId") as string;
+
+        // Auto-categorization
+        if (!categoryId) {
+            const categories = await prisma.category.findMany();
+            categoryId = categorizeTransaction(description, categories) || "";
+        }
 
         if (!categoryId && categoryName) {
             const category = await prisma.category.upsert({
@@ -55,6 +58,7 @@ export async function createTransaction(formData: FormData) {
                 date,
                 type,
                 categoryId: categoryId || null,
+                isTransfer: isTransfer(description),
             },
         });
 
@@ -66,6 +70,7 @@ export async function createTransaction(formData: FormData) {
         return { success: false, error: "Failed to create transaction" };
     }
 }
+
 
 export async function deleteTransaction(id: string) {
     try {
