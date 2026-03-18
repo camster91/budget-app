@@ -16,11 +16,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client (no DB connection needed at build time)
 RUN npx prisma generate
 
-# Build Next.js
+# Build Next.js (skip DB-dependent checks at build time)
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 RUN npm run build
 
 # Production image
