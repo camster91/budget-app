@@ -92,4 +92,18 @@ const DialogDescription = React.forwardRef<
 ))
 DialogDescription.displayName = "DialogDescription"
 
-export { Dialog, DialogHeader, DialogTitle, DialogDescription }
+const DialogContent = React.forwardRef<
+    HTMLDivElement,
+    React.HTMLAttributes<HTMLDivElement>
+>(({ className, children, ...props }, ref) => (
+    <div
+        ref={ref}
+        className={cn("relative", className)}
+        {...props}
+    >
+        {children}
+    </div>
+))
+DialogContent.displayName = "DialogContent"
+
+export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription }
