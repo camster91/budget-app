@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { getAccounts } from "@/app/_actions/accounts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
