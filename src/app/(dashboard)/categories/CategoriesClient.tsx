@@ -1,0 +1,242 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { Tag, Plus, X, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { createCategory, deleteCategory } from "@/app/_actions/categories";
+
+interface Category {
+    id: string;
+    name: string;
+    icon: string | null;
+    color: string | null;
+    type: string;
+    rules: string | null;
+    _count: { transactions: number };
+}
+
+const PRESET_COLORS = [
+    "#6366f1", "#8b5cf6", "#ec4899", "#ef4444",
+    "#f97316", "#eab308", "#22c55e", "#06b6d4",
+];
+
+interface CategoriesClientProps {
+    categories: Category[];
+}
+
+export function CategoriesClient({ categories: initialCategories }: CategoriesClientProps) {
+    const [categories, setCategories] = useState(initialCategories);
+    const [showForm, setShowForm] = useState(false);
+    const [typeFilter, setTypeFilter] = useState<"all" | "expense" | "income">("all");
+    const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
+    const [isPending, startTransition] = useTransition();
+
+    const filtered = typeFilter === "all" ? categories : categories.filter((c) => c.type === typeFilter);
+    const expenseCount = categories.filter((c) => c.type === "expense").length;
+    const incomeCount = categories.filter((c) => c.type === "income").length;
+
+    function handleCreate(formData: FormData) {
+        formData.set("color", selectedColor);
+        startTransition(async () => {
+            const result = await createCategory(formData);
+            if (result.success) {
+                setShowForm(false);
+                setSelectedColor(PRESET_COLORS[0]);
+                window.location.reload();
+            }
+        });
+    }
+
+    function handleDelete(id: string) {
+        startTransition(async () => {
+            const result = await deleteCategory(id);
+            if (result.success) setCategories((prev) => prev.filter((c) => c.id !== id));
+        });
+    }
+
+    return (
+        <div className="flex flex-col gap-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight text-white mb-1">Categories</h2>
+                    <p className="text-muted-foreground text-sm">Organise transactions with custom categories and auto-matching rules.</p>
+                </div>
+                <Button onClick={() => setShowForm(true)} className="gap-2 rounded-xl self-start md:self-auto">
+                    <Plus className="h-4 w-4" />
+                    New Category
+                </Button>
+            </div>
+
+            <AnimatePresence>
+                {showForm && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                    >
+                        <Card className="border-primary/20 bg-primary/5">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                                <CardTitle className="text-base">New Category</CardTitle>
+                                <Button variant="ghost" size="icon" onClick={() => setShowForm(false)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                <form action={handleCreate} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Name</label>
+                                        <Input name="name" placeholder="e.g. Groceries" required className="rounded-xl bg-white/[0.05] border-white/[0.1]" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Type</label>
+                                        <select name="type" required className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary">
+                                            <option value="expense">Expense</option>
+                                            <option value="income">Income</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Icon (emoji)</label>
+                                        <Input name="icon" placeholder="🛒" maxLength={2} className="rounded-xl bg-white/[0.05] border-white/[0.1]" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Auto-match keywords</label>
+                                        <Input name="rules" placeholder='["grocery","superstore"]' className="rounded-xl bg-white/[0.05] border-white/[0.1]" />
+                                    </div>
+                                    <div className="space-y-2 sm:col-span-2 lg:col-span-3">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Color</label>
+                                        <div className="flex gap-2">
+                                            {PRESET_COLORS.map((c) => (
+                                                <button
+                                                    key={c}
+                                                    type="button"
+                                                    onClick={() => setSelectedColor(c)}
+                                                    className={cn(
+                                                        "h-7 w-7 rounded-full transition-all",
+                                                        selectedColor === c ? "ring-2 ring-white ring-offset-2 ring-offset-black scale-110" : "opacity-70 hover:opacity-100"
+                                                    )}
+                                                    style={{ backgroundColor: c }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-end">
+                                        <Button type="submit" disabled={isPending} className="w-full rounded-xl">
+                                            {isPending ? "Creating..." : "Create"}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Filter tabs */}
+            <div className="flex items-center gap-2">
+                {([["all", "All", categories.length], ["expense", "Expenses", expenseCount], ["income", "Income", incomeCount]] as const).map(([v, label, count]) => (
+                    <button
+                        key={v}
+                        onClick={() => setTypeFilter(v)}
+                        className={cn(
+                            "px-4 py-2 rounded-xl text-sm font-bold transition-all",
+                            typeFilter === v
+                                ? "bg-primary/20 text-primary border border-primary/30"
+                                : "text-muted-foreground hover:text-white hover:bg-white/[0.05]"
+                        )}
+                    >
+                        {label} <span className="ml-1 text-xs opacity-60">({count})</span>
+                    </button>
+                ))}
+            </div>
+
+            {!filtered.length ? (
+                <Card className="flex flex-col items-center justify-center py-20 text-center border-dashed border-2 border-white/[0.1] bg-transparent">
+                    <div className="h-16 w-16 rounded-3xl glass flex items-center justify-center mb-6">
+                        <Tag className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="text-white text-lg font-bold mb-2">No categories yet</h3>
+                    <p className="text-muted-foreground mb-8 max-w-sm">Create categories to automatically classify your transactions.</p>
+                    <Button onClick={() => setShowForm(true)} className="gap-2 rounded-xl">
+                        <Plus className="h-4 w-4" />
+                        Create First Category
+                    </Button>
+                </Card>
+            ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {filtered.map((cat) => {
+                        const rules = (() => {
+                            try { return JSON.parse(cat.rules || "[]") as string[]; }
+                            catch { return cat.rules ? [cat.rules] : []; }
+                        })();
+
+                        return (
+                            <motion.div
+                                key={cat.id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                            >
+                                <Card className="relative overflow-hidden group">
+                                    <div
+                                        className="absolute top-0 left-0 w-1 h-full rounded-l-2xl"
+                                        style={{ backgroundColor: cat.color || "#6366f1" }}
+                                    />
+                                    <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 pl-6">
+                                        <div className="flex items-center gap-2">
+                                            {cat.icon && <span className="text-xl">{cat.icon}</span>}
+                                            <div>
+                                                <CardTitle className="text-sm font-bold text-white">{cat.name}</CardTitle>
+                                                <div className="flex items-center gap-1 mt-0.5">
+                                                    {cat.type === "income" ? (
+                                                        <ArrowUpCircle className="h-3 w-3 text-emerald-400" />
+                                                    ) : (
+                                                        <ArrowDownCircle className="h-3 w-3 text-rose-400" />
+                                                    )}
+                                                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                                                        {cat.type}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-400 shrink-0"
+                                            onClick={() => handleDelete(cat.id)}
+                                            disabled={isPending}
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </CardHeader>
+                                    <CardContent className="pl-6 pt-0">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-muted-foreground">
+                                                {cat._count.transactions} transaction{cat._count.transactions !== 1 ? "s" : ""}
+                                            </span>
+                                        </div>
+                                        {rules.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                {rules.slice(0, 3).map((r, i) => (
+                                                    <span key={i} className="text-[10px] bg-white/[0.05] border border-white/[0.08] rounded-md px-1.5 py-0.5 text-muted-foreground font-medium">
+                                                        {r}
+                                                    </span>
+                                                ))}
+                                                {rules.length > 3 && (
+                                                    <span className="text-[10px] text-muted-foreground">+{rules.length - 3}</span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
+}

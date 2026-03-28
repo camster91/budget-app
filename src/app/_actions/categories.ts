@@ -49,3 +49,13 @@ export async function updateCategory(id: string, formData: FormData) {
         return { success: false, error: "Failed to update category" };
     }
 }
+
+export async function deleteCategory(id: string) {
+    try {
+        await prisma.category.delete({ where: { id } });
+        revalidatePath("/categories");
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Failed to delete category" };
+    }
+}

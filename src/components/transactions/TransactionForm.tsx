@@ -14,13 +14,23 @@ const transactionSchema = z.object({
     type: z.enum(["expense", "income"]),
     amount: z.string().refine((v) => !isNaN(Number(v)) && Number(v) > 0, "Amount must be a positive number"),
     description: z.string().min(1, "Description is required").max(100),
-    category: z.string().min(1, "Category is required"),
+    categoryId: z.string().optional(),
+    category: z.string().optional(),
     date: z.string().min(1, "Date is required"),
 });
 
 type TransactionValues = z.infer<typeof transactionSchema>;
 
-export function TransactionForm() {
+interface Category {
+    id: string;
+    name: string;
+}
+
+interface TransactionFormProps {
+    categories?: Category[];
+}
+
+export function TransactionForm({ categories = [] }: TransactionFormProps) {
     const [open, setOpen] = useState(false);
     const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<TransactionValues>({
         resolver: zodResolver(transactionSchema),
@@ -32,7 +42,12 @@ export function TransactionForm() {
 
     const onSubmit = async (data: TransactionValues) => {
         const formData = new FormData();
-        Object.entries(data).forEach(([key, value]) => formData.append(key, value.toString()));
+        formData.append("type", data.type);
+        formData.append("amount", data.amount);
+        formData.append("description", data.description);
+        formData.append("date", data.date);
+        if (data.categoryId) formData.append("categoryId", data.categoryId);
+        else if (data.category) formData.append("category", data.category);
 
         const res = await createTransaction(formData);
 
@@ -90,13 +105,24 @@ export function TransactionForm() {
 
                     <div className="grid gap-2">
                         <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Category</label>
-                        <Input
-                            {...register("category")}
-                            type="text"
-                            placeholder="Food, Rent, Salary..."
-                            className="rounded-xl border-white/[0.1] bg-white/[0.05]"
-                        />
-                        {errors.category && <p className="text-xs text-red-400">{errors.category.message}</p>}
+                        {categories.length > 0 ? (
+                            <select
+                                {...register("categoryId")}
+                                className="flex h-10 w-full rounded-xl border border-white/[0.1] bg-white/[0.05] px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                            >
+                                <option value="">Auto-detect</option>
+                                {categories.map((c) => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <Input
+                                {...register("category")}
+                                type="text"
+                                placeholder="Food, Rent, Salary..."
+                                className="rounded-xl border-white/[0.1] bg-white/[0.05]"
+                            />
+                        )}
                     </div>
 
                     <div className="grid gap-2">

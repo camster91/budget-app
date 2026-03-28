@@ -147,7 +147,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                             <Upload className="h-4 w-4" />
                             Import
                         </Button>
-                        <TransactionForm />
+                        <TransactionForm categories={categories} />
                     </div>
                 </div>
 

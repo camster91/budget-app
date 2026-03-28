@@ -20,3 +20,13 @@ export async function createBill(formData: FormData) {
         return { success: false, error: "Failed to create bill" };
     }
 }
+
+export async function deleteBill(id: string) {
+    try {
+        await prisma.bill.delete({ where: { id } });
+        revalidatePath("/bills");
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Failed to delete bill" };
+    }
+}

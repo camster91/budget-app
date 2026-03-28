@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DollarSign, ArrowUpRight, ArrowDownRight, CreditCard, Wallet, TrendingUp, Calendar, Zap } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
@@ -153,7 +154,9 @@ export function DashboardContent({ data }: DashboardContentProps) {
                                 <CardTitle>Recent Activity</CardTitle>
                                 <CardDescription>Your latest transactions.</CardDescription>
                             </div>
-                            <Button variant="ghost" size="sm" className="text-primary hover:text-primary/80">View All</Button>
+                            <Link href="/transactions" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors px-3 py-1 rounded-lg hover:bg-white/[0.05]">
+                                View All
+                            </Link>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-6">
