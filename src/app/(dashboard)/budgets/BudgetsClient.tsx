@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { BudgetForm } from "@/components/budgets/BudgetForm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { formatCurrency, cn } from "@/lib/utils";
-import { PiggyBank, PlusCircle, X } from "lucide-react";
+import { PiggyBank, PlusCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteBudget } from "@/app/_actions/budgets";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,12 +28,33 @@ interface Category {
 interface BudgetsClientProps {
     budgets: Budget[];
     categories: Category[];
+    period: string;
 }
 
-export function BudgetsClient({ budgets: initialBudgets, categories }: BudgetsClientProps) {
+function formatPeriodLabel(period: string): string {
+    const [year, month] = period.split("-");
+    return new Date(Number(year), Number(month) - 1, 1).toLocaleString("default", { month: "long", year: "numeric" });
+}
+
+function offsetPeriod(period: string, months: number): string {
+    const [year, month] = period.split("-").map(Number);
+    const date = new Date(year, month - 1 + months, 1);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export function BudgetsClient({ budgets: initialBudgets, categories, period }: BudgetsClientProps) {
+    const router = useRouter();
     const [budgets, setBudgets] = useState(initialBudgets);
     const [tileFormKey, setTileFormKey] = useState(0);
     const [isPending, startTransition] = useTransition();
+
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const isCurrentMonth = period === currentMonth;
+
+    function navigatePeriod(months: number) {
+        const newPeriod = offsetPeriod(period, months);
+        router.push(`/budgets?period=${newPeriod}`);
+    }
 
     function handleDelete(id: string) {
         startTransition(async () => {
@@ -62,8 +84,29 @@ export function BudgetsClient({ budgets: initialBudgets, categories }: BudgetsCl
                             </div>
                         </div>
                     )}
-                    <BudgetForm categories={categories} />
+                    <BudgetForm categories={categories} period={period} />
                 </div>
+            </div>
+
+            {/* Month navigation */}
+            <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => navigatePeriod(-1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+                    <span className="text-sm font-bold text-white">{formatPeriodLabel(period)}</span>
+                    {!isCurrentMonth && (
+                        <button
+                            onClick={() => router.push("/budgets")}
+                            className="text-[10px] font-bold text-primary hover:text-primary/80 transition-colors ml-1"
+                        >
+                            Back to current
+                        </button>
+                    )}
+                </div>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => navigatePeriod(1)}>
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
             </div>
 
             {!budgets.length ? (
@@ -71,9 +114,9 @@ export function BudgetsClient({ budgets: initialBudgets, categories }: BudgetsCl
                     <div className="h-16 w-16 rounded-3xl glass flex items-center justify-center mb-6">
                         <PiggyBank className="h-8 w-8 text-primary" />
                     </div>
-                    <h3 className="text-white text-lg font-bold mb-2">No budgets set</h3>
+                    <h3 className="text-white text-lg font-bold mb-2">No budgets for {formatPeriodLabel(period)}</h3>
                     <p className="text-muted-foreground mb-8 max-w-sm">Set monthly limits for your expense categories to keep your finances on track.</p>
-                    <BudgetForm categories={categories} />
+                    <BudgetForm categories={categories} period={period} />
                 </Card>
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -159,9 +202,8 @@ export function BudgetsClient({ budgets: initialBudgets, categories }: BudgetsCl
                             <PlusCircle className="h-10 w-10 text-muted-foreground group-hover:text-primary transition-colors mb-4" />
                             <span className="text-sm font-bold text-muted-foreground group-hover:text-white transition-colors">New Budget</span>
                         </button>
-                        {/* Render a fresh auto-open BudgetForm each time the tile is clicked */}
                         {tileFormKey > 0 && (
-                            <BudgetForm key={tileFormKey} categories={categories} autoOpen />
+                            <BudgetForm key={tileFormKey} categories={categories} period={period} autoOpen />
                         )}
                     </div>
                 </div>

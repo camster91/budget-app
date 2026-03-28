@@ -2,10 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
-export async function getBudgets() {
+export async function getBudgets(period?: string) {
+    const targetPeriod = period || new Date().toISOString().slice(0, 7);
     try {
         const budgets = await prisma.budget.findMany({
+            where: { period: targetPeriod },
             include: { category: true },
             orderBy: { createdAt: "desc" },
         });
@@ -40,11 +43,12 @@ export async function getBudgets() {
 }
 
 export async function createBudget(formData: FormData) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
         const amount = parseFloat(formData.get("amount") as string);
         const categoryId = formData.get("categoryId") as string;
         const categoryName = formData.get("category") as string;
-        const period = new Date().toISOString().slice(0, 7);
+        const period = (formData.get("period") as string) || new Date().toISOString().slice(0, 7);
 
         if (!amount || (!categoryId && !categoryName)) {
             return { success: false, error: "Missing required fields" };
@@ -76,6 +80,7 @@ export async function createBudget(formData: FormData) {
 }
 
 export async function deleteBudget(id: string) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
         await prisma.budget.delete({ where: { id } });
         revalidatePath("/budgets");

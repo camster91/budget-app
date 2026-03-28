@@ -15,16 +15,19 @@ interface Category {
 interface BudgetFormProps {
     categories?: Category[];
     autoOpen?: boolean;
+    period?: string;
 }
 
-export function BudgetForm({ categories = [], autoOpen = false }: BudgetFormProps) {
+export function BudgetForm({ categories = [], autoOpen = false, period }: BudgetFormProps) {
     const [open, setOpen] = useState(autoOpen);
     const [amount, setAmount] = useState("");
     const [categoryId, setCategoryId] = useState("");
     const [categoryName, setCategoryName] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    const currentMonth = new Date().toLocaleString("default", { month: "long", year: "numeric" });
+    const activePeriod = period || new Date().toISOString().slice(0, 7);
+    const [year, month] = activePeriod.split("-").map(Number);
+    const periodLabel = new Date(year, month - 1, 1).toLocaleString("default", { month: "long", year: "numeric" });
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -40,6 +43,7 @@ export function BudgetForm({ categories = [], autoOpen = false }: BudgetFormProp
         setSubmitting(true);
         const fd = new FormData();
         fd.append("amount", amount);
+        fd.append("period", activePeriod);
         if (categoryId) fd.append("categoryId", categoryId);
         else fd.append("category", categoryName);
 
@@ -88,7 +92,7 @@ export function BudgetForm({ categories = [], autoOpen = false }: BudgetFormProp
                             />
                         )}
                         <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
-                            Applies to {currentMonth}.
+                            Applies to {periodLabel}.
                         </p>
                     </div>
 

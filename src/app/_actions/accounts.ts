@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 export async function createAccount(formData: FormData) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
         const name = formData.get("name") as string;
         const type = formData.get("type") as string;
@@ -22,6 +24,7 @@ export async function createAccount(formData: FormData) {
 }
 
 export async function updateAccountBalance(id: string, balance: number) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
         await prisma.account.update({ where: { id }, data: { balance } });
         revalidatePath("/accounts");
@@ -33,8 +36,15 @@ export async function updateAccountBalance(id: string, balance: number) {
 }
 
 export async function deleteAccount(id: string) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
-        await prisma.account.delete({ where: { id } });
+        await prisma.$transaction([
+            // Transactions have nullable accountId — null them out.
+            // Bills have required accountId — delete them.
+            prisma.transaction.updateMany({ where: { accountId: id }, data: { accountId: null } }),
+            prisma.bill.deleteMany({ where: { accountId: id } }),
+            prisma.account.delete({ where: { id } }),
+        ]);
         revalidatePath("/accounts");
         revalidatePath("/");
         return { success: true };

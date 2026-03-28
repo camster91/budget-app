@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 export async function createBill(formData: FormData) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
         const name = formData.get("name") as string;
         const amount = parseFloat(formData.get("amount") as string);
@@ -22,6 +24,7 @@ export async function createBill(formData: FormData) {
 }
 
 export async function updateBill(id: string, formData: FormData) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
         const name = formData.get("name") as string;
         const amount = parseFloat(formData.get("amount") as string);
@@ -41,6 +44,7 @@ export async function updateBill(id: string, formData: FormData) {
 }
 
 export async function deleteBill(id: string) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
         await prisma.bill.delete({ where: { id } });
         revalidatePath("/bills");

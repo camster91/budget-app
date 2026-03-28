@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +53,7 @@ interface AccountsClientProps {
 }
 
 export function AccountsClient({ accounts: initialAccounts }: AccountsClientProps) {
+    const router = useRouter();
     const [accounts, setAccounts] = useState(initialAccounts);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -67,7 +69,7 @@ export function AccountsClient({ accounts: initialAccounts }: AccountsClientProp
             const result = await createAccount(formData);
             if (result.success) {
                 setShowForm(false);
-                window.location.reload();
+                router.refresh();
             }
         });
     }

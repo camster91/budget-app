@@ -38,6 +38,8 @@ export function TransactionsClient({ transactions: initialTransactions, categori
     const [search, setSearch] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("");
     const [typeFilter, setTypeFilter] = useState("");
+    const [dateFrom, setDateFrom] = useState("");
+    const [dateTo, setDateTo] = useState("");
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<Partial<Transaction>>({});
     const [page, setPage] = useState(1);
@@ -48,9 +50,12 @@ export function TransactionsClient({ transactions: initialTransactions, categori
             const matchesSearch = !search || t.description.toLowerCase().includes(search.toLowerCase());
             const matchesCategory = !categoryFilter || t.categoryId === categoryFilter;
             const matchesType = !typeFilter || t.type === typeFilter;
-            return matchesSearch && matchesCategory && matchesType;
+            const tDate = new Date(t.date);
+            const matchesFrom = !dateFrom || tDate >= new Date(dateFrom);
+            const matchesTo = !dateTo || tDate <= new Date(dateTo + "T23:59:59");
+            return matchesSearch && matchesCategory && matchesType && matchesFrom && matchesTo;
         });
-    }, [transactions, search, categoryFilter, typeFilter]);
+    }, [transactions, search, categoryFilter, typeFilter, dateFrom, dateTo]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -129,12 +134,16 @@ export function TransactionsClient({ transactions: initialTransactions, categori
         setSearch("");
         setCategoryFilter("");
         setTypeFilter("");
+        setDateFrom("");
+        setDateTo("");
         setPage(1);
     }
 
     function handleSearchChange(v: string) { setSearch(v); setPage(1); }
     function handleCategoryChange(v: string) { setCategoryFilter(v); setPage(1); }
     function handleTypeChange(v: string) { setTypeFilter(v); setPage(1); }
+    function handleDateFromChange(v: string) { setDateFrom(v); setPage(1); }
+    function handleDateToChange(v: string) { setDateTo(v); setPage(1); }
 
     return (
         <>
@@ -201,6 +210,23 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                     <option value="income">Income</option>
                                     <option value="expense">Expense</option>
                                 </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Date Range</label>
+                                <Input
+                                    type="date"
+                                    placeholder="From"
+                                    value={dateFrom}
+                                    onChange={(e) => handleDateFromChange(e.target.value)}
+                                    className="bg-white/[0.02] border-white/[0.08] text-sm"
+                                />
+                                <Input
+                                    type="date"
+                                    placeholder="To"
+                                    value={dateTo}
+                                    onChange={(e) => handleDateToChange(e.target.value)}
+                                    className="bg-white/[0.02] border-white/[0.08] text-sm"
+                                />
                             </div>
                             <Button variant="secondary" className="w-full text-xs h-9" onClick={resetFilters}>
                                 Reset Filters
