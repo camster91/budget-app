@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, cn } from "@/lib/utils";
-import { FileText, Plus, X, AlertCircle, CheckCircle2, Clock, Info } from "lucide-react";
+import { FileText, Plus, X, AlertCircle, CheckCircle2, Clock, Info, Pencil, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createBill, deleteBill } from "@/app/_actions/bills";
+import { createBill, updateBill, deleteBill } from "@/app/_actions/bills";
 
 interface Bill {
     id: string;
@@ -48,19 +49,59 @@ function getDueStatus(days: number): { label: string; color: string; icon: any }
     return { label: `Due in ${days}d`, color: "text-emerald-400", icon: CheckCircle2 };
 }
 
+interface EditState {
+    name: string;
+    amount: string;
+    dueDay: string;
+    categoryId: string;
+    accountId: string;
+}
+
 export function BillsClient({ bills: initialBills, categories, accounts }: BillsClientProps) {
+    const router = useRouter();
     const [bills, setBills] = useState(initialBills);
     const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editState, setEditState] = useState<EditState | null>(null);
     const [isPending, startTransition] = useTransition();
 
     const totalMonthly = bills.reduce((sum, b) => sum + b.amount, 0);
+
+    function startEdit(bill: Bill) {
+        setEditingId(bill.id);
+        setEditState({
+            name: bill.name,
+            amount: String(bill.amount),
+            dueDay: String(bill.dueDay),
+            categoryId: bill.category.id,
+            accountId: bill.account.id,
+        });
+    }
 
     function handleCreate(formData: FormData) {
         startTransition(async () => {
             const result = await createBill(formData);
             if (result.success) {
                 setShowForm(false);
-                window.location.reload();
+                router.refresh();
+            }
+        });
+    }
+
+    function handleUpdate(id: string) {
+        if (!editState) return;
+        const formData = new FormData();
+        formData.set("name", editState.name);
+        formData.set("amount", editState.amount);
+        formData.set("dueDay", editState.dueDay);
+        formData.set("categoryId", editState.categoryId);
+        formData.set("accountId", editState.accountId);
+        startTransition(async () => {
+            const result = await updateBill(id, formData);
+            if (result.success) {
+                setEditingId(null);
+                setEditState(null);
+                router.refresh();
             }
         });
     }
@@ -71,6 +112,8 @@ export function BillsClient({ bills: initialBills, categories, accounts }: Bills
             if (result.success) setBills((prev) => prev.filter((b) => b.id !== id));
         });
     }
+
+    const selectCls = "w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary";
 
     return (
         <div className="flex flex-col gap-8">
@@ -142,14 +185,14 @@ export function BillsClient({ bills: initialBills, categories, accounts }: Bills
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Category</label>
-                                        <select name="categoryId" required className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary">
+                                        <select name="categoryId" required className={selectCls}>
                                             <option value="">Select category</option>
                                             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Account</label>
-                                        <select name="accountId" required className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary">
+                                        <select name="accountId" required className={selectCls}>
                                             <option value="">Select account</option>
                                             {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                                         </select>
@@ -185,6 +228,7 @@ export function BillsClient({ bills: initialBills, categories, accounts }: Bills
                         const status = getDueStatus(days);
                         const StatusIcon = status.icon;
                         const nextDate = getNextDueDate(bill.dueDay);
+                        const isEditing = editingId === bill.id;
 
                         return (
                             <motion.div
@@ -195,41 +239,133 @@ export function BillsClient({ bills: initialBills, categories, accounts }: Bills
                             >
                                 <Card className={cn(
                                     "relative overflow-hidden group",
-                                    days <= 3 && "border-orange-500/20 bg-orange-500/5"
+                                    days <= 3 && !isEditing && "border-orange-500/20 bg-orange-500/5",
+                                    isEditing && "border-primary/30 bg-primary/5"
                                 )}>
-                                    <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
-                                        <div>
-                                            <CardTitle className="text-base font-bold text-white mb-1">{bill.name}</CardTitle>
-                                            <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
-                                                {bill.category.name} · {bill.account.name}
-                                            </p>
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-400"
-                                            onClick={() => handleDelete(bill.id)}
-                                            disabled={isPending}
-                                        >
-                                            <X className="h-3.5 w-3.5" />
-                                        </Button>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="flex items-end justify-between">
-                                            <div className="text-3xl font-bold text-white tracking-tight">
-                                                {formatCurrency(bill.amount)}
+                                    {isEditing && editState ? (
+                                        /* ── Edit mode ── */
+                                        <CardContent className="pt-5 space-y-3">
+                                            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Edit Bill</div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="col-span-2 space-y-1.5">
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Name</label>
+                                                    <Input
+                                                        value={editState.name}
+                                                        onChange={(e) => setEditState({ ...editState, name: e.target.value })}
+                                                        className="rounded-xl bg-white/[0.05] border-white/[0.1] h-8 text-sm"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Amount</label>
+                                                    <Input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={editState.amount}
+                                                        onChange={(e) => setEditState({ ...editState, amount: e.target.value })}
+                                                        className="rounded-xl bg-white/[0.05] border-white/[0.1] h-8 text-sm"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Due Day</label>
+                                                    <Input
+                                                        type="number"
+                                                        min="1"
+                                                        max="31"
+                                                        value={editState.dueDay}
+                                                        onChange={(e) => setEditState({ ...editState, dueDay: e.target.value })}
+                                                        className="rounded-xl bg-white/[0.05] border-white/[0.1] h-8 text-sm"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Category</label>
+                                                    <select
+                                                        value={editState.categoryId}
+                                                        onChange={(e) => setEditState({ ...editState, categoryId: e.target.value })}
+                                                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    >
+                                                        {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Account</label>
+                                                    <select
+                                                        value={editState.accountId}
+                                                        onChange={(e) => setEditState({ ...editState, accountId: e.target.value })}
+                                                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    >
+                                                        {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                                    </select>
+                                                </div>
                                             </div>
-                                            <div className={cn("flex items-center gap-1.5 text-xs font-bold", status.color)}>
-                                                <StatusIcon className="h-3.5 w-3.5" />
-                                                {status.label}
+                                            <div className="flex gap-2 pt-1">
+                                                <Button
+                                                    size="sm"
+                                                    className="flex-1 rounded-xl h-8 gap-1.5"
+                                                    onClick={() => handleUpdate(bill.id)}
+                                                    disabled={isPending}
+                                                >
+                                                    <Check className="h-3.5 w-3.5" />
+                                                    {isPending ? "Saving..." : "Save"}
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="rounded-xl h-8"
+                                                    onClick={() => { setEditingId(null); setEditState(null); }}
+                                                >
+                                                    Cancel
+                                                </Button>
                                             </div>
-                                        </div>
-                                        <div className="mt-3 pt-3 border-t border-white/[0.05]">
-                                            <p className="text-[10px] text-muted-foreground font-medium">
-                                                Next due: {nextDate.toLocaleDateString(undefined, { month: "long", day: "numeric" })}
-                                            </p>
-                                        </div>
-                                    </CardContent>
+                                        </CardContent>
+                                    ) : (
+                                        /* ── View mode ── */
+                                        <>
+                                            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
+                                                <div>
+                                                    <CardTitle className="text-base font-bold text-white mb-1">{bill.name}</CardTitle>
+                                                    <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                                                        {bill.category.name} · {bill.account.name}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 hover:text-primary"
+                                                        onClick={() => startEdit(bill)}
+                                                        disabled={isPending}
+                                                    >
+                                                        <Pencil className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 hover:text-red-400"
+                                                        onClick={() => handleDelete(bill.id)}
+                                                        disabled={isPending}
+                                                    >
+                                                        <X className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="flex items-end justify-between">
+                                                    <div className="text-3xl font-bold text-white tracking-tight">
+                                                        {formatCurrency(bill.amount)}
+                                                    </div>
+                                                    <div className={cn("flex items-center gap-1.5 text-xs font-bold", status.color)}>
+                                                        <StatusIcon className="h-3.5 w-3.5" />
+                                                        {status.label}
+                                                    </div>
+                                                </div>
+                                                <div className="mt-3 pt-3 border-t border-white/[0.05]">
+                                                    <p className="text-[10px] text-muted-foreground font-medium">
+                                                        Next due: {nextDate.toLocaleDateString(undefined, { month: "long", day: "numeric" })}
+                                                    </p>
+                                                </div>
+                                            </CardContent>
+                                        </>
+                                    )}
                                 </Card>
                             </motion.div>
                         );

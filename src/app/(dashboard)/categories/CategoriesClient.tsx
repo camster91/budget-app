@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ interface CategoriesClientProps {
 }
 
 export function CategoriesClient({ categories: initialCategories }: CategoriesClientProps) {
+    const router = useRouter();
     const [categories, setCategories] = useState(initialCategories);
     const [showForm, setShowForm] = useState(false);
     const [typeFilter, setTypeFilter] = useState<"all" | "expense" | "income">("all");
@@ -46,7 +48,7 @@ export function CategoriesClient({ categories: initialCategories }: CategoriesCl
             if (result.success) {
                 setShowForm(false);
                 setSelectedColor(PRESET_COLORS[0]);
-                window.location.reload();
+                router.refresh();
             }
         });
     }

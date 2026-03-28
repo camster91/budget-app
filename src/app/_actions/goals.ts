@@ -27,11 +27,23 @@ export async function createGoal(formData: FormData) {
     }
 }
 
-export async function updateGoal(id: string, currentAmount: number) {
+export async function updateGoal(id: string, formData: FormData) {
     try {
+        const name = formData.get("name") as string;
+        const targetAmount = parseFloat(formData.get("targetAmount") as string);
+        const currentAmount = parseFloat(formData.get("currentAmount") as string);
+        const categoryId = (formData.get("categoryId") as string) || null;
+        const targetDateStr = formData.get("targetDate") as string;
+
         await prisma.goal.update({
             where: { id },
-            data: { currentAmount },
+            data: {
+                name,
+                targetAmount,
+                currentAmount,
+                categoryId,
+                targetDate: targetDateStr ? new Date(targetDateStr) : null,
+            },
         });
         revalidatePath("/goals");
         return { success: true };

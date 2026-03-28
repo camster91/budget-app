@@ -52,7 +52,14 @@ export async function updateCategory(id: string, formData: FormData) {
 
 export async function deleteCategory(id: string) {
     try {
-        await prisma.category.delete({ where: { id } });
+        // Null out FK references before deleting to avoid constraint errors
+        await prisma.$transaction([
+            prisma.transaction.updateMany({ where: { categoryId: id }, data: { categoryId: null } }),
+            prisma.budget.deleteMany({ where: { categoryId: id } }),
+            prisma.bill.updateMany({ where: { categoryId: id }, data: { categoryId: null } }),
+            prisma.goal.updateMany({ where: { categoryId: id }, data: { categoryId: null } }),
+            prisma.category.delete({ where: { id } }),
+        ]);
         revalidatePath("/categories");
         return { success: true };
     } catch (error) {
