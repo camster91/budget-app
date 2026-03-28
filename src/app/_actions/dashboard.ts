@@ -18,7 +18,6 @@ export async function getDashboardSummary() {
         const lastMonthStart = startOfMonth(subMonths(now, 1));
         const lastMonthEnd = endOfMonth(subMonths(now, 1));
 
-        // Run all aggregations in parallel
         const [
             totalIncome,
             totalExpenses,
@@ -27,6 +26,8 @@ export async function getDashboardSummary() {
             lastMonthIncome,
             accounts,
             recentTransactions,
+            categorySpending,
+            budgets,
         ] = await Promise.all([
             aggregateByType("income"),
             aggregateByType("expense"),
@@ -39,33 +40,90 @@ export async function getDashboardSummary() {
                 orderBy: { date: "desc" },
                 include: { category: true },
             }),
+            // Top spending categories this month
+            prisma.transaction.groupBy({
+                by: ["categoryId"],
+                where: {
+                    type: "expense",
+                    date: { gte: thisMonthStart, lte: thisMonthEnd },
+                    isTransfer: false,
+                },
+                _sum: { amount: true },
+                orderBy: { _sum: { amount: "desc" } },
+                take: 6,
+            }),
+            // Budgets with spending for health widget
+            prisma.budget.findMany({
+                where: { period: now.toISOString().slice(0, 7) },
+                include: { category: true },
+                take: 5,
+                orderBy: { amount: "desc" },
+            }),
         ]);
 
-        // Net worth: account balances (credit cards are liabilities)
-        const accountNetWorth = accounts.reduce((sum, a) =>
-            a.type === "credit" ? sum - a.balance : sum + a.balance, 0
+        // Enrich category spending with names
+        const categoryIds = categorySpending
+            .map((c) => c.categoryId)
+            .filter(Boolean) as string[];
+        const categories = categoryIds.length
+            ? await prisma.category.findMany({ where: { id: { in: categoryIds } } })
+            : [];
+        const categoryMap = Object.fromEntries(categories.map((c) => [c.id, c]));
+
+        const spendingByCategory = categorySpending
+            .filter((c) => c.categoryId && (c._sum.amount || 0) > 0)
+            .map((c) => ({
+                name: categoryMap[c.categoryId!]?.name ?? "Uncategorized",
+                amount: c._sum.amount || 0,
+                color: categoryMap[c.categoryId!]?.color ?? "#6366f1",
+            }));
+
+        // Enrich budgets with spending
+        const enrichedBudgets = await Promise.all(
+            budgets.map(async (b) => {
+                const agg = await prisma.transaction.aggregate({
+                    where: {
+                        categoryId: b.categoryId,
+                        date: { gte: thisMonthStart, lte: thisMonthEnd },
+                        type: "expense",
+                    },
+                    _sum: { amount: true },
+                });
+                const spent = agg._sum.amount || 0;
+                return {
+                    id: b.id,
+                    name: b.category.name,
+                    amount: b.amount,
+                    spent,
+                    progress: (spent / b.amount) * 100,
+                };
+            })
         );
-        // Fall back to transaction-based if no accounts configured
-        const txNetWorth = totalIncome - totalExpenses;
-        const netWorth = accounts.length > 0 ? accountNetWorth : txNetWorth;
 
-        const savingsRate = monthlyIncome > 0
-            ? ((monthlyIncome - monthlyExpenses) / monthlyIncome) * 100
-            : 0;
+        // Net worth from account balances, or transaction-based fallback
+        const accountNetWorth = accounts.reduce(
+            (sum, a) => (a.type === "credit" ? sum - a.balance : sum + a.balance),
+            0
+        );
+        const netWorth = accounts.length > 0 ? accountNetWorth : totalIncome - totalExpenses;
 
-        const incomeTrend = lastMonthIncome > 0
-            ? ((monthlyIncome - lastMonthIncome) / lastMonthIncome) * 100
-            : 0;
+        const savingsRate =
+            monthlyIncome > 0
+                ? ((monthlyIncome - monthlyExpenses) / monthlyIncome) * 100
+                : 0;
 
-        // Chart: 6 months of monthly net cashflow
+        const incomeTrend =
+            lastMonthIncome > 0
+                ? ((monthlyIncome - lastMonthIncome) / lastMonthIncome) * 100
+                : 0;
+
+        // 6-month cashflow chart
         const chartData = await Promise.all(
             Array.from({ length: 6 }, (_, i) => 5 - i).map(async (i) => {
                 const date = subMonths(now, i);
-                const mStart = startOfMonth(date);
-                const mEnd = endOfMonth(date);
                 const [inc, exp] = await Promise.all([
-                    aggregateByType("income", mStart, mEnd),
-                    aggregateByType("expense", mStart, mEnd),
+                    aggregateByType("income", startOfMonth(date), endOfMonth(date)),
+                    aggregateByType("expense", startOfMonth(date), endOfMonth(date)),
                 ]);
                 return {
                     name: date.toLocaleString("default", { month: "short" }),
@@ -86,6 +144,8 @@ export async function getDashboardSummary() {
                 incomeTrend: (incomeTrend >= 0 ? "+" : "") + incomeTrend.toFixed(1) + "%",
                 chartData,
                 transactions: recentTransactions,
+                spendingByCategory,
+                budgetHealth: enrichedBudgets,
             },
         };
     } catch (error) {

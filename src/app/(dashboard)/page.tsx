@@ -13,6 +13,8 @@ export default async function DashboardPage() {
         savingsRate: 0,
         incomeTrend: "0%",
         chartData: [],
-        transactions: []
+        transactions: [],
+        spendingByCategory: [],
+        budgetHealth: [],
     }} />;
 }

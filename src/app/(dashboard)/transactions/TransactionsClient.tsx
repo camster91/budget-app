@@ -5,10 +5,12 @@ import { TransactionForm } from "@/components/transactions/TransactionForm";
 import { ImportModal } from "@/components/transactions/ImportModal";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import { Receipt, Search, Filter, Download, Upload, Pencil, Trash2, Check, X } from "lucide-react";
+import { Receipt, Search, Filter, Download, Upload, Pencil, Trash2, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { updateTransaction, deleteTransaction } from "@/app/_actions/transactions";
+
+const PAGE_SIZE = 25;
 
 interface Category {
     id: string;
@@ -38,6 +40,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
     const [typeFilter, setTypeFilter] = useState("");
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<Partial<Transaction>>({});
+    const [page, setPage] = useState(1);
     const [isPending, startTransition] = useTransition();
 
     const filtered = useMemo(() => {
@@ -48,6 +51,9 @@ export function TransactionsClient({ transactions: initialTransactions, categori
             return matchesSearch && matchesCategory && matchesType;
         });
     }, [transactions, search, categoryFilter, typeFilter]);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
     function startEdit(t: Transaction) {
         setEditingId(t.id);
@@ -123,7 +129,12 @@ export function TransactionsClient({ transactions: initialTransactions, categori
         setSearch("");
         setCategoryFilter("");
         setTypeFilter("");
+        setPage(1);
     }
+
+    function handleSearchChange(v: string) { setSearch(v); setPage(1); }
+    function handleCategoryChange(v: string) { setCategoryFilter(v); setPage(1); }
+    function handleTypeChange(v: string) { setTypeFilter(v); setPage(1); }
 
     return (
         <>
@@ -163,7 +174,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                     placeholder="Search..."
                                     className="pl-9 bg-white/[0.02]"
                                     value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
+                                    onChange={(e) => handleSearchChange(e.target.value)}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -171,7 +182,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                 <select
                                     className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary"
                                     value={categoryFilter}
-                                    onChange={(e) => setCategoryFilter(e.target.value)}
+                                    onChange={(e) => handleCategoryChange(e.target.value)}
                                 >
                                     <option value="">All Categories</option>
                                     {categories.map((c) => (
@@ -184,7 +195,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                 <select
                                     className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary"
                                     value={typeFilter}
-                                    onChange={(e) => setTypeFilter(e.target.value)}
+                                    onChange={(e) => handleTypeChange(e.target.value)}
                                 >
                                     <option value="">All Types</option>
                                     <option value="income">Income</option>
@@ -194,11 +205,9 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                             <Button variant="secondary" className="w-full text-xs h-9" onClick={resetFilters}>
                                 Reset Filters
                             </Button>
-                            {(search || categoryFilter || typeFilter) && (
-                                <p className="text-[10px] text-center text-muted-foreground">
-                                    {filtered.length} of {transactions.length} shown
-                                </p>
-                            )}
+                            <p className="text-[10px] text-center text-muted-foreground">
+                                {filtered.length} of {transactions.length} transactions
+                            </p>
                         </CardContent>
                     </Card>
 
@@ -206,7 +215,11 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
                                 <CardTitle>History</CardTitle>
-                                <CardDescription>A detailed list of your recent flows.</CardDescription>
+                                <CardDescription>
+                                    {filtered.length > 0
+                                        ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)} of ${filtered.length}`
+                                        : "No results"}
+                                </CardDescription>
                             </div>
                             <Button variant="ghost" size="icon">
                                 <Filter className="h-4 w-4" />
@@ -238,7 +251,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-white/[0.05]">
-                                            {filtered.map((t) =>
+                                            {paginated.map((t) =>
                                                 editingId === t.id ? (
                                                     <tr key={t.id} className="bg-white/[0.03]">
                                                         <td className="py-3 pr-2">
@@ -343,6 +356,46 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                             )}
                                         </tbody>
                                     </table>
+
+                                    {totalPages > 1 && (
+                                        <div className="flex items-center justify-between pt-4 border-t border-white/[0.05]">
+                                            <p className="text-xs text-muted-foreground">
+                                                Page {page} of {totalPages}
+                                            </p>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7"
+                                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                                    disabled={page === 1}
+                                                >
+                                                    <ChevronLeft className="h-3.5 w-3.5" />
+                                                </Button>
+                                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                                    const p = totalPages <= 5 ? i + 1 : Math.min(Math.max(page - 2 + i, 1), totalPages - 4 + i);
+                                                    return (
+                                                        <button
+                                                            key={p}
+                                                            onClick={() => setPage(p)}
+                                                            className={`h-7 w-7 rounded-lg text-xs font-bold transition-colors ${p === page ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-white hover:bg-white/[0.05]"}`}
+                                                        >
+                                                            {p}
+                                                        </button>
+                                                    );
+                                                })}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7"
+                                                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                                                    disabled={page === totalPages}
+                                                >
+                                                    <ChevronRight className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </CardContent>
