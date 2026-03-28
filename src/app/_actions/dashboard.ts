@@ -3,78 +3,78 @@
 import { prisma } from "@/lib/prisma";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 
+async function aggregateByType(type: string, gte?: Date, lte?: Date) {
+    const where: any = { type };
+    if (gte || lte) where.date = { ...(gte && { gte }), ...(lte && { lte }) };
+    const result = await prisma.transaction.aggregate({ where, _sum: { amount: true } });
+    return result._sum.amount || 0;
+}
+
 export async function getDashboardSummary() {
     try {
-        const transactions = await prisma.transaction.findMany();
-
-        const totalIncome = transactions
-            .filter((t: any) => t.type === 'income')
-            .reduce((sum: number, t: any) => sum + t.amount, 0);
-
-        const totalExpenses = transactions
-            .filter((t: any) => t.type === 'expense')
-            .reduce((sum: number, t: any) => sum + t.amount, 0);
-
-        const netWorth = totalIncome - totalExpenses;
-
-        // Current month stats
         const now = new Date();
-        const firstDayOfMonth = startOfMonth(now);
-        const lastDayOfMonth = endOfMonth(now);
+        const thisMonthStart = startOfMonth(now);
+        const thisMonthEnd = endOfMonth(now);
+        const lastMonthStart = startOfMonth(subMonths(now, 1));
+        const lastMonthEnd = endOfMonth(subMonths(now, 1));
 
-        const currentMonthTransactions = transactions.filter((t: any) =>
-            t.date >= firstDayOfMonth && t.date <= lastDayOfMonth
+        // Run all aggregations in parallel
+        const [
+            totalIncome,
+            totalExpenses,
+            monthlyIncome,
+            monthlyExpenses,
+            lastMonthIncome,
+            accounts,
+            recentTransactions,
+        ] = await Promise.all([
+            aggregateByType("income"),
+            aggregateByType("expense"),
+            aggregateByType("income", thisMonthStart, thisMonthEnd),
+            aggregateByType("expense", thisMonthStart, thisMonthEnd),
+            aggregateByType("income", lastMonthStart, lastMonthEnd),
+            prisma.account.findMany({ select: { balance: true, type: true } }),
+            prisma.transaction.findMany({
+                take: 5,
+                orderBy: { date: "desc" },
+                include: { category: true },
+            }),
+        ]);
+
+        // Net worth: account balances (credit cards are liabilities)
+        const accountNetWorth = accounts.reduce((sum, a) =>
+            a.type === "credit" ? sum - a.balance : sum + a.balance, 0
         );
-
-        const monthlyIncome = currentMonthTransactions
-            .filter((t: any) => t.type === 'income')
-            .reduce((sum: number, t: any) => sum + t.amount, 0);
-
-        const monthlyExpenses = currentMonthTransactions
-            .filter((t: any) => t.type === 'expense')
-            .reduce((sum: number, t: any) => sum + t.amount, 0);
+        // Fall back to transaction-based if no accounts configured
+        const txNetWorth = totalIncome - totalExpenses;
+        const netWorth = accounts.length > 0 ? accountNetWorth : txNetWorth;
 
         const savingsRate = monthlyIncome > 0
             ? ((monthlyIncome - monthlyExpenses) / monthlyIncome) * 100
             : 0;
 
-        // Last month for trends
-        const firstDayOfLastMonth = startOfMonth(subMonths(now, 1));
-        const lastDayOfLastMonth = endOfMonth(subMonths(now, 1));
-
-        const lastMonthTransactions = transactions.filter((t: any) =>
-            t.date >= firstDayOfLastMonth && t.date <= lastDayOfLastMonth
-        );
-
-        const lastMonthIncome = lastMonthTransactions
-            .filter((t: any) => t.type === 'income')
-            .reduce((sum: number, t: any) => sum + t.amount, 0);
-
         const incomeTrend = lastMonthIncome > 0
             ? ((monthlyIncome - lastMonthIncome) / lastMonthIncome) * 100
             : 0;
 
-        // Chart data (last 7 months)
-        const chartData = [];
-        for (let i = 6; i >= 0; i--) {
-            const date = subMonths(now, i);
-            const mStart = startOfMonth(date);
-            const mEnd = endOfMonth(date);
-
-            const monthTransactions = transactions.filter((t: any) =>
-                t.date >= mStart && t.date <= mEnd
-            );
-
-            const mIncome = monthTransactions.filter((t: any) => t.type === 'income').reduce((sum: number, t: any) => sum + t.amount, 0);
-            const mExpenses = monthTransactions.filter((t: any) => t.type === 'expense').reduce((sum: number, t: any) => sum + t.amount, 0);
-
-            chartData.push({
-                name: date.toLocaleString('default', { month: 'short' }),
-                total: mIncome - mExpenses,
-                income: mIncome,
-                expenses: mExpenses
-            });
-        }
+        // Chart: 6 months of monthly net cashflow
+        const chartData = await Promise.all(
+            Array.from({ length: 6 }, (_, i) => 5 - i).map(async (i) => {
+                const date = subMonths(now, i);
+                const mStart = startOfMonth(date);
+                const mEnd = endOfMonth(date);
+                const [inc, exp] = await Promise.all([
+                    aggregateByType("income", mStart, mEnd),
+                    aggregateByType("expense", mStart, mEnd),
+                ]);
+                return {
+                    name: date.toLocaleString("default", { month: "short" }),
+                    total: inc - exp,
+                    income: inc,
+                    expenses: exp,
+                };
+            })
+        );
 
         return {
             success: true,
@@ -83,10 +83,10 @@ export async function getDashboardSummary() {
                 monthlyIncome,
                 monthlyExpenses,
                 savingsRate,
-                incomeTrend: incomeTrend.toFixed(1) + "%",
+                incomeTrend: (incomeTrend >= 0 ? "+" : "") + incomeTrend.toFixed(1) + "%",
                 chartData,
-                transactions: transactions.slice(0, 5) // Recent activity
-            }
+                transactions: recentTransactions,
+            },
         };
     } catch (error) {
         console.error("Dashboard data fetch error:", error);

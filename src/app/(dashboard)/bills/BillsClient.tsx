@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, cn } from "@/lib/utils";
-import { FileText, Plus, X, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { FileText, Plus, X, AlertCircle, CheckCircle2, Clock, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createBill, deleteBill } from "@/app/_actions/bills";
 
@@ -84,12 +84,33 @@ export function BillsClient({ bills: initialBills, categories, accounts }: Bills
                         <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Monthly Total</div>
                         <div className="text-xl font-bold text-white">{formatCurrency(totalMonthly)}</div>
                     </div>
-                    <Button onClick={() => setShowForm(true)} className="gap-2 rounded-xl">
+                    <Button
+                        onClick={() => setShowForm(true)}
+                        className="gap-2 rounded-xl"
+                        disabled={accounts.length === 0 || categories.length === 0}
+                    >
                         <Plus className="h-4 w-4" />
                         Add Bill
                     </Button>
                 </div>
             </div>
+
+            {/* Prerequisites warning */}
+            {(accounts.length === 0 || categories.length === 0) && (
+                <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm">
+                    <Info className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+                    <p className="text-amber-300/80">
+                        {accounts.length === 0 && categories.length === 0
+                            ? "You need at least one account and one category before adding bills. "
+                            : accounts.length === 0
+                            ? "You need at least one account before adding bills. "
+                            : "You need at least one category before adding bills. "}
+                        <a href={accounts.length === 0 ? "/accounts" : "/categories"} className="font-bold underline underline-offset-2 hover:text-amber-200">
+                            {accounts.length === 0 ? "Add an account →" : "Add a category →"}
+                        </a>
+                    </p>
+                </div>
+            )}
 
             <AnimatePresence>
                 {showForm && (

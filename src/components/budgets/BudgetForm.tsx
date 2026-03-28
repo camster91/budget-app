@@ -1,38 +1,57 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { createBudget } from "@/app/_actions/budgets";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-const budgetSchema = z.object({
-    category: z.string().min(1, "Category is required"),
-    amount: z.string().refine((v) => !isNaN(Number(v)) && Number(v) > 0, "Amount must be a positive number"),
-});
+interface Category {
+    id: string;
+    name: string;
+}
 
-type BudgetValues = z.infer<typeof budgetSchema>;
+interface BudgetFormProps {
+    categories?: Category[];
+    autoOpen?: boolean;
+}
 
-export function BudgetForm() {
-    const [open, setOpen] = useState(false);
-    const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<BudgetValues>({
-        resolver: zodResolver(budgetSchema),
-    });
+export function BudgetForm({ categories = [], autoOpen = false }: BudgetFormProps) {
+    const [open, setOpen] = useState(autoOpen);
+    const [amount, setAmount] = useState("");
+    const [categoryId, setCategoryId] = useState("");
+    const [categoryName, setCategoryName] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
-    const onSubmit = async (data: BudgetValues) => {
-        const formData = new FormData();
-        Object.entries(data).forEach(([key, value]) => formData.append(key, value.toString()));
+    const currentMonth = new Date().toLocaleString("default", { month: "long", year: "numeric" });
 
-        const res = await createBudget(formData);
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        if (!amount || parseFloat(amount) <= 0) {
+            toast.error("Enter a valid amount");
+            return;
+        }
+        if (!categoryId && !categoryName) {
+            toast.error("Select or enter a category");
+            return;
+        }
+
+        setSubmitting(true);
+        const fd = new FormData();
+        fd.append("amount", amount);
+        if (categoryId) fd.append("categoryId", categoryId);
+        else fd.append("category", categoryName);
+
+        const res = await createBudget(fd);
+        setSubmitting(false);
 
         if (res.success) {
             setOpen(false);
-            reset();
-            toast.success("Budget updated!");
+            setAmount("");
+            setCategoryId("");
+            setCategoryName("");
+            toast.success("Budget saved!");
         } else {
             toast.error(res.error);
         }
@@ -45,33 +64,50 @@ export function BudgetForm() {
                 <DialogHeader>
                     <DialogTitle>Set Monthly Budget</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+                <form onSubmit={handleSubmit} className="space-y-4 py-4">
                     <div className="grid gap-2">
                         <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Category</label>
-                        <Input
-                            {...register("category")}
-                            type="text"
-                            placeholder="Groceries, Rent..."
-                            className="rounded-xl border-white/[0.1] bg-white/[0.05]"
-                        />
-                        {errors.category && <p className="text-xs text-red-400">{errors.category.message}</p>}
-                        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">Budget applies to current month.</p>
+                        {categories.length > 0 ? (
+                            <select
+                                value={categoryId}
+                                onChange={(e) => setCategoryId(e.target.value)}
+                                className="flex h-10 w-full rounded-xl border border-white/[0.1] bg-white/[0.05] px-3 py-1 text-sm text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                                required
+                            >
+                                <option value="">Select category…</option>
+                                {categories.filter(c => true).map((c) => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <Input
+                                value={categoryName}
+                                onChange={(e) => setCategoryName(e.target.value)}
+                                placeholder="Groceries, Rent…"
+                                className="rounded-xl border-white/[0.1] bg-white/[0.05]"
+                            />
+                        )}
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">
+                            Applies to {currentMonth}.
+                        </p>
                     </div>
 
                     <div className="grid gap-2">
-                        <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Limit Amount</label>
+                        <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Monthly Limit</label>
                         <Input
-                            {...register("amount")}
+                            type="number"
+                            step="0.01"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
                             placeholder="500.00"
                             className="rounded-xl border-white/[0.1] bg-white/[0.05]"
                         />
-                        {errors.amount && <p className="text-xs text-red-400">{errors.amount.message}</p>}
                     </div>
 
                     <div className="flex justify-end gap-2 pt-4">
                         <Button type="button" variant="outline" className="rounded-xl" onClick={() => setOpen(false)}>Cancel</Button>
-                        <Button type="submit" disabled={isSubmitting} className="rounded-xl px-8">
-                            {isSubmitting ? "Saving..." : "Save Budget"}
+                        <Button type="submit" disabled={submitting} className="rounded-xl px-8">
+                            {submitting ? "Saving…" : "Save Budget"}
                         </Button>
                     </div>
                 </form>
