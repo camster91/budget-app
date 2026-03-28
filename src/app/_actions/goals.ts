@@ -39,3 +39,13 @@ export async function updateGoal(id: string, currentAmount: number) {
         return { success: false, error: "Failed to update goal" };
     }
 }
+
+export async function deleteGoal(id: string) {
+    try {
+        await prisma.goal.delete({ where: { id } });
+        revalidatePath("/goals");
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Failed to delete goal" };
+    }
+}

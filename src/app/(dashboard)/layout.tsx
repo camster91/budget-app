@@ -4,6 +4,17 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { useEffect, useState } from "react";
+
+function getInitials(name: string | null | undefined, email: string | null | undefined): string {
+    if (name) {
+        const parts = name.trim().split(" ");
+        if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        return parts[0].slice(0, 2).toUpperCase();
+    }
+    if (email) return email.slice(0, 2).toUpperCase();
+    return "?";
+}
 
 export default function DashboardLayout({
     children,
@@ -11,6 +22,19 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const pathname = usePathname();
+    const [user, setUser] = useState<{ name: string | null; email: string } | null>(null);
+
+    useEffect(() => {
+        fetch("/api/auth/me")
+            .then((r) => r.json())
+            .then((data) => { if (data.user) setUser(data.user); })
+            .catch(() => {});
+    }, []);
+
+    const displayName = user?.name || user?.email?.split("@")[0] || "User";
+    const initials = getInitials(user?.name, user?.email);
+
+    const pageTitle = pathname === "/" ? "Overview" : pathname.replace("/", "").replace(/-/g, " ");
 
     return (
         <div className="relative flex h-screen w-full overflow-hidden bg-background bg-grid">
@@ -28,16 +52,16 @@ export default function DashboardLayout({
                         <MobileNav />
                         <div>
                             <h1 className="text-xl font-bold text-white/90 capitalize tracking-tight">
-                                {pathname === "/" ? "Overview" : pathname.replace("/", "").replace("-", " ")}
+                                {pageTitle}
                             </h1>
                             <p className="text-xs text-muted-foreground font-medium hidden md:block">
-                                Welcome back, User.
+                                Welcome back, {displayName}.
                             </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-white">
-                            <span className="text-xs font-bold">JD</span>
+                            <span className="text-xs font-bold">{initials}</span>
                         </div>
                     </div>
                 </header>
