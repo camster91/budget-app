@@ -209,27 +209,6 @@ export function SettingsClient({ user }: SettingsClientProps) {
                     </Card>
                 </motion.div>
 
-                {/* Danger Zone */}
-                <motion.div variants={item}>
-                    <Card className="border-red-500/20 bg-red-500/5">
-                        <CardHeader>
-                            <CardTitle className="text-red-400">Danger Zone</CardTitle>
-                            <CardDescription>Irreversible actions for your account.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button
-                                variant="destructive"
-                                className="rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-500 border-red-500/50"
-                                onClick={async () => {
-                                    if (!confirm("Are you sure you want to delete your account? This cannot be undone.")) return;
-                                    // TODO: implement delete account endpoint
-                                }}
-                            >
-                                Delete Account
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </motion.div>
             </div>
         </motion.div>
     );
