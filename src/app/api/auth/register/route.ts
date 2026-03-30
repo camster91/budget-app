@@ -13,6 +13,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // Single-user app: block registration once an account exists
+    const userCount = await prisma.user.count();
+    if (userCount > 0) {
+      return NextResponse.json(
+        { error: "Registration is disabled" },
+        { status: 403 }
+      );
+    }
+
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return NextResponse.json(

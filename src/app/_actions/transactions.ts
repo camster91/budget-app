@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 import { isTransfer } from "@/lib/utils/transactionUtils";
 import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
 
@@ -23,6 +24,7 @@ export async function getTransactions() {
 }
 
 export async function createTransaction(formData: FormData) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
         const amount = parseFloat(formData.get("amount") as string);
         const description = formData.get("description") as string;
@@ -72,7 +74,36 @@ export async function createTransaction(formData: FormData) {
 }
 
 
+export async function updateTransaction(id: string, formData: FormData) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    try {
+        const amount = parseFloat(formData.get("amount") as string);
+        const description = formData.get("description") as string;
+        const date = new Date(formData.get("date") as string);
+        const type = formData.get("type") as string;
+        const categoryId = formData.get("categoryId") as string;
+
+        await prisma.transaction.update({
+            where: { id },
+            data: {
+                amount,
+                description,
+                date,
+                type,
+                categoryId: categoryId || null,
+            },
+        });
+
+        revalidatePath("/transactions");
+        revalidatePath("/");
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Failed to update transaction" };
+    }
+}
+
 export async function deleteTransaction(id: string) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
         await prisma.transaction.delete({
             where: { id }

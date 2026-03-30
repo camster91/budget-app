@@ -2,8 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, Receipt, PiggyBank, Settings, LogOut, Menu, Sparkles } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+    LayoutDashboard,
+    Receipt,
+    PiggyBank,
+    Settings,
+    LogOut,
+    Menu,
+    Target,
+    FileText,
+    CreditCard,
+    Tag,
+} from "lucide-react";
 import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
@@ -17,31 +28,25 @@ import {
 } from "@/components/ui/sheet";
 
 const sidebarItems = [
-    {
-        title: "Dashboard",
-        href: "/",
-        icon: LayoutDashboard,
-    },
-    {
-        title: "Transactions",
-        href: "/transactions",
-        icon: Receipt,
-    },
-    {
-        title: "Budgets",
-        href: "/budgets",
-        icon: PiggyBank,
-    },
-    {
-        title: "Settings",
-        href: "/settings",
-        icon: Settings,
-    },
+    { title: "Dashboard", href: "/", icon: LayoutDashboard },
+    { title: "Transactions", href: "/transactions", icon: Receipt },
+    { title: "Budgets", href: "/budgets", icon: PiggyBank },
+    { title: "Goals", href: "/goals", icon: Target },
+    { title: "Bills", href: "/bills", icon: FileText },
+    { title: "Accounts", href: "/accounts", icon: CreditCard },
+    { title: "Categories", href: "/categories", icon: Tag },
+    { title: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function MobileNav() {
     const pathname = usePathname();
+    const router = useRouter();
     const [open, setOpen] = useState(false);
+
+    async function handleLogout() {
+        await fetch("/api/auth/logout", { method: "POST" });
+        router.push("/login");
+    }
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
@@ -64,7 +69,7 @@ export function MobileNav() {
                         </SheetTitle>
                     </SheetHeader>
 
-                    <div className="flex-1 px-4 py-6 space-y-8 overflow-y-auto">
+                    <div className="flex-1 px-4 py-6 overflow-y-auto">
                         <nav className="space-y-1">
                             {sidebarItems.map((item, index) => {
                                 const isActive = pathname === item.href;
@@ -96,20 +101,14 @@ export function MobileNav() {
                                 );
                             })}
                         </nav>
-
-                        <div className="px-4 py-4 rounded-2xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/10 mt-6">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Sparkles className="h-3 w-3 text-primary" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Pro Tip</span>
-                            </div>
-                            <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                Try sorting your expenses by "High Impact" to find saving opportunities.
-                            </p>
-                        </div>
                     </div>
 
                     <div className="p-6 border-t border-white/[0.08]">
-                        <Button variant="ghost" className="w-full justify-start gap-3 rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground">
+                        <Button
+                            variant="ghost"
+                            className="w-full justify-start gap-3 rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
+                            onClick={handleLogout}
+                        >
                             <LogOut className="h-4 w-4" />
                             Sign out
                         </Button>

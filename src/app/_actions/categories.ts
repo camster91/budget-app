@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 
 export async function createCategory(formData: FormData) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
         const name = formData.get("name") as string;
         const icon = formData.get("icon") as string;
@@ -28,6 +30,7 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function updateCategory(id: string, formData: FormData) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
         const name = formData.get("name") as string;
         const icon = formData.get("icon") as string;
@@ -47,5 +50,25 @@ export async function updateCategory(id: string, formData: FormData) {
         return { success: true };
     } catch (error) {
         return { success: false, error: "Failed to update category" };
+    }
+}
+
+export async function deleteCategory(id: string) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    try {
+        // Transactions and Goals have nullable categoryId — null them out.
+        // Budgets and Bills have required categoryId — delete them.
+        await prisma.$transaction([
+            prisma.transaction.updateMany({ where: { categoryId: id }, data: { categoryId: null } }),
+            prisma.goal.updateMany({ where: { categoryId: id }, data: { categoryId: null } }),
+            prisma.budget.deleteMany({ where: { categoryId: id } }),
+            prisma.bill.deleteMany({ where: { categoryId: id } }),
+            prisma.category.delete({ where: { id } }),
+        ]);
+        revalidatePath("/categories");
+        revalidatePath("/bills");
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Failed to delete category" };
     }
 }
