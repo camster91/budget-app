@@ -44,7 +44,6 @@ export function ImportModal({ open, onOpenChange }: ImportModalProps) {
 
   const handleImport = async () => {
     if (!file) return;
-    setIsLoading(true);
     setStep("importing");
 
     try {
