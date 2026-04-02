@@ -1,0 +1,77 @@
+# ============================================
+# Docker Compose for budget-app
+# Optimized for Coolify self-hosting
+# ============================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: budget-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Server binding
+      - HOSTNAME=0.0.0.0
+      - PORT=3000
+      - NODE_ENV=production
+      
+      # Database - Coolify typically injects DATABASE_URL
+      # For SQLite fallback (dev/testing), uncomment below:
+      # - DATABASE_URL=file:./prisma/dev.db
+      
+      # Security
+      - NEXT_TELEMETRY_DISABLED=1
+      
+      # Authentication secrets (Coolify should inject these)
+      # - JWT_SECRET=your-secret-here
+      # - NEXTAUTH_SECRET=your-secret-here
+    volumes:
+      # Persist database data
+      - app_data:/app/prisma
+      # Optional: persist uploaded files
+      - app_uploads:/app/public/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - budget-network
+
+  # PostgreSQL database (optional - use if Coolify doesn't provide managed DB)
+  db:
+    image: postgres:16-alpine
+    container_name: budget-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=budget_app
+      - POSTGRES_USER=budget_user
+      # Override these with Coolify secrets or .env
+      - POSTGRES_PASSWORD=budget_secure_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U budget_user -d budget_app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - budget-network
+    profiles:
+      - with-db  # Only start with: docker-compose --profile with-db up
+
+volumes:
+  app_data:
+    driver: local
+  app_uploads:
+    driver: local
+  postgres_data:
+    driver: local
+
+networks:
+  budget-network:
+    driver: bridge

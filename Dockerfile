@@ -1,62 +1,84 @@
-FROM node:20-alpine AS base
-# Install OpenSSL for Prisma compatibility
-RUN apk add --no-cache openssl
+# ============================================
+# Multi-stage production-ready Dockerfile for budget-app
+# Optimized for Coolify deployment
+# ============================================
 
-# Install dependencies
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
+# Stage 1: Dependencies
+FROM node:20-alpine AS deps
+RUN apk add --no-cache \
+    libc6-compat \
+    openssl \
+    python3 \
+    make \
+    g++
+
 WORKDIR /app
 
+# Copy package files first for better layer caching
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
-# Build the application
-FROM base AS builder
+# Stage 2: Build
+FROM deps AS builder
 WORKDIR /app
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client (no DB connection needed at build time)
+# Generate Prisma client
 RUN npx prisma generate
 
-# Build Next.js (skip DB-dependent checks at build time)
+# Build Next.js with all optimizations
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+ENV NODE_ENV=production
+
+# Use standalone output for smaller final image
 RUN npm run build
 
-# Production image
-FROM base AS runner
+# Stage 3: Production runner
+FROM node:20-alpine AS runner
+
+# Install OpenSSL for Prisma and minimal runtime deps
+RUN apk add --no-cache openssl dumb-init
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
 WORKDIR /app
 
+# Set production environment
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-ENV DATABASE_URL="file:./prisma/dev.db"
+ENV HOSTNAME=0.0.0.0
+ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create directory for Prisma (SQLite fallback or persistent volume)
+RUN mkdir -p /app/prisma && chown -R nextjs:nodejs /app
 
-# Copy necessary files
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
+# Copy built application and dependencies
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Copy built application
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/prisma ./prisma
+# Copy package.json for npm scripts
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
-# Copy startup script
-COPY --chown=nextjs:nodejs start.sh ./start.sh
-RUN chmod +x ./start.sh
-
-# Ensure prisma directory is writable for SQLite
-RUN chown -R nextjs:nodejs /app/prisma
+# Create writable directory for SQLite (if used) or volume mount
+RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
 
 USER nextjs
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+# Health check using Next.js response
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD wget -qO- http://localhost:3000/api/health || exit 1
 
-CMD ["./start.sh"]
+# Use dumb-init for proper signal handling
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start Next.js server binding to all interfaces
+CMD ["node", "server.js"]
