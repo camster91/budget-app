@@ -1,10 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 
 async function aggregateByType(type: string, gte?: Date, lte?: Date) {
-    const where: any = { type };
+    const where: Prisma.TransactionWhereInput = { type };
     if (gte || lte) where.date = { ...(gte && { gte }), ...(lte && { lte }) };
     const result = await prisma.transaction.aggregate({ where, _sum: { amount: true } });
     return result._sum.amount || 0;

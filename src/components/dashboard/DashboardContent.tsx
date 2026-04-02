@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowUpRight, ArrowDownRight, CreditCard, Wallet, TrendingUp, Calendar, PiggyBank } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, CreditCard, Wallet, TrendingUp, Calendar } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import {
     Area, AreaChart, ResponsiveContainer, Tooltip,
-    XAxis, YAxis, Cell, PieChart, Pie,
+    XAxis, YAxis,
 } from "recharts";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +19,20 @@ const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
 interface SpendingCategory { name: string; amount: number; color: string }
 interface BudgetHealth { id: string; name: string; amount: number; spent: number; progress: number }
+interface Transaction {
+    id: string;
+    description: string;
+    amount: number;
+    date: Date;
+    type: string;
+    category?: { name: string } | null;
+}
+interface ChartData {
+    name: string;
+    total: number;
+    income: number;
+    expenses: number;
+}
 
 interface DashboardContentProps {
     data: {
@@ -27,8 +41,8 @@ interface DashboardContentProps {
         monthlyExpenses: number;
         savingsRate: number;
         incomeTrend: string;
-        chartData: any[];
-        transactions: any[];
+        chartData: ChartData[];
+        transactions: Transaction[];
         spendingByCategory?: SpendingCategory[];
         budgetHealth?: BudgetHealth[];
     };
@@ -55,7 +69,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-gradient mb-1">Financial Pulse</h2>
-                    <p className="text-muted-foreground text-sm font-medium">Here's a summary of your wealth this month.</p>
+                    <p className="text-muted-foreground text-sm font-medium">Here&apos;s a summary of your wealth this month.</p>
                 </div>
                 <Button variant="outline" size="sm" className="gap-2">
                     <Calendar className="h-4 w-4" />
@@ -121,7 +135,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                                                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <Tooltip {...TOOLTIP_STYLE} formatter={(v: number) => formatCurrency(v)} />
+                                        <Tooltip {...TOOLTIP_STYLE} formatter={(v: number | undefined) => formatCurrency(v ?? 0)} />
                                         <Area
                                             type="monotone"
                                             dataKey="total"
@@ -194,7 +208,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <div>
                                     <CardTitle>Budget Health</CardTitle>
-                                    <CardDescription>This month's budget progress.</CardDescription>
+                                    <CardDescription>This month&apos;s budget progress.</CardDescription>
                                 </div>
                                 <Link href="/budgets" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.05]">
                                     Manage

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, cn } from "@/lib/utils";
-import { FileText, Plus, X, AlertCircle, CheckCircle2, Clock, Info, Pencil, Check } from "lucide-react";
+import { FileText, Plus, X, AlertCircle, CheckCircle2, Clock, Info, Pencil, Check, LucideIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createBill, updateBill, deleteBill } from "@/app/_actions/bills";
 
@@ -42,7 +42,7 @@ function getDaysUntilDue(dueDay: number): number {
     return Math.round((next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getDueStatus(days: number): { label: string; color: string; icon: any } {
+function getDueStatus(days: number): { label: string; color: string; icon: LucideIcon } {
     if (days === 0) return { label: "Due today", color: "text-red-400", icon: AlertCircle };
     if (days <= 3) return { label: `Due in ${days}d`, color: "text-orange-400", icon: AlertCircle };
     if (days <= 7) return { label: `Due in ${days}d`, color: "text-yellow-400", icon: Clock };

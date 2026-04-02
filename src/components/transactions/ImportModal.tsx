@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Upload, X, Loader2, Check } from "lucide-react";
+import { Upload, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 import { importCSVTransactions, type CSVRow } from "@/app/_actions/import";
 import Papa from "papaparse";
 
@@ -19,8 +18,7 @@ export function ImportModal({ open, onOpenChange }: ImportModalProps) {
   const [step, setStep] = useState<ImportStep>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [previewData, setPreviewData] = useState<CSVRow[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [importResults, setImportResults] = useState<{ imported: number; errors?: any[] } | null>(null);
+  const [importResults, setImportResults] = useState<{ imported: number; errors?: unknown[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,7 +31,7 @@ export function ImportModal({ open, onOpenChange }: ImportModalProps) {
     Papa.parse(selectedFile, {
       header: true,
       skipEmptyLines: true,
-      complete: (results: Papa.ParseResult<any>) => {
+      complete: (results: Papa.ParseResult<CSVRow>) => {
         if (results.errors.length > 0) {
           setError(`CSV parse error: ${results.errors[0].message}`);
           return;
@@ -64,10 +62,8 @@ export function ImportModal({ open, onOpenChange }: ImportModalProps) {
       } else {
         setError(result.error || "Failed to import");
       }
-    } catch (e) {
+    } catch {
       setError("Failed to import transactions");
-    } finally {
-      setIsLoading(false);
     }
   };
 
