@@ -25,10 +25,10 @@ Single-user, self-hosted on a VPS via Coolify (Docker). Built with Next.js App R
 
 ## Infrastructure
 
-- **Database**: `postgresql://budget:Budget2026!@10.0.1.31:5432/budget` (VPS Docker network)
-- **Coolify UUID**: `ok08c00scw48cgo4kgsgkkww`
+- **Database**: [Set in environment variables]
+- **Coolify UUID**: [Set in environment variables]
 - **Live URL**: https://budget.ashbi.ca
-- **Login**: cameron@ashbi.ca / Ashbi2026!
+- **Login**: [Set in environment variables]
 
 **DO NOT** change `DATABASE_URL` — it points to VPS Postgres.
 **DO NOT** remove or bypass the custom auth system.

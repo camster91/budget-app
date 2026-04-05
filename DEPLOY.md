@@ -1,25 +1,25 @@
 # Budget App Deployment to Coolify
 
 ## Prerequisites
-- Coolify instance running at `http://187.77.26.99:8000`
-- API Token: `2|OyUt8feqoaBUVu1Uvvkq59CCqNjIdj4j2Vf0OXYf`
-- Server UUID: `b4gwko84g88ssgwk0wc8ks40`
+- Coolify instance running at `[Set COOLIFY_URL in environment variables]`
+- API Token: `[Set COOLIFY_API_TOKEN in environment variables]`
+- Server UUID: `[Set COOLIFY_SERVER_UUID in environment variables]`
 
 ## Deployment Options
 
 ### Option 1: Deploy via Coolify API (Recommended)
 ```bash
 # Set variables
-API="http://187.77.26.99:8000/api/v1"
-AUTH="Authorization: Bearer 2|OyUt8feqoaBUVu1Uvvkq59CCqNjIdj4j2Vf0OXYf"
-PROJECT_UUID="gsgwk4c4wco8osw40cw8k48k"  # Same as Taekwondo Tournament project
+API="$COOLIFY_URL/api/v1"
+AUTH="Authorization: Bearer $COOLIFY_API_TOKEN"
+PROJECT_UUID="$COOLIFY_PROJECT_UUID"
 
 # Create new application
 curl -s -X POST -H "$AUTH" -H "Content-Type: application/json" \
   "$API/applications/public" -d '{
     "project_uuid": "'"$PROJECT_UUID"'",
     "environment_name": "production",
-    "server_uuid": "b4gwko84g88ssgwk0wc8ks40",
+    "server_uuid": "'"$COOLIFY_SERVER_UUID"'",
     "git_repository": "https://github.com/camster91/budget-app",
     "git_branch": "main",
     "build_pack": "dockerfile",
@@ -42,7 +42,7 @@ curl -s -X POST -H "$AUTH" -H "Content-Type: application/json" \
   "$API/applications" -d '{
     "project_uuid": "'"$PROJECT_UUID"'",
     "environment_name": "production",
-    "server_uuid": "b4gwko84g88ssgwk0wc8ks40",
+    "server_uuid": "'"$COOLIFY_SERVER_UUID"'",
     "name": "budget-app",
     "build_pack": "dockerfile",
     "dockerfile_location": "/",
@@ -57,17 +57,10 @@ curl -s -X POST -H "$AUTH" -H "Content-Type: application/json" \
 Set these in Coolify dashboard after creating the app:
 - `NODE_ENV=production`
 - `PORT=3000`
-- `DATABASE_URL="file:./prisma/dev.db"` (SQLite file in container)
+- `DATABASE_URL` — PostgreSQL connection string (set in Coolify environment)
 
-## Database Persistence
-For production, consider:
-1. **SQLite with volume mount**: Mount a volume to `/app/prisma` to persist the database
-2. **PostgreSQL**: Update Prisma schema to use PostgreSQL and set connection string
-
-### SQLite Volume Mount (in Coolify)
-Add volume mount in Coolify app settings:
-- Source: `budget-app-db` (Docker volume)
-- Destination: `/app/prisma`
+## Database
+The app uses PostgreSQL via Prisma ORM. Set the `DATABASE_URL` environment variable in Coolify to your PostgreSQL connection string.
 
 ## Domain Configuration
 After deployment, set custom domain in Coolify:
@@ -78,14 +71,14 @@ curl -s -X PATCH -H "$AUTH" -H "Content-Type: application/json" \
 
 ## DNS Configuration
 Add A record in Cloudflare:
-- `budget.ashbi.ca` → `187.77.26.99` (DNS only, not proxied)
+- `budget.ashbi.ca` → `[Your server IP]` (DNS only, not proxied)
 
 ## Health Check
 The app has a built-in health check at `/api/health` (to be implemented).
 
 ## Troubleshooting
 1. **Build fails**: Check Docker build logs in Coolify
-2. **Database issues**: Ensure volume is mounted for SQLite persistence
+2. **Database issues**: Ensure DATABASE_URL is correctly set for PostgreSQL
 3. **Port conflicts**: Ensure port 3000 is available on the server
 4. **Memory issues**: Node.js apps may need memory limits adjusted
 
