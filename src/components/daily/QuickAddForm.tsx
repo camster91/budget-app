@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X, Camera, Tag, Hash } from "lucide-react";
+import { Plus, X, Camera, Tag, Hash, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, cn } from "@/lib/utils";
 
 interface QuickAddFormProps {
     onAdd: (formData: FormData) => Promise<void>;
-    categories?: { id: string; name: string; color?: string | null }[];
+    categories?: { id: string; name: string; color?: string | null; dailyCap?: number | null }[];
 }
 
 export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
@@ -18,6 +18,8 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
     const [description, setDescription] = useState("");
     const [categoryId, setCategoryId] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const selectedCategory = categories.find((c) => c.id === categoryId);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -122,24 +124,35 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
                         </div>
 
                         {categories.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {categories.map((cat) => (
-                                    <button
-                                        key={cat.id}
-                                        type="button"
-                                        onClick={() => setCategoryId(categoryId === cat.id ? "" : cat.id)}
-                                        className={cn(
-                                            "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all",
-                                            categoryId === cat.id
-                                                ? "ring-1 ring-primary/50 text-white"
-                                                : "text-muted-foreground hover:text-white/80"
-                                        )}
-                                        style={categoryId === cat.id ? { backgroundColor: cat.color + "33" } : undefined}
-                                    >
-                                        <Tag className="h-3 w-3" />
-                                        {cat.name}
-                                    </button>
-                                ))}
+                            <div className="space-y-2">
+                                <div className="flex flex-wrap gap-2">
+                                    {categories.map((cat) => (
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            onClick={() => setCategoryId(categoryId === cat.id ? "" : cat.id)}
+                                            className={cn(
+                                                "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all relative",
+                                                categoryId === cat.id
+                                                    ? "ring-1 ring-primary/50 text-white"
+                                                    : "text-muted-foreground hover:text-white/80"
+                                            )}
+                                            style={categoryId === cat.id ? { backgroundColor: cat.color + "33" } : undefined}
+                                        >
+                                            {cat.dailyCap && (
+                                                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-400 ring-1 ring-background" title={`Cap: $${cat.dailyCap}/day`} />
+                                            )}
+                                            <Tag className="h-3 w-3" />
+                                            {cat.name}
+                                        </button>
+                                    ))}
+                                </div>
+                                {selectedCategory?.dailyCap && (
+                                    <p className="text-xs text-amber-400 flex items-center gap-1">
+                                        <AlertTriangle className="h-3 w-3" />
+                                        Daily cap for {selectedCategory.name}: {formatCurrency(selectedCategory.dailyCap)}
+                                    </p>
+                                )}
                             </div>
                         )}
 

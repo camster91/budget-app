@@ -56,6 +56,9 @@ model Category {
   color     String?  // Hex code or Tailwind class
   type      String   @default("expense") // "income" or "expense"
   
+  // Budget cap for daily spending tracker
+  dailyCap  Float?   // Max dollars per day in this category (null = no limit)
+  
   // For nested categories
   parentId  String?
   parent    Category? @relation("CategoryToCategory", fields: [parentId], references: [id])

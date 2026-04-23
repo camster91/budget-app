@@ -64,11 +64,26 @@ export async function updateCategory(id: string, formData: FormData) {
     }
 }
 
+export async function updateCategoryBudgetCap(id: string, formData: FormData) {
+    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    try {
+        const dailyCapRaw = formData.get("dailyCap") as string;
+        const dailyCap = dailyCapRaw === "" || dailyCapRaw === null ? null : parseFloat(dailyCapRaw);
+
+        await prisma.category.update({
+            where: { id },
+            data: { dailyCap },
+        });
+        revalidatePath("/settings");
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Failed to update budget cap" };
+    }
+}
+
 export async function deleteCategory(id: string) {
     if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {
-        // Transactions and Goals have nullable categoryId — null them out.
-        // Budgets and Bills have required categoryId — delete them.
         await prisma.$transaction([
             prisma.transaction.updateMany({ where: { categoryId: id }, data: { categoryId: null } }),
             prisma.goal.updateMany({ where: { categoryId: id }, data: { categoryId: null } }),

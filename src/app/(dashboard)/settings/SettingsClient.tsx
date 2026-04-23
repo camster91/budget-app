@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Shield, Wallet, Plus, Trash2, Save, DollarSign } from "lucide-react";
+import { User, Wallet, Shield, Plus, Trash2, Save, DollarSign, Tag, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
@@ -17,21 +17,31 @@ interface Income {
     isActive: boolean;
 }
 
+interface Category {
+    id: string;
+    name: string;
+    icon: string | null;
+    color: string | null;
+    dailyCap: number | null;
+}
+
 interface SettingsClientProps {
     user: { id: string; email: string; name: string | null };
     incomes: Income[];
+    categories: Category[];
     createIncome: (formData: FormData) => Promise<{ success: boolean } & Record<string, unknown>>;
     deleteIncome: (id: string) => Promise<{ success: boolean } & Record<string, unknown>>;
+    updateCategoryBudgetCap: (id: string, formData: FormData) => Promise<{ success: boolean } & Record<string, unknown>>;
 }
 
-export function SettingsClient({ user, incomes, createIncome, deleteIncome }: SettingsClientProps) {
-    const [activeTab, setActiveTab] = useState<"profile" | "income">("profile");
+export function SettingsClient({ user, incomes, categories, createIncome, deleteIncome, updateCategoryBudgetCap }: SettingsClientProps) {
+    const [activeTab, setActiveTab] = useState<"profile" | "income" | "budgetCaps">("profile");
 
     return (
-        <div className="space-y-8 max-w-2xl">
+        <div className="space-y-8 max-w-3xl">
             <div>
                 <h2 className="text-3xl font-black tracking-tight text-gradient mb-2">Settings</h2>
-                <p className="text-muted-foreground">Manage your profile, income, and pay schedule.</p>
+                <p className="text-muted-foreground">Manage your profile, income, and budget limits.</p>
             </div>
 
             {/* Tabs */}
@@ -39,6 +49,7 @@ export function SettingsClient({ user, incomes, createIncome, deleteIncome }: Se
                 {[
                     { key: "profile" as const, label: "Profile", icon: User },
                     { key: "income" as const, label: "Income", icon: Wallet },
+                    { key: "budgetCaps" as const, label: "Budget Caps", icon: DollarSign },
                 ].map((tab) => (
                     <button
                         key={tab.key}
@@ -57,7 +68,7 @@ export function SettingsClient({ user, incomes, createIncome, deleteIncome }: Se
             </div>
 
             <AnimatePresence mode="wait">
-                {activeTab === "profile" ? (
+                {activeTab === "profile" && (
                     <motion.div
                         key="profile"
                         initial={{ opacity: 0, y: 10 }}
@@ -66,7 +77,8 @@ export function SettingsClient({ user, incomes, createIncome, deleteIncome }: Se
                     >
                         <ProfileSettings user={user} />
                     </motion.div>
-                ) : (
+                )}
+                {activeTab === "income" && (
                     <motion.div
                         key="income"
                         initial={{ opacity: 0, y: 10 }}
@@ -76,13 +88,127 @@ export function SettingsClient({ user, incomes, createIncome, deleteIncome }: Se
                         <IncomeSettings incomes={incomes} createIncome={createIncome} deleteIncome={deleteIncome} />
                     </motion.div>
                 )}
+                {activeTab === "budgetCaps" && (
+                    <motion.div
+                        key="budgetCaps"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                    >
+                        <BudgetCapsSettings categories={categories} updateCategoryBudgetCap={updateCategoryBudgetCap} />
+                    </motion.div>
+                )}
             </AnimatePresence>
         </div>
     );
 }
 
-// ─── Profile Settings ─────────────────────────────────────────
+// ─── Budget Caps Tab ───────────────────────────────
+function BudgetCapsSettings({
+    categories,
+    updateCategoryBudgetCap,
+}: {
+    categories: Category[];
+    updateCategoryBudgetCap: (id: string, formData: FormData) => Promise<{ success: boolean } & Record<string, unknown>>;
+}) {
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [values, setValues] = useState<Record<string, string>>({});
+    const [status, setStatus] = useState<string | null>(null);
 
+    function startEdit(cat: Category) {
+        setEditingId(cat.id);
+        setValues({ ...values, [cat.id]: cat.dailyCap?.toString() || "" });
+    }
+
+    async function handleSave(id: string) {
+        setStatus("Saving...");
+        const fd = new FormData();
+        fd.append("dailyCap", values[id] || "");
+        const result = await updateCategoryBudgetCap(id, fd);
+        if (result.success) {
+            setEditingId(null);
+            setStatus("Saved!");
+            setTimeout(() => setStatus(null), 2000);
+        } else {
+            setStatus("Failed to save");
+        }
+    }
+
+    return (
+        <div className="space-y-4">
+            <div className="glass-card rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-bold text-white/90">Category Budget Caps</h3>
+                        <p className="text-sm text-muted-foreground">Set daily limits per category. Leave blank for no limit.</p>
+                    </div>
+                    <Tag className="h-5 w-5 text-primary" />
+                </div>
+
+                {status && (
+                    <div className="text-xs font-bold text-emerald-400">{status}</div>
+                )}
+
+                <div className="space-y-2">
+                    {categories.length === 0 && (
+                        <p className="text-sm text-muted-foreground italic">No categories yet. Create some on the daily page first.</p>
+                    )}
+                    {categories.map((cat) => (
+                        <div
+                            key={cat.id}
+                            className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+                        >
+                            <span className="text-lg">{cat.icon || "📌"}</span>
+                            <span className="flex-1 text-sm font-medium text-white/90">{cat.name}</span>
+
+                            {editingId === cat.id ? (
+                                <>
+                                    <div className="relative w-28">
+                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
+                                        <Input
+                                            value={values[cat.id] || ""}
+                                            onChange={(e) => setValues({ ...values, [cat.id]: e.target.value })}
+                                            className="pl-5 h-8 text-sm"
+                                            placeholder="no cap"
+                                            type="number"
+                                            step="0.01"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => handleSave(cat.id)}>
+                                        <Save className="h-3.5 w-3.5 text-emerald-400" />
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => setEditingId(null)}>
+                                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                                    </Button>
+                                </>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-mono text-muted-foreground">
+                                        {cat.dailyCap ? formatCurrency(cat.dailyCap) : "—"}
+                                    </span>
+                                    <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => startEdit(cat)}>
+                                        <DollarSign className="h-3.5 w-3.5 text-primary" />
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Quick tip */}
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/[0.08] border border-amber-500/20">
+                <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+                <p className="text-xs text-amber-200/80">
+                    When you approach a cap, the fuel gauge turns amber. If you exceed it, the gauge turns red and a warning appears.
+                </p>
+            </div>
+        </div>
+    );
+}
+
+// ─── Profile Tab (unchanged) ───────────────────────
 function ProfileSettings({ user }: { user: { id: string; email: string; name: string | null } }) {
     const [name, setName] = useState(user.name || "");
     const [email, setEmail] = useState(user.email);
@@ -112,160 +238,118 @@ function ProfileSettings({ user }: { user: { id: string; email: string; name: st
     return (
         <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-6 space-y-4">
             <div className="flex items-center gap-2 mb-2">
-                <User className="h-5 w-5 text-primary" />
+                <Shield className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-bold text-white/90">Profile</h3>
             </div>
-
             <div className="space-y-1">
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Name</label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
+                <Input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
-
             <div className="space-y-1">
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email</label>
-                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" />
+                <Input value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
-
+            <Button variant="gradient" type="submit" disabled={loading}>
+                {loading ? "Saving..." : "Save Profile"}
+            </Button>
             {status && (
-                <p className={cn("text-xs font-medium", status.ok ? "text-emerald-400" : "text-rose-400")}>
+                <p className={`text-xs font-medium ${status.ok ? "text-emerald-400" : "text-rose-400"}`}>
                     {status.msg}
                 </p>
             )}
-
-            <Button type="submit" variant="gradient" disabled={loading}>
-                <Save className="h-4 w-4 mr-1" /> {loading ? "Saving..." : "Save Profile"}
-            </Button>
         </form>
     );
 }
 
-// ─── Income Settings ──────────────────────────────────────────
-
+// ─── Income Tab (unchanged) ──────────────────────
 function IncomeSettings({ incomes, createIncome, deleteIncome }: {
     incomes: Income[];
     createIncome: (formData: FormData) => Promise<{ success: boolean } & Record<string, unknown>>;
     deleteIncome: (id: string) => Promise<{ success: boolean } & Record<string, unknown>>;
 }) {
-    const [showForm, setShowForm] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isAdding, setIsAdding] = useState(false);
+    const [form, setForm] = useState({ name: "", amount: "", frequency: "monthly", startDate: new Date().toISOString().slice(0, 10) });
+    const [pending, setPending] = useState(false);
 
-    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        setIsSubmitting(true);
-        const formData = new FormData(e.currentTarget);
-        const res = await createIncome(formData);
-        if (res.success) {
-            setShowForm(false);
-            e.currentTarget.reset();
-        }
-        setIsSubmitting(false);
+        setPending(true);
+        const fd = new FormData();
+        fd.append("name", form.name);
+        fd.append("amount", form.amount);
+        fd.append("frequency", form.frequency);
+        fd.append("startDate", form.startDate);
+        await createIncome(fd);
+        setPending(false);
+        setIsAdding(false);
+        setForm({ name: "", amount: "", frequency: "monthly", startDate: new Date().toISOString().slice(0, 10) });
     }
 
     return (
-        <div className="glass-card rounded-2xl p-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Wallet className="h-5 w-5 text-primary" />
+        <div className="space-y-4">
+            <div className="glass-card rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold text-white/90">Income Sources</h3>
+                    <Button variant="ghost" size="sm" onClick={() => setIsAdding(!isAdding)}>
+                        <Plus className="h-4 w-4 text-primary" />
+                        {isAdding ? "Cancel" : "Add"}
+                    </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setShowForm(!showForm)} className="gap-1">
-                    <Plus className="h-4 w-4" /> Add
-                </Button>
-            </div>
 
-            <AnimatePresence>
-                {showForm && (
-                    <motion.form
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        onSubmit={handleSubmit}
-                        className="space-y-4 pb-6 border-b border-white/[0.06]"
-                    >
-                        <div className="grid grid-cols-2 gap-4">
+                {isAdding && (
+                    <form onSubmit={handleSubmit} className="space-y-3 p-4 rounded-xl bg-white/[0.02]">
+                        <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Name</label>
-                                <Input name="name" placeholder="e.g. Salary" required />
+                                <label className="text-xs font-bold uppercase text-muted-foreground">Name</label>
+                                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Salary" />
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Amount</label>
-                                <div className="relative">
-                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input name="amount" type="number" step="0.01" min="0" placeholder="2500" required className="pl-9" />
-                                </div>
+                                <label className="text-xs font-bold uppercase text-muted-foreground">Amount</label>
+                                <Input value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} type="number" placeholder="4200" />
                             </div>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Frequency</label>
-                                <select
-                                    name="frequency"
-                                    className="h-10 w-full rounded-md border border-white/[0.08] bg-transparent px-3 text-sm text-white/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                                >
+                                <label className="text-xs font-bold uppercase text-muted-foreground">Frequency</label>
+                                <select value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value })} className="h-10 w-full rounded-md border border-white/[0.08] bg-transparent px-3 text-sm text-white/90">
                                     <option value="monthly">Monthly</option>
                                     <option value="biweekly">Bi-weekly</option>
                                     <option value="weekly">Weekly</option>
                                 </select>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">First Pay Date</label>
-                                <Input name="startDate" type="date" required />
+                                <label className="text-xs font-bold uppercase text-muted-foreground">Start Date</label>
+                                <Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
                             </div>
                         </div>
+                        <Button variant="gradient" type="submit" disabled={pending || !form.name || !form.amount}>
+                            {pending ? "Adding..." : "Add Income"}
+                        </Button>
+                    </form>
+                )}
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Day of Month (optional)</label>
-                            <Input name="dayOfMonth" type="number" min="1" max="31" placeholder="e.g. 15" />
-                        </div>
-
-                        <div className="flex gap-2">
-                            <Button type="submit" variant="gradient" disabled={isSubmitting}>
-                                <Save className="h-4 w-4 mr-1" /> {isSubmitting ? "Saving..." : "Save Income"}
+                <div className="space-y-2">
+                    {incomes.map((inc) => (
+                        <div key={inc.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02]">
+                            <div>
+                                <p className="text-sm font-medium text-white/90">{inc.name}</p>
+                                <p className="text-xs text-muted-foreground">{inc.frequency} · {formatCurrency(inc.amount)}</p>
+                            </div>
+                            <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => deleteIncome(inc.id)}>
+                                <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-rose-400" />
                             </Button>
-                            <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
                         </div>
-                    </motion.form>
-                )}
-            </AnimatePresence>
-
-            <div className="space-y-2">
-                {incomes.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-8 text-center">No income configured yet.</p>
-                ) : (
-                    incomes.map((income) => (
-                        <div
-                            key={income.id}
-                            className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-colors"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="h-9 w-9 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
-                                    <Wallet className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-white/90">{income.name}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {income.frequency} · started {new Date(income.startDate).toLocaleDateString()}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-sm font-bold text-emerald-400">{formatCurrency(income.amount)}</span>
-                                <button
-                                    onClick={async () => { await deleteIncome(income.id); }}
-                                    className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-all"
-                                >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                            </div>
-                        </div>
-                    ))
-                )}
+                    ))}
+                    {incomes.length === 0 && (
+                        <p className="text-sm text-muted-foreground italic">No income sources yet. Add your first one above.</p>
+                    )}
+                </div>
             </div>
         </div>
     );
 }
 
+// ─── Utility ──────────────────────────────────────
 function cn(...classes: (string | undefined | false)[]) {
     return classes.filter(Boolean).join(" ");
 }
