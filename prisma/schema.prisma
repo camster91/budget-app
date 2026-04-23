@@ -18,10 +18,8 @@ model Transaction {
   date        DateTime
   type        String   @default("expense") // "income" or "expense"
   
-  category    Category? @relation(fields: [categoryId], references: [id])
-  categoryId  String?
-
-  // New fields for Mint-like features
+  // Daily spending tracker
+  isDiscretionary Boolean @default(true)
   isTransfer   Boolean  @default(false)
   isRecurring  Boolean  @default(false)
   recurringId  String?  // For grouping recurring transactions
@@ -30,6 +28,12 @@ model Transaction {
   statementId  String?  // Identifier from bank statement
   reconciled   Boolean  @default(false)
   
+  // Smart deduplication
+  isDuplicate  Boolean  @default(false)
+  duplicateOfId String? // Points to the original transaction
+  fingerprint  String?  // Hash of (amount + normalized description + date)
+  source       String?  // "manual", "screenshot", "import", "plaid"
+  
   // Account relation
   account      Account? @relation(fields: [accountId], references: [id])
   accountId    String?
@@ -37,6 +41,9 @@ model Transaction {
   // Bill relation
   bill         Bill?    @relation(fields: [billId], references: [id])
   billId       String?
+
+  category    Category? @relation(fields: [categoryId], references: [id])
+  categoryId  String?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -101,10 +108,13 @@ model Bill {
   name        String
   amount      Float
   dueDay      Int      // Day of month (1-31)
+  frequency   String   @default("monthly") // monthly, weekly, biweekly
   category    Category @relation(fields: [categoryId], references: [id])
   categoryId  String
   account     Account  @relation(fields: [accountId], references: [id])
   accountId   String
+  isAutoDeduct Boolean @default(false)
+  isActive    Boolean  @default(true)
   
   transactions Transaction[]
   
@@ -132,4 +142,67 @@ model User {
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Multiple income sources
+model Income {
+  id          String   @id @default(uuid())
+  name        String   @default("Primary Income")
+  amount      Float
+  frequency   String   @default("monthly") // monthly, biweekly, weekly
+  startDate   DateTime @db.Date
+  dayOfMonth  Int?     // For monthly: day of month (1-31)
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Raw screenshot receipts from camera upload
+model ScreenshotReceipt {
+  id           String   @id @default(uuid())
+  imageUrl     String
+  status       String   @default("pending") // pending, processed, rejected
+  
+  // Parsed data
+  rawAmount    Float?   // What the user might edit
+  rawMerchant  String?
+  rawDate      DateTime?
+  rawItems     String?  // JSON array of line items
+  confidence   Float?   // AI confidence score 0-1
+  
+  // Linked on approval
+  transactionId String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// Smart spending patterns for the algorithm layer
+model SpendingPattern {
+  id            String   @id @default(uuid())
+  categoryId    String
+  avgAmount     Float
+  frequency     String   // daily, weekly, monthly
+  dayOfWeek     Int?     // 0-6 for weekly
+  dayOfMonth    Int?     // for monthly
+  confidence    Float    @default(0.5)
+  lastSeen      DateTime
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Tracks the day's available spending and rollover state per period
+model DailyPeriod {
+  id              String   @id @default(uuid())
+  periodStart     DateTime
+  periodEnd       DateTime
+  totalIncome     Float
+  billsTotal      Float
+  dailyAllowance  Float
+  accumulatedSurplus Float @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

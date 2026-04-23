@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { SettingsClient } from "./SettingsClient";
+import { createIncome, deleteIncome } from "@/app/_actions/incomes";
 import { redirect } from "next/navigation";
 
 export default async function SettingsPage() {
@@ -16,5 +17,14 @@ export default async function SettingsPage() {
 
     if (!user) redirect("/login");
 
-    return <SettingsClient user={user} />;
+    const incomes = await prisma.income.findMany({ orderBy: { createdAt: "desc" } });
+
+    return (
+        <SettingsClient
+            user={user}
+            incomes={incomes}
+            createIncome={createIncome}
+            deleteIncome={deleteIncome}
+        />
+    );
 }

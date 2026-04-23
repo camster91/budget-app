@@ -12,6 +12,7 @@ import {
     FileText,
     CreditCard,
     Tag,
+    Flame,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 
 const sidebarItems = [
     { title: "Dashboard", href: "/", icon: LayoutDashboard },
+    { title: "Daily Spend", href: "/daily", icon: Flame },
     { title: "Transactions", href: "/transactions", icon: Receipt },
     { title: "Budgets", href: "/budgets", icon: PiggyBank },
     { title: "Goals", href: "/goals", icon: Target },
