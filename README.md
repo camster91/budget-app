@@ -1,57 +1,135 @@
-# GlowOS Finance (formerly Budget App)
+# Budget App
 
-**A modern, automated personal finance and budgeting platform with built-in statement parsing and AI categorization.**
-
-As part of the **Nexus AI Product Ecosystem**, this repository is being evaluated for a public SaaS launch. With the sunsetting of popular budgeting tools like Mint, there is a massive market opportunity for privacy-first, AI-driven financial software.
-
-## 💰 Monetization & Future Planning
-
-This application serves as a strong candidate for our **Money-Making Software** initiative.
-- **SaaS Model:** Potential integration with Plaid for live bank sync behind a premium subscription tier.
-- **AI Categorization:** Leveraging the GlowOS Engine to securely and intelligently categorize transactions without manually building endless regex rules.
-- **Mainstream Integration:** Will become an accessible skill for the Pi Coding Agent, allowing users to simply ask: *"How much did I spend on groceries this month?"*
+A modern, privacy-first **Daily Spending Tracker** with a fuel-gauge budget concept, smart receipt OCR, streak gamification, and offline PWA support.
 
 ## ✨ Features
 
-- **Automated Statement Parsing:** Built-in Python scripts to parse, extract, and clean bank PDF/CSV statements.
-- **Smart Categorization:** Automatically assigns categories to transactions based on merchant names.
-- **Dashboard Analytics:** Clean, React-based dashboard showing cash flow, spending by category, and budget adherence.
-- **Database:** Prisma + PostgreSQL for secure transaction storage.
+### Daily Budget Engine
+- **Fuel Gauge Concept**: Income − Bills = Daily Allowance
+- **Rollover Tracking**: Unused money rolls to tomorrow; overspending reduces it
+- **Smart Insights**: Pace alerts, bill countdown, projections
+- **No-Spend Mode**: Toggle locks all discretionary spending
+
+### AI & Automation
+- **OCR Receipt Parsing**: Client-side Tesseract.js scans receipts → auto-extracts total/merchant/date
+- **Smart Deduplication**: Fingerprint matching prevents double entries
+- **Pattern Detection**: Recurring merchants, time-of-day peaks, weekend spikes
+- **Auto-Categorization**: Merchant name → category mapping
+
+### Gamification
+- **Streak Counter**: Under-budget day streaks
+- **Spending Score**: 0-100 grade (A-F) combining pace, surplus, bills, streaks
+- **Category Pie**: Donut chart of today’s spending by category
+
+### Sync & Export
+- **Plaid Bank Sync**: Link bank accounts for automatic transaction sync
+- **CSV Export**: Tax-ready transaction downloads
+- **Weekly/Monthly Review**: ReCharts bar charts with MoM/WoW trends
+
+### Notifications & PWA
+- **Push Notifications**: Budget warnings (80% spent, over-budget, bill reminders)
+- **Progressive Web App**: Installable on mobile, works offline with service worker
+- **Onboarding Wizard**: 5-step walkthrough for new users
+
+---
 
 ## 🛠 Tech Stack
 
-- **Frontend/Backend:** Next.js (App Router)
-- **Data Parsing:** Python (`extract_pdf.py`, `parse_statement.py`)
-- **Database:** Prisma ORM
-- **Deployment:** Docker & Coolify ready
+| Layer | Tech |
+|-------|------|
+| Framework | Next.js 16 + React 19 |
+| Styling | Tailwind CSS v4 |
+| Database | PostgreSQL + Prisma |
+| Charts | ReCharts + Framer Motion |
+| OCR | Tesseract.js (client-side) |
+| Bank Sync | Plaid |
+| Mobile | Capacitor (Android APK) |
+
+---
 
 ## 🚀 Getting Started
 
 ```bash
-# Clone the repository
+# Clone and install
 git clone https://github.com/camster91/budget-app.git
 cd budget-app
-
-# Install dependencies
 npm install
 
-# Setup environment variables
+# Environment
 cp .env.example .env.local
-# (Configure DATABASE_URL)
+# Edit DATABASE_URL and (optional) PLAID_CLIENT_ID / PLAID_SECRET
 
-# Run database migrations
+# Database
 npx prisma db push
+npm run db:seed   # Demo data
 
-# Start the development server
-npm run dev
+# Dev server
+npm run dev     # http://localhost:3000
 ```
 
-Visit `http://localhost:3000` to view the application.
+---
 
-## 📈 Roadmap
-- [ ] Implement Plaid API for live bank synchronization.
-- [ ] Connect the AI categorization engine to the 24-hour token reset billing model.
-- [ ] Polish the UI/UX for public SaaS launch.
+## 📱 Build Android APK
+
+Requires: Android Studio + Android SDK (API 33+) + Java 17+
+
+```bash
+# 1. Install Capacitor (one-time)
+npm install @capacitor/core @capacitor/cli @capacitor/android
+
+# 2. Build static export + sync Android
+npm run build:capacitor
+
+# 3. Open Android Studio
+npm run cap:android
+
+# 4. In Android Studio:
+#    Build → Generate Signed Bundle / APK → APK
+#    OR Run on device with the green Play button
+
+# Debug APK location:
+#   android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+**Quick script:**
+```bash
+bash scripts/build-apk.sh   # Automates steps 1-4
+```
 
 ---
-*Developed by Cameron Ashley / Nexus AI.*
+
+## 📂 Key Files
+
+| Path | Purpose |
+|------|---------|
+| `src/app/(dashboard)/daily/page.tsx` | Main daily spend page |
+| `src/components/daily/` | All daily tracker UI |
+| `src/app/_actions/daily.ts` | Budget calculation engine |
+| `src/app/_actions/patterns.ts` | Smart algorithms |
+| `src/lib/ocr.ts` | Client-side receipt OCR |
+| `public/manifest.json` | PWA manifest |
+| `public/sw.js` | Service worker (offline) |
+| `capacitor.config.ts` | Mobile app config |
+| `prisma/schema.prisma` | Database schema |
+
+---
+
+## 🔐 Environment Variables
+
+```env
+DATABASE_URL=postgresql://user:pass@localhost:5432/budgetapp
+JWT_SECRET=your-secret-key
+PLAID_CLIENT_ID=your-plaid-client-id
+PLAID_SECRET=your-plaid-sandbox-secret
+PLAID_ENV=sandbox
+```
+
+---
+
+## 📈 Roadmap Ideas
+
+- [ ] Category Budget Caps (✅ Done — set daily limits per category)
+- [ ] Theme Toggle (light/dark/system)
+- [ ] Family/Shared Budgets (multi-user)
+- [ ] Weekly Email Summaries
+- [ ] iOS Capacitor build

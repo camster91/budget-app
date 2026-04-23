@@ -17,6 +17,11 @@
 /.next/
 /out/
 
+# Capacitor static export build
+/dist/
+/android/
+/ios/
+
 # production
 /build
 
@@ -46,7 +51,6 @@ next-env.d.ts
 *.db
 *.db-journal
 *.txt
-*.json
 *.csv
 *.gz
 *.tar.gz
@@ -54,4 +58,3 @@ next-env.d.ts
 # Extracted statements
 *_extracted.txt
 *_transactions.json
-

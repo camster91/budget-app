@@ -1,0 +1,19 @@
+{
+  "name": "GlowOS Finance",
+  "short_name": "GlowOS",
+  "description": "Daily spending tracker with AI insights",
+  "start_url": "/daily",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "categories": ["finance", "productivity"],
+  "screenshots": [
+    { "src": "/screenshot-wide.png", "sizes": "1280x720", "type": "image/png", "form_factor": "wide" },
+    { "src": "/screenshot-narrow.png", "sizes": "390x844", "type": "image/png", "form_factor": "narrow" }
+  ]
+}

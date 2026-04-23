@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:seed": "tsx src/lib/seed.ts"
+    "db:seed": "tsx src/lib/seed.ts",
+    "build:capacitor": "cp next.config.capacitor.ts next.config.ts && rm -f next.config.mjs next.config.js && next build && npx cap sync android",
+    "cap:android": "npx cap open android",
+    "cap:sync": "npx cap sync"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -46,6 +49,9 @@
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/android": "^6.0.0"
   }
 }
