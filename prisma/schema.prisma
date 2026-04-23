@@ -95,6 +95,11 @@ model Account {
   balance     Float    @default(0)
   color       String?  // Hex color for UI
   isDefault   Boolean  @default(false) // Default account for transactions
+
+  // Plaid integration
+  plaidAccessToken String? // Encrypted access token
+  plaidItemId String? // Plaid item ID
+  plaidLastSynced DateTime? // Last successful sync timestamp
   
   transactions Transaction[]
   bills        Bill[]

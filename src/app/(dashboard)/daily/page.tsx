@@ -1,10 +1,6 @@
 import { getDailySnapshot } from "@/app/_actions/daily";
-import { addQuickSpend, deleteTransactionAndRevalidate } from "@/app/_actions/daily";
 import { getCategories } from "@/app/_actions/categories";
-import { getPendingReceipts, approveReceipt, rejectReceipt } from "@/app/_actions/receipts";
-import { handleReceiptParsed } from "@/app/_actions/receipt-parse-handler";
-import { detectSpendingPatterns, getHourlyVelocity, getDuplicateReviewQueue, keepAndMergeDuplicate, rejectDuplicate } from "@/app/_actions/patterns";
-
+import { addQuickSpend, deleteTransactionAndRevalidate } from "@/app/_actions/daily";
 import { DailyAllowanceHero } from "@/components/daily/DailyAllowanceHero";
 import { QuickAddForm } from "@/components/daily/QuickAddForm";
 import { TodaysLog } from "@/components/daily/TodaysLog";
@@ -16,11 +12,17 @@ import { VelocityGraph } from "@/components/daily/VelocityGraph";
 import { DedupeReview } from "@/components/daily/DedupeReview";
 import { PatternInsights } from "@/components/daily/PatternInsights";
 import { ReceiptUploader } from "@/components/daily/ReceiptUploader";
-import { StreakCounter } from "@/components/daily/StreakCounter";
+import { NoSpendToggle } from "@/components/daily/NoSpendToggle";
+import { toggleNoSpendMode } from "@/app/_actions/nospend";
 import { CategoryPieToday } from "@/components/daily/CategoryPieToday";
 import { SpendingScore } from "@/components/daily/SpendingScore";
-
-import { Button } from "@/components/ui/button";
+import { PushNotifier } from "@/components/daily/PushNotifier";
+import { StreakCounter } from "@/components/daily/StreakCounter";
+import * as actions from "@/app/_actions/receipts";
+import * as patternActions from "@/app/_actions/patterns";
+import { PlaidLinker } from "@/components/plaid/PlaidLinker";
+import { createLinkToken, exchangePublicToken } from "@/app/_actions/plaid-link";
+import { prisma } from "@/lib/prisma";
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -37,15 +39,15 @@ export default async function DailyPage() {
     ] = await Promise.all([
         getDailySnapshot(),
         getCategories(),
-        getPendingReceipts(),
-        detectSpendingPatterns(),
-        getHourlyVelocity(),
-        getDuplicateReviewQueue(),
+        actions.getPendingReceipts(),
+        patternActions.detectSpendingPatterns(),
+        patternActions.getHourlyVelocity(),
+        patternActions.getDuplicateReviewQueue(),
     ]);
 
-    const s = snapshot || {
+    const defaultSnapshot = {
         dailyAllowance: 0, todaysAvailable: 0, spentToday: 0, remainingToday: 0, accumulatedSurplus: 0,
-        pace: { percent: 100, label: "No data", color: "text-muted-foreground", emoji: "📊" },
+        pace: { percent: 100, label: "No data", color: "text-muted-foreground", emoji: "💾" },
         period: { start: new Date(), end: new Date(), daysTotal: 30, daysElapsed: 0, daysRemaining: 30 },
         totalIncome: 0, incomeSources: [] as { name: string; amount: number }[],
         upcomingBills: [] as { name: string; amount: number; dueDay: number; daysUntil: number; isAutoDeduct: boolean }[],
@@ -59,6 +61,8 @@ export default async function DailyPage() {
         spendingScore: 0,
         scoreLabel: "No data",
     };
+
+    const s = snapshot || defaultSnapshot;
 
     if (error) {
         return (
@@ -129,25 +133,54 @@ export default async function DailyPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-                <CategoryPieToday data={s.categoryBreakdownToday} />
                 <ReceiptUploader
                     pendingReceipts={pendingReceipts || []}
-                    onApprove={approveReceipt}
-                    onReject={rejectReceipt}
-                    onParsed={handleReceiptParsed}
+                    onApprove={actions.approveReceipt}
+                    onReject={actions.rejectReceipt}
+                    onParsed={async (parsed) => {
+                        "use server";
+                        await actions.saveReceiptParse({
+                            imageUrl: "/receipts/ocr.jpg",
+                            rawText: parsed.rawText,
+                            parsed: {
+                                total: parsed.total,
+                                merchant: parsed.merchant,
+                                date: parsed.date,
+                                items: [],
+                                confidence: parsed.confidence,
+                                rawText: parsed.rawText,
+                            },
+                        });
+                    }}
                 />
-                <PatternInsights patterns={patterns || []} />
+                <CategoryPieToday data={s.categoryBreakdownToday} />
             </div>
 
             {duplicates && duplicates.length > 0 && (
                 <DedupeReview
                     duplicates={duplicates}
-                    onKeepAndMerge={keepAndMergeDuplicate}
-                    onRejectDuplicate={rejectDuplicate}
+                    onKeepAndMerge={patternActions.keepAndMergeDuplicate}
+                    onRejectDuplicate={patternActions.rejectDuplicate}
                 />
             )}
 
+            <PatternInsights patterns={patterns || []} />
+
+            <div className="grid gap-6 md:grid-cols-2">
+                <NoSpendToggle isActive={false} onToggle={async (active) => {
+                    const fd = new FormData();
+                    fd.append("isActive", active ? "true" : "false");
+                    await toggleNoSpendMode(fd);
+                }} />
+                <PlaidLinker
+                    accounts={await prisma.account.findMany()}
+                    createLinkToken={createLinkToken}
+                    exchangeToken={exchangePublicToken}
+                />
+            </div>
+
             {s.smartInsights.length > 0 && <SmartInsights insights={s.smartInsights} />}
+            <PushNotifier />
         </div>
     );
 }

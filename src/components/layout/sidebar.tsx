@@ -13,6 +13,7 @@ import {
     CreditCard,
     Tag,
     Flame,
+    BarChart3,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -22,6 +23,7 @@ import { Button } from "@/components/ui/button";
 const sidebarItems = [
     { title: "Dashboard", href: "/", icon: LayoutDashboard },
     { title: "Daily Spend", href: "/daily", icon: Flame },
+    { title: "Review", href: "/review", icon: BarChart3 },
     { title: "Transactions", href: "/transactions", icon: Receipt },
     { title: "Budgets", href: "/budgets", icon: PiggyBank },
     { title: "Goals", href: "/goals", icon: Target },

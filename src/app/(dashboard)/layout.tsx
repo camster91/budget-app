@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { useEffect, useState } from "react";
+import { usePwaRegistration } from "@/hooks/use-pwa";
 
 function getInitials(name: string | null | undefined, email: string | null | undefined): string {
     if (name) {
@@ -35,6 +36,8 @@ export default function DashboardLayout({
     const initials = getInitials(user?.name, user?.email);
 
     const pageTitle = pathname === "/" ? "Overview" : pathname.replace("/", "").replace(/-/g, " ");
+
+    usePwaRegistration();
 
     return (
         <div className="relative flex h-screen w-full overflow-hidden bg-background bg-grid">

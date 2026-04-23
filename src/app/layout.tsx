@@ -1,37 +1,44 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Budget Tracker",
-  description: "Personal finance and budget tracking app",
+    title: "GlowOS Finance",
+    description: "Daily spending tracker with AI insights",
+    manifest: "/manifest.json",
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: "black-translucent",
+        title: "GlowOS",
+    },
+    icons: {
+        apple: "/icon-192.png",
+    },
 };
 
-import { Toaster } from "sonner";
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    themeColor: "#09090b",
+};
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en" className="dark">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased selection:bg-primary/30`}
-      >
-        {children}
-        <Toaster position="bottom-right" richColors theme="dark" closeButton />
-      </body>
-    </html>
-  );
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <html lang="en" className="dark">
+            <head>
+                <link rel="manifest" href="/manifest.json" />
+                <meta name="apple-mobile-web-app-capable" content="yes" />
+                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+                <meta name="apple-mobile-web-app-title" content="GlowOS" />
+                <meta name="mobile-web-app-capable" content="yes" />
+            </head>
+            <body className={`${inter.className} min-h-screen bg-background text-foreground`}>
+                {children}
+            </body>
+        </html>
+    );
 }
