@@ -4,6 +4,17 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
+export async function getCategories() {
+    try {
+        const categories = await prisma.category.findMany({
+            orderBy: { name: "asc" },
+        });
+        return { success: true, data: categories };
+    } catch (error) {
+        return { success: false, error: "Failed to fetch categories" };
+    }
+}
+
 export async function createCategory(formData: FormData) {
     if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
     try {

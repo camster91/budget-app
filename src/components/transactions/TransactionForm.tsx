@@ -12,11 +12,12 @@ import { toast } from "sonner";
 
 const transactionSchema = z.object({
     type: z.enum(["expense", "income"]),
-    amount: z.string().refine((v) => !isNaN(Number(v)) && Number(v) > 0, "Amount must be a positive number"),
+    amount: z.string().refine((v) =>> !isNaN(Number(v)) && Number(v) > 0, "Amount must be a positive number"),
     description: z.string().min(1, "Description is required").max(100),
     categoryId: z.string().optional(),
     category: z.string().optional(),
     date: z.string().min(1, "Date is required"),
+    isDiscretionary: z.boolean().default(true),
 });
 
 type TransactionValues = z.infer<typeof transactionSchema>;
@@ -37,6 +38,7 @@ export function TransactionForm({ categories = [] }: TransactionFormProps) {
         defaultValues: {
             type: "expense",
             date: new Date().toISOString().split('T')[0],
+            isDiscretionary: true,
         }
     });
 
@@ -46,6 +48,7 @@ export function TransactionForm({ categories = [] }: TransactionFormProps) {
         formData.append("amount", data.amount);
         formData.append("description", data.description);
         formData.append("date", data.date);
+        formData.append("isDiscretionary", data.isDiscretionary ? "true" : "false");
         if (data.categoryId) formData.append("categoryId", data.categoryId);
         else if (data.category) formData.append("category", data.category);
 
@@ -133,6 +136,19 @@ export function TransactionForm({ categories = [] }: TransactionFormProps) {
                             className="rounded-xl border-white/[0.1] bg-white/[0.05]"
                         />
                         {errors.date && <p className="text-xs text-red-400">{errors.date.message}</p>}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2 pb-2">
+                        <input
+                            {...register("isDiscretionary")}
+                            id="isDiscretionary"
+                            type="checkbox"
+                            defaultChecked
+                            className="h-4 w-4 rounded border-white/[0.1] bg-white/[0.05] text-primary focus:ring-primary"
+                        />
+                        <label htmlFor="isDiscretionary" className="text-sm text-muted-foreground cursor-pointer">
+                            Counts against daily budget
+                        </label>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-4">

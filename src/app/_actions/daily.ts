@@ -105,6 +105,9 @@ export interface DailySnapshot {
         message: string;
     };
     smartInsights: string[];
+    streak: number;
+    bestStreak: number;
+    categoryBreakdownToday: { name: string; amount: number; color: string | null }[];
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -227,10 +230,52 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
             projectionMessage = `At this pace, you'll overspend by ${fmt(Math.abs(projectedEndBalance))} before payday`;
         }
 
+        // Streak calculation
+        const streak = await calculateStreak(dailyAllowance);
+
+        // Best streak from history
+        const bestStreak = await calculateBestStreak(dailyAllowance);
+
+        // Category breakdown today
+        const categoryBreakdownToday = await prisma.transaction.groupBy({
+            by: ["categoryId"],
+            where: {
+                type: "expense",
+                date: { gte: todayStart, lte: todayEnd },
+                isDiscretionary: true,
+                isDuplicate: false,
+            },
+            _sum: { amount: true },
+        });
+
+        const categoryIds = categoryBreakdownToday.map((c) => c.categoryId).filter(Boolean) as string[];
+        const categoryColors = categoryIds.length > 0
+            ? await prisma.category.findMany({ where: { id: { in: categoryIds } }, select: { id: true, name: true, color: true } })
+            : [];
+        const colorMap = Object.fromEntries(categoryColors.map((c) => [c.id, c]));
+
+        const enrichedCategoryBreakdown = categoryBreakdownToday
+            .filter((c) => c._sum.amount && c._sum.amount > 0)
+            .map((c) => ({
+                name: colorMap[c.categoryId!]?.name || "Uncategorized",
+                amount: c._sum.amount || 0,
+                color: colorMap[c.categoryId!]?.color || "#52525b",
+            }))
+            .sort((a, b) => b.amount - a.amount);
+
         // Smart Insights
         const smartInsights = await generateSmartInsights({
             accumulatedSurplus, dailyAllowance, spentToday, remainingToday,
             daysRemaining, upcomingBills, avgDailySpend, pacePercent,
+        });
+
+        const { score, label: scoreLabel } = computeSpendingScore({
+            pacePercent,
+            accumulatedSurplus,
+            dailyAllowance,
+            totalIncome,
+            upcomingBillsTotal,
+            streak,
         });
 
         return {
@@ -266,6 +311,11 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
                     message: projectionMessage,
                 },
                 smartInsights,
+                streak,
+                bestStreak,
+                categoryBreakdownToday: enrichedCategoryBreakdown,
+                spendingScore: score,
+                scoreLabel,
             },
         };
     } catch (error) {
@@ -454,4 +504,80 @@ function fmt(amount: number) {
 function getDaysInCurrentMonth() {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+}
+
+// ═════════════════════════════════════════════════════════════
+//  STREAK ENGINE
+// ═════════════════════════════════════════════════════════════
+
+async function calculateStreak(dailyAllowance: number): Promise<number> {
+    try {
+        if (dailyAllowance <= 0) return 0;
+        let streak = 0;
+        for (let i = 0; i < 30; i++) {
+            const day = subDays(new Date(), i);
+            const dayStart = startOfDay(day);
+            const dayEnd = endOfDay(day);
+
+            const spent = await prisma.transaction.aggregate({
+                where: {
+                    type: "expense",
+                    date: { gte: dayStart, lte: dayEnd },
+                    isDiscretionary: true,
+                    isDuplicate: false,
+                },
+                _sum: { amount: true },
+            });
+
+            const total = spent._sum.amount || 0;
+            if (i === 0 && total === 0) continue; // no spending today = neutral
+            if (total <= dailyAllowance) {
+                streak++;
+            } else {
+                // If today is the first day and already over, it's a negative streak
+                if (i === 0 && total > dailyAllowance) streak = -1;
+                break;
+            }
+        }
+        return streak;
+    } catch {
+        return 0;
+    }
+}
+
+async function calculateBestStreak(dailyAllowance: number): Promise<number> {
+    try {
+        if (dailyAllowance <= 0) return 0;
+        const txs = await prisma.transaction.findMany({
+            where: {
+                type: "expense",
+                isDiscretionary: true,
+                isDuplicate: false,
+                date: { gte: subDays(new Date(), 90) },
+            },
+            orderBy: { date: "asc" },
+            select: { date: true, amount: true },
+        });
+
+        const dayMap = new Map<string, number>();
+        for (const tx of txs) {
+            const key = tx.date.toISOString().slice(0, 10);
+            dayMap.set(key, (dayMap.get(key) || 0) + tx.amount);
+        }
+
+        let best = 0;
+        let current = 0;
+        const sortedDays = Array.from(dayMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+        for (const [, total] of sortedDays) {
+            if (total <= dailyAllowance) {
+                current++;
+                best = Math.max(best, current);
+            } else {
+                current = 0;
+            }
+        }
+        return best;
+    } catch {
+        return 0;
+    }
 }

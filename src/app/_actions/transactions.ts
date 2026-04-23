@@ -30,6 +30,7 @@ export async function createTransaction(formData: FormData) {
         const description = formData.get("description") as string;
         const date = new Date(formData.get("date") as string);
         const type = formData.get("type") as string;
+        const isDiscretionary = (formData.get("isDiscretionary") as string) !== "false";
         const categoryName = formData.get("category") as string;
 
         if (!amount || !description || !date || !type) {
@@ -61,6 +62,7 @@ export async function createTransaction(formData: FormData) {
                 type,
                 categoryId: categoryId || null,
                 isTransfer: isTransfer(description),
+                isDiscretionary: type === "income" ? false : isDiscretionary,
             },
         });
 

@@ -16,6 +16,9 @@ import { VelocityGraph } from "@/components/daily/VelocityGraph";
 import { DedupeReview } from "@/components/daily/DedupeReview";
 import { PatternInsights } from "@/components/daily/PatternInsights";
 import { ReceiptUploader } from "@/components/daily/ReceiptUploader";
+import { StreakCounter } from "@/components/daily/StreakCounter";
+import { CategoryPieToday } from "@/components/daily/CategoryPieToday";
+import { SpendingScore } from "@/components/daily/SpendingScore";
 
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
@@ -50,6 +53,11 @@ export default async function DailyPage() {
         entriesToday: [] as { id: string; description: string; amount: number; category?: string | null; source?: string | null }[],
         projection: { atCurrentPace: 0, projectedEndBalance: 0, message: "" },
         smartInsights: [] as string[],
+        streak: 0,
+        bestStreak: 0,
+        categoryBreakdownToday: [] as { name: string; amount: number; color: string | null }[],
+        spendingScore: 0,
+        scoreLabel: "No data",
     };
 
     if (error) {
@@ -116,6 +124,12 @@ export default async function DailyPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
+                <StreakCounter streak={s.streak} bestStreak={s.bestStreak} />
+                <SpendingScore score={s.spendingScore} label={s.scoreLabel} />
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+                <CategoryPieToday data={s.categoryBreakdownToday} />
                 <ReceiptUploader
                     pendingReceipts={pendingReceipts || []}
                     onApprove={approveReceipt}
