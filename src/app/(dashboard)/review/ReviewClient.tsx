@@ -124,7 +124,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months }: ReviewCl
             />
             <StatCard
               label="Avg/Day"
-              value={formatCurrency("averagePerDay" in data ? data.averagePerDay : data.averagePerDay)}
+              value={formatCurrency(data?.averagePerDay || 0)}
               icon={TrendingUp}
               className="text-white"
             />
@@ -141,7 +141,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months }: ReviewCl
                   <YAxis hide />
                   <Tooltip
                     contentStyle={{ backgroundColor: "#18181b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff" }}
-                    formatter={(val: number) => formatCurrency(val)}
+                    formatter={(val: any) => formatCurrency(Number(val) || 0)}
                   />
                   <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                     {(view === "weekly" ? (data as WeeklyData).byDay : (data as MonthlyData).byWeek).map((_, i) => (

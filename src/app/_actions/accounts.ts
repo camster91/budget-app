@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
 export async function createAccount(formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const name = formData.get("name") as string;
         const type = formData.get("type") as string;
@@ -14,7 +15,14 @@ export async function createAccount(formData: FormData) {
         const color = formData.get("color") as string;
 
         await prisma.account.create({
-            data: { name, type, institution: institution || null, balance, color: color || null },
+            data: { 
+                name, 
+                type, 
+                institution: institution || null, 
+                balance, 
+                color: color || null,
+                householdId: user.householdId
+            },
         });
         revalidatePath("/accounts");
         return { success: true };
@@ -24,9 +32,13 @@ export async function createAccount(formData: FormData) {
 }
 
 export async function updateAccountBalance(id: string, balance: number) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
-        await prisma.account.update({ where: { id }, data: { balance } });
+        await prisma.account.update({ 
+            where: { id, householdId: user.householdId }, 
+            data: { balance } 
+        });
         revalidatePath("/accounts");
         revalidatePath("/");
         return { success: true };
@@ -36,14 +48,22 @@ export async function updateAccountBalance(id: string, balance: number) {
 }
 
 export async function deleteAccount(id: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         await prisma.$transaction([
             // Transactions have nullable accountId — null them out.
             // Bills have required accountId — delete them.
-            prisma.transaction.updateMany({ where: { accountId: id }, data: { accountId: null } }),
-            prisma.bill.deleteMany({ where: { accountId: id } }),
-            prisma.account.delete({ where: { id } }),
+            prisma.transaction.updateMany({ 
+                where: { accountId: id, householdId: user.householdId }, 
+                data: { accountId: null } 
+            }),
+            prisma.bill.deleteMany({ 
+                where: { accountId: id, householdId: user.householdId } 
+            }),
+            prisma.account.delete({ 
+                where: { id, householdId: user.householdId } 
+            }),
         ]);
         revalidatePath("/accounts");
         revalidatePath("/");
@@ -54,5 +74,10 @@ export async function deleteAccount(id: string) {
 }
 
 export async function getAccounts() {
-    return await prisma.account.findMany({ orderBy: { createdAt: "asc" } });
+    const user = await getAuthUser();
+    if (!user) return [];
+    return await prisma.account.findMany({ 
+        where: { householdId: user.householdId },
+        orderBy: { createdAt: "asc" } 
+    });
 }

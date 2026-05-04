@@ -19,6 +19,8 @@ export interface SpendingPattern {
 }
 
 export async function detectSpendingPatterns(): Promise<{ success: boolean; data?: SpendingPattern[]; error?: string }> {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const now = new Date();
         const patterns: SpendingPattern[] = [];
@@ -34,6 +36,7 @@ export async function detectSpendingPatterns(): Promise<{ success: boolean; data
                     date
                 FROM "Transaction"
                 WHERE type = 'expense'
+                AND "householdId" = ${user.householdId}
                 AND date >= ${subMonths(now, 3)}
                 AND isDuplicate = false
             )
@@ -70,7 +73,7 @@ export async function detectSpendingPatterns(): Promise<{ success: boolean; data
         >`
             SELECT EXTRACT(hour FROM date)::int AS hour, SUM(amount)::float AS total, COUNT(*)::bigint
             FROM "Transaction"
-            WHERE type = 'expense' AND date >= ${subMonths(now, 1)}
+            WHERE type = 'expense' AND "householdId" = ${user.householdId} AND date >= ${subMonths(now, 1)}
             AND isDuplicate = false
             GROUP BY hour
             ORDER BY total DESC
@@ -102,7 +105,7 @@ export async function detectSpendingPatterns(): Promise<{ success: boolean; data
                 EXTRACT(dow FROM date) IN (0,6) AS is_weekend,
                 SUM(amount)::float AS total
             FROM "Transaction"
-            WHERE type = 'expense' AND date >= ${subMonths(now, 2)}
+            WHERE type = 'expense' AND "householdId" = ${user.householdId} AND date >= ${subMonths(now, 2)}
             AND isDuplicate = false
             GROUP BY is_weekend
         `;
@@ -137,7 +140,7 @@ export async function detectSpendingPatterns(): Promise<{ success: boolean; data
                     SUM(t.amount)::float AS weekly_total
                 FROM "Transaction" t
                 LEFT JOIN "Category" c ON t."categoryId" = c.id
-                WHERE t.type = 'expense' AND t.isDuplicate = false
+                WHERE t.type = 'expense' AND t."householdId" = ${user.householdId} AND t.isDuplicate = false
                 GROUP BY c.name, DATE_TRUNC('week', t.date)
             )
             SELECT 
@@ -184,6 +187,8 @@ export interface MerchantRule {
 }
 
 export async function getLearnedMerchantRules(): Promise<{ success: boolean; data?: MerchantRule[]; error?: string }> {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const rules = await prisma.$queryRaw<
             { merchant: string; categoryId: string; categoryName: string; hits: bigint; total: bigint }[]
@@ -196,6 +201,7 @@ export async function getLearnedMerchantRules(): Promise<{ success: boolean; dat
                 FROM "Transaction" t
                 LEFT JOIN "Category" c ON t."categoryId" = c.id
                 WHERE type = 'expense' AND "categoryId" IS NOT NULL AND t.isDuplicate = false
+                AND t."householdId" = ${user.householdId}
             )
             SELECT merchant, "categoryId", "categoryName",
                 COUNT(*)::bigint AS hits,
@@ -244,6 +250,8 @@ export interface HourlySpend {
 }
 
 export async function getHourlyVelocity(): Promise<{ success: boolean; data?: HourlySpend[]; error?: string }> {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -254,6 +262,7 @@ export async function getHourlyVelocity(): Promise<{ success: boolean; data?: Ho
             SELECT EXTRACT(hour FROM date)::int AS hour, SUM(amount)::float AS amount
             FROM "Transaction"
             WHERE type = 'expense' AND date >= ${todayStart}
+            AND "householdId" = ${user.householdId}
             AND isDuplicate = false
             GROUP BY hour
             ORDER BY hour
@@ -287,6 +296,8 @@ export interface DuplicateSet {
 }
 
 export async function getDuplicateReviewQueue(): Promise<{ success: boolean; data?: DuplicateSet[]; error?: string }> {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const duplicates = await prisma.$queryRaw<
             { id: string; description: string; amount: number; date: Date; fingerprint: string; source: string | null }[]
@@ -294,12 +305,13 @@ export async function getDuplicateReviewQueue(): Promise<{ success: boolean; dat
             SELECT id, description, amount, date, fingerprint, source
             FROM "Transaction"
             WHERE isDuplicate = true AND duplicateOfId IS NOT NULL
+            AND "householdId" = ${user.householdId}
             AND date >= NOW() - INTERVAL '7 days'
             ORDER BY date DESC
             LIMIT 20
         `;
 
-        const grouped = new Map<string, DuplicateSet["transactions"]();
+        const grouped = new Map<string, DuplicateSet["transactions"]>();
         for (const d of duplicates) {
             if (!grouped.has(d.fingerprint)) grouped.set(d.fingerprint, []);
             grouped.get(d.fingerprint)!.push(d);
@@ -316,14 +328,15 @@ export async function getDuplicateReviewQueue(): Promise<{ success: boolean; dat
 }
 
 export async function keepAndMergeDuplicate(duplicateId: string, keepId: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         await prisma.$transaction([
             prisma.transaction.update({
-                where: { id: duplicateId },
+                where: { id: duplicateId, householdId: user.householdId },
                 data: { isDuplicate: false, duplicateOfId: null },
             }),
-            prisma.transaction.delete({ where: { id: keepId } }),
+            prisma.transaction.delete({ where: { id: keepId, householdId: user.householdId } }),
         ]);
         revalidatePath("/daily");
         return { success: true };
@@ -333,10 +346,11 @@ export async function keepAndMergeDuplicate(duplicateId: string, keepId: string)
 }
 
 export async function rejectDuplicate(duplicateId: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         await prisma.transaction.update({
-            where: { id: duplicateId },
+            where: { id: duplicateId, householdId: user.householdId },
             data: { isDuplicate: false, duplicateOfId: null },
         });
         revalidatePath("/daily");

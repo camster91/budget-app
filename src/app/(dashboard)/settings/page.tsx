@@ -24,7 +24,7 @@ export default async function SettingsPage() {
     return (
         <SettingsClient
             user={user}
-            incomes={incomes}
+            incomes={incomes as any}
             categories={categories}
             createIncome={createIncome}
             deleteIncome={deleteIncome}

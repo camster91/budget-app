@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'BudgetApp',
   webDir: 'dist',
   server: {
-    androidScheme: 'https',
+    url: 'https://budget.ashbi.ca',
     cleartext: true,
   },
   plugins: {

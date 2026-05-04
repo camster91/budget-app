@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
 export async function createBill(formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const name = formData.get("name") as string;
         const amount = parseFloat(formData.get("amount") as string);
@@ -14,7 +15,7 @@ export async function createBill(formData: FormData) {
         const accountId = formData.get("accountId") as string;
 
         await prisma.bill.create({
-            data: { name, amount, dueDay, categoryId, accountId },
+            data: { name, amount, dueDay, categoryId, accountId, householdId: user.householdId },
         });
         revalidatePath("/bills");
         return { success: true };
@@ -24,7 +25,8 @@ export async function createBill(formData: FormData) {
 }
 
 export async function updateBill(id: string, formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const name = formData.get("name") as string;
         const amount = parseFloat(formData.get("amount") as string);
@@ -33,7 +35,7 @@ export async function updateBill(id: string, formData: FormData) {
         const accountId = formData.get("accountId") as string;
 
         await prisma.bill.update({
-            where: { id },
+            where: { id, householdId: user.householdId },
             data: { name, amount, dueDay, categoryId, accountId },
         });
         revalidatePath("/bills");
@@ -44,12 +46,46 @@ export async function updateBill(id: string, formData: FormData) {
 }
 
 export async function deleteBill(id: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
-        await prisma.bill.delete({ where: { id } });
+        await prisma.bill.delete({ where: { id, householdId: user.householdId } });
         revalidatePath("/bills");
         return { success: true };
     } catch (error) {
         return { success: false, error: "Failed to delete bill" };
     }
 }
+
+export async function markBillAsPaid(id: string) {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+    try {
+        const bill = await prisma.bill.findUnique({ where: { id, householdId: user.householdId } });
+        if (!bill) return { success: false, error: "Bill not found" };
+
+        await prisma.transaction.create({
+            data: {
+                amount: bill.amount,
+                description: `Bill Payment: ${bill.name}`,
+                date: new Date(),
+                type: "expense",
+                isDiscretionary: false,
+                isRecurring: true,
+                source: "manual",
+                categoryId: bill.categoryId,
+                accountId: bill.accountId,
+                billId: bill.id,
+                householdId: user.householdId
+            }
+        });
+
+        revalidatePath("/bills");
+        revalidatePath("/daily");
+        revalidatePath("/");
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Failed to mark bill as paid" };
+    }
+}
+

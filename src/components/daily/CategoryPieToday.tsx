@@ -7,7 +7,7 @@ import { formatCurrency, cn } from "@/lib/utils";
 interface CategorySpend {
     name: string;
     amount: number;
-    color: string;
+    color: string | null;
 }
 
 interface CategoryPieTodayProps {
@@ -33,6 +33,8 @@ export function CategoryPieToday({ data }: CategoryPieTodayProps) {
     const top = sorted.slice(0, 5);
     const others = sorted.slice(5).reduce((s, d) => s + d.amount, 0);
     const displayData = others > 0 ? [...top, { name: "Other", amount: others, color: "#52525b" }] : top;
+
+    const getFill = (color: string | null) => color || "#6366f1";
 
     return (
         <motion.div
@@ -61,10 +63,10 @@ export function CategoryPieToday({ data }: CategoryPieTodayProps) {
                                     stroke="none"
                                 >
                                     {displayData.map((entry, i) => (
-                                        <Cell key={i} fill={entry.color} />
+                                        <Cell key={i} fill={getFill(entry.color)} />
                                     ))}
                                 </Pie>
-                                <Tooltip {...TOOLTIP_STYLE} formatter={(val: number) => formatCurrency(val)} />
+                                <Tooltip {...TOOLTIP_STYLE} formatter={(val: any) => formatCurrency(Number(val) || 0)} />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
@@ -73,7 +75,7 @@ export function CategoryPieToday({ data }: CategoryPieTodayProps) {
                         {displayData.map((d) => (
                             <div key={d.name} className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: getFill(d.color) }} />
                                     <span className="text-xs text-white/80">{d.name}</span>
                                 </div>
                                 <span className="text-xs font-bold text-white/90">{formatCurrency(d.amount)}</span>

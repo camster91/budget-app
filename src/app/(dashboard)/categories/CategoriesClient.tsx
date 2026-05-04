@@ -10,6 +10,11 @@ import { Tag, Plus, X, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createCategory, deleteCategory } from "@/app/_actions/categories";
 
+interface Rule {
+    keyword: string;
+    type: 'contains' | 'equals';
+}
+
 interface Category {
     id: string;
     name: string;
@@ -35,11 +40,24 @@ export function CategoriesClient({ categories: initialCategories }: CategoriesCl
     const [showForm, setShowForm] = useState(false);
     const [typeFilter, setTypeFilter] = useState<"all" | "expense" | "income">("all");
     const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
+    const [rules, setRules] = useState<Rule[]>([]);
+    const [newRuleKeyword, setNewRuleKeyword] = useState("");
+    const [newRuleType, setNewRuleType] = useState<'contains' | 'equals'>("contains");
     const [isPending, startTransition] = useTransition();
 
     const filtered = typeFilter === "all" ? categories : categories.filter((c) => c.type === typeFilter);
     const expenseCount = categories.filter((c) => c.type === "expense").length;
     const incomeCount = categories.filter((c) => c.type === "income").length;
+
+    function handleAddRule() {
+        if (!newRuleKeyword.trim()) return;
+        setRules([...rules, { keyword: newRuleKeyword.trim(), type: newRuleType }]);
+        setNewRuleKeyword("");
+    }
+
+    function handleRemoveRule(index: number) {
+        setRules(rules.filter((_, i) => i !== index));
+    }
 
     function handleCreate(formData: FormData) {
         formData.set("color", selectedColor);
@@ -48,6 +66,7 @@ export function CategoriesClient({ categories: initialCategories }: CategoriesCl
             if (result.success) {
                 setShowForm(false);
                 setSelectedColor(PRESET_COLORS[0]);
+                setRules([]);
                 router.refresh();
             }
         });
@@ -83,12 +102,14 @@ export function CategoriesClient({ categories: initialCategories }: CategoriesCl
                         <Card className="border-primary/20 bg-primary/5">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                                 <CardTitle className="text-base">New Category</CardTitle>
-                                <Button variant="ghost" size="icon" onClick={() => setShowForm(false)}>
+                                <Button variant="ghost" size="icon" onClick={() => { setShowForm(false); setRules([]); }}>
                                     <X className="h-4 w-4" />
                                 </Button>
                             </CardHeader>
                             <CardContent>
                                 <form action={handleCreate} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                    <input type="hidden" name="rules" value={JSON.stringify(rules)} />
+                                    
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Name</label>
                                         <Input name="name" placeholder="e.g. Groceries" required className="rounded-xl bg-white/[0.05] border-white/[0.1]" />
@@ -104,9 +125,52 @@ export function CategoriesClient({ categories: initialCategories }: CategoriesCl
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Icon (emoji)</label>
                                         <Input name="icon" placeholder="🛒" maxLength={2} className="rounded-xl bg-white/[0.05] border-white/[0.1]" />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Auto-match keywords</label>
-                                        <Input name="rules" placeholder='["grocery","superstore"]' className="rounded-xl bg-white/[0.05] border-white/[0.1]" />
+                                    <div className="space-y-2 sm:col-span-2 lg:col-span-4">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Auto-match Rules</label>
+                                        
+                                        <div className="flex gap-2">
+                                            <select 
+                                                value={newRuleType}
+                                                onChange={(e) => setNewRuleType(e.target.value as 'contains' | 'equals')}
+                                                className="w-32 bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                                            >
+                                                <option value="contains">Contains</option>
+                                                <option value="equals">Equals</option>
+                                            </select>
+                                            <Input 
+                                                placeholder="e.g. walmart" 
+                                                value={newRuleKeyword}
+                                                onChange={(e) => setNewRuleKeyword(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        handleAddRule();
+                                                    }
+                                                }}
+                                                className="flex-1 rounded-xl bg-white/[0.05] border-white/[0.1]" 
+                                            />
+                                            <Button type="button" onClick={handleAddRule} variant="outline" className="rounded-xl shrink-0">
+                                                Add Rule
+                                            </Button>
+                                        </div>
+
+                                        {rules.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mt-3 p-3 rounded-xl bg-black/20 border border-white/5">
+                                                {rules.map((rule, idx) => (
+                                                    <div key={idx} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs text-white">
+                                                        <span className="opacity-60 font-mono">{rule.type}:</span>
+                                                        <span className="font-bold">{rule.keyword}</span>
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => handleRemoveRule(idx)}
+                                                            className="ml-1 opacity-50 hover:opacity-100 hover:text-rose-400"
+                                                        >
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="space-y-2 sm:col-span-2 lg:col-span-3">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Color</label>
@@ -170,9 +234,19 @@ export function CategoriesClient({ categories: initialCategories }: CategoriesCl
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filtered.map((cat) => {
-                        const rules = (() => {
-                            try { return JSON.parse(cat.rules || "[]") as string[]; }
-                            catch { return cat.rules ? [cat.rules] : []; }
+                        const parsedRules = (() => {
+                            try { 
+                                const p = JSON.parse(cat.rules || "[]"); 
+                                if (Array.isArray(p) && p.length > 0 && typeof p[0] === 'object' && 'keyword' in p[0]) {
+                                    return p as Rule[];
+                                }
+                                // Backwards compatibility for old string array format
+                                if (Array.isArray(p)) {
+                                    return p.map(s => ({ keyword: String(s), type: 'contains' as const }));
+                                }
+                                return [];
+                            }
+                            catch { return cat.rules ? [{ keyword: cat.rules, type: 'contains' as const }] : []; }
                         })();
 
                         return (
@@ -220,15 +294,16 @@ export function CategoriesClient({ categories: initialCategories }: CategoriesCl
                                                 {cat._count.transactions} transaction{cat._count.transactions !== 1 ? "s" : ""}
                                             </span>
                                         </div>
-                                        {rules.length > 0 && (
+                                        {parsedRules.length > 0 && (
                                             <div className="flex flex-wrap gap-1 mt-2">
-                                                {rules.slice(0, 3).map((r, i) => (
-                                                    <span key={i} className="text-[10px] bg-white/[0.05] border border-white/[0.08] rounded-md px-1.5 py-0.5 text-muted-foreground font-medium">
-                                                        {r}
+                                                {parsedRules.slice(0, 3).map((r, i) => (
+                                                    <span key={i} className="text-[10px] bg-white/[0.05] border border-white/[0.08] rounded-md px-1.5 py-0.5 text-muted-foreground font-medium flex gap-1">
+                                                        <span className="opacity-50">{r.type === 'equals' ? '=' : '~'}</span>
+                                                        <span>{r.keyword}</span>
                                                     </span>
                                                 ))}
-                                                {rules.length > 3 && (
-                                                    <span className="text-[10px] text-muted-foreground">+{rules.length - 3}</span>
+                                                {parsedRules.length > 3 && (
+                                                    <span className="text-[10px] text-muted-foreground bg-white/[0.02] rounded-md px-1.5 py-0.5">+{parsedRules.length - 3} more</span>
                                                 )}
                                             </div>
                                         )}

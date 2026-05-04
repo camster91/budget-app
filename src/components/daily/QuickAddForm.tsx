@@ -1,15 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X, Camera, Tag, Hash, AlertTriangle } from "lucide-react";
+import { Plus, X, Camera, Tag, Hash, AlertTriangle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, cn } from "@/lib/utils";
+import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
+
+interface Category {
+    id: string;
+    name: string;
+    rules: string | null;
+    color?: string | null;
+    dailyCap?: number | null;
+}
 
 interface QuickAddFormProps {
-    onAdd: (formData: FormData) => Promise<void>;
-    categories?: { id: string; name: string; color?: string | null; dailyCap?: number | null }[];
+    onAdd: (formData: FormData) => Promise<any>;
+    categories?: Category[];
 }
 
 export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
@@ -18,6 +27,28 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
     const [description, setDescription] = useState("");
     const [categoryId, setCategoryId] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isAutoSelected, setIsAutoSelected] = useState(false);
+
+    // Auto-categorize as the user types
+    useEffect(() => {
+        if (!description.trim() || !categories.length) {
+            if (isAutoSelected) {
+                setCategoryId("");
+                setIsAutoSelected(false);
+            }
+            return;
+        }
+
+        const suggestedId = categorizeTransaction(description, categories as any);
+        if (suggestedId) {
+            setCategoryId(suggestedId);
+            setIsAutoSelected(true);
+        } else if (isAutoSelected) {
+            // Only clear if it was an auto-selection, don't clear if user manually picked
+            setCategoryId("");
+            setIsAutoSelected(false);
+        }
+    }, [description, categories, isAutoSelected]);
 
     const selectedCategory = categories.find((c) => c.id === categoryId);
 
@@ -35,6 +66,7 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
         setAmount("");
         setDescription("");
         setCategoryId("");
+        setIsAutoSelected(false);
         setIsSubmitting(false);
     }
 
@@ -142,7 +174,10 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
                                             {cat.dailyCap && (
                                                 <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-400 ring-1 ring-background" title={`Cap: $${cat.dailyCap}/day`} />
                                             )}
-                                            <Tag className="h-3 w-3" />
+                                            {categoryId === cat.id && isAutoSelected && (
+                                                <Sparkles className="h-3 w-3 animate-pulse text-primary" />
+                                            )}
+                                            {!isAutoSelected || categoryId !== cat.id ? <Tag className="h-3 w-3" /> : null}
                                             {cat.name}
                                         </button>
                                     ))}

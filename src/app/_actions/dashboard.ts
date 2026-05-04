@@ -3,15 +3,19 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { getAuthUser } from "@/lib/auth";
 
-async function aggregateByType(type: string, gte?: Date, lte?: Date) {
-    const where: Prisma.TransactionWhereInput = { type };
+async function aggregateByType(householdId: string, type: string, gte?: Date, lte?: Date) {
+    const where: Prisma.TransactionWhereInput = { type, householdId };
     if (gte || lte) where.date = { ...(gte && { gte }), ...(lte && { lte }) };
     const result = await prisma.transaction.aggregate({ where, _sum: { amount: true } });
     return result._sum.amount || 0;
 }
 
 export async function getDashboardSummary() {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
     try {
         const now = new Date();
         const thisMonthStart = startOfMonth(now);
@@ -30,13 +34,17 @@ export async function getDashboardSummary() {
             categorySpending,
             budgets,
         ] = await Promise.all([
-            aggregateByType("income"),
-            aggregateByType("expense"),
-            aggregateByType("income", thisMonthStart, thisMonthEnd),
-            aggregateByType("expense", thisMonthStart, thisMonthEnd),
-            aggregateByType("income", lastMonthStart, lastMonthEnd),
-            prisma.account.findMany({ select: { balance: true, type: true } }),
+            aggregateByType(user.householdId, "income"),
+            aggregateByType(user.householdId, "expense"),
+            aggregateByType(user.householdId, "income", thisMonthStart, thisMonthEnd),
+            aggregateByType(user.householdId, "expense", thisMonthStart, thisMonthEnd),
+            aggregateByType(user.householdId, "income", lastMonthStart, lastMonthEnd),
+            prisma.account.findMany({ 
+                where: { householdId: user.householdId },
+                select: { balance: true, type: true } 
+            }),
             prisma.transaction.findMany({
+                where: { householdId: user.householdId },
                 take: 5,
                 orderBy: { date: "desc" },
                 include: { category: true },
@@ -48,6 +56,7 @@ export async function getDashboardSummary() {
                     type: "expense",
                     date: { gte: thisMonthStart, lte: thisMonthEnd },
                     isTransfer: false,
+                    householdId: user.householdId,
                 },
                 _sum: { amount: true },
                 orderBy: { _sum: { amount: "desc" } },
@@ -55,7 +64,7 @@ export async function getDashboardSummary() {
             }),
             // Budgets with spending for health widget
             prisma.budget.findMany({
-                where: { period: now.toISOString().slice(0, 7) },
+                where: { period: now.toISOString().slice(0, 7), householdId: user.householdId },
                 include: { category: true },
                 take: 5,
                 orderBy: { amount: "desc" },
@@ -67,7 +76,7 @@ export async function getDashboardSummary() {
             .map((c) => c.categoryId)
             .filter(Boolean) as string[];
         const categories = categoryIds.length
-            ? await prisma.category.findMany({ where: { id: { in: categoryIds } } })
+            ? await prisma.category.findMany({ where: { id: { in: categoryIds }, householdId: user.householdId } })
             : [];
         const categoryMap = Object.fromEntries(categories.map((c) => [c.id, c]));
 
@@ -87,6 +96,7 @@ export async function getDashboardSummary() {
                         categoryId: b.categoryId,
                         date: { gte: thisMonthStart, lte: thisMonthEnd },
                         type: "expense",
+                        householdId: user.householdId,
                     },
                     _sum: { amount: true },
                 });
@@ -123,8 +133,8 @@ export async function getDashboardSummary() {
             Array.from({ length: 6 }, (_, i) => 5 - i).map(async (i) => {
                 const date = subMonths(now, i);
                 const [inc, exp] = await Promise.all([
-                    aggregateByType("income", startOfMonth(date), endOfMonth(date)),
-                    aggregateByType("expense", startOfMonth(date), endOfMonth(date)),
+                    aggregateByType(user.householdId, "income", startOfMonth(date), endOfMonth(date)),
+                    aggregateByType(user.householdId, "expense", startOfMonth(date), endOfMonth(date)),
                 ]);
                 return {
                     name: date.toLocaleString("default", { month: "short" }),

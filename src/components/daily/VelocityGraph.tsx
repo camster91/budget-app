@@ -56,7 +56,7 @@ export function VelocityGraph({ data }: VelocityGraphProps) {
                                 tick={{ fill: "#a1a1aa", fontSize: 10 }}
                             />
                             <YAxis hide />
-                            <Tooltip {...TOOLTIP_STYLE} formatter={(val: number) => [`$${val.toFixed(2)}`, "Spent"]} />
+                            <Tooltip {...TOOLTIP_STYLE} formatter={(val: any) => [`$${Number(val).toFixed(2)}`, "Spent"]} />
                             <Bar
                                 dataKey="amount"
                                 fill="#6366f1"

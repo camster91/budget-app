@@ -8,13 +8,14 @@ import { formatCurrency } from "@/lib/utils";
 
 interface TodaysLogProps {
     entries: { id: string; description: string; amount: number; category?: string | null; source?: string | null }[];
-    onDelete?: (id: string) => Promise<void>;
+    onDelete?: (id: string) => Promise<any>;
 }
 
 export function TodaysLog({ entries, onDelete }: TodaysLogProps) {
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
     async function handleDelete(id: string) {
+        if (!confirm("Are you sure you want to delete this transaction?")) return;
         setDeletingId(id);
         await onDelete?.(id);
         setDeletingId(null);

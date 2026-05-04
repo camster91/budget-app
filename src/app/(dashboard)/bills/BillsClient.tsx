@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, cn } from "@/lib/utils";
-import { FileText, Plus, X, AlertCircle, CheckCircle2, Clock, Info, Pencil, Check, LucideIcon } from "lucide-react";
+import { FileText, Plus, X, AlertCircle, CheckCircle2, Clock, Info, Pencil, Check, LucideIcon, HandCoins } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createBill, updateBill, deleteBill } from "@/app/_actions/bills";
+import { createBill, updateBill, deleteBill, markBillAsPaid } from "@/app/_actions/bills";
+import { toast } from "sonner";
 
 interface Bill {
     id: string;
@@ -358,11 +359,31 @@ export function BillsClient({ bills: initialBills, categories, accounts }: Bills
                                                         {status.label}
                                                     </div>
                                                 </div>
-                                                <div className="mt-3 pt-3 border-t border-white/[0.05]">
+                                                <div className="mt-3 pt-3 border-t border-white/[0.05] flex items-center justify-between">
                                                     <p className="text-[10px] text-muted-foreground font-medium">
                                                         Next due: {nextDate.toLocaleDateString(undefined, { month: "long", day: "numeric" })}
                                                     </p>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 text-xs text-muted-foreground hover:text-emerald-400 gap-1.5"
+                                                        onClick={() => {
+                                                            startTransition(async () => {
+                                                                const result = await markBillAsPaid(bill.id);
+                                                                if (result.success) {
+                                                                    toast.success(`${bill.name} marked as paid!`);
+                                                                } else {
+                                                                    toast.error(result.error || "Failed to mark as paid");
+                                                                }
+                                                            });
+                                                        }}
+                                                        disabled={isPending}
+                                                    >
+                                                        <HandCoins className="h-3 w-3" />
+                                                        Mark Paid
+                                                    </Button>
                                                 </div>
+
                                             </CardContent>
                                         </>
                                     )}

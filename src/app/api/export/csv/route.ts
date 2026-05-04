@@ -1,3 +1,5 @@
+export const dynamic = "force-static";
+
 import { exportTransactionsToCSV } from "@/app/_actions/export";
 
 export async function GET(req: Request) {

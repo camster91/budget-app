@@ -1,9 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/auth";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, subWeeks, format } from "date-fns";
 
 export async function getWeeklyReview(date?: Date) {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
     try {
         const target = date || new Date();
         const start = startOfWeek(target, { weekStartsOn: 1 });
@@ -11,7 +15,7 @@ export async function getWeeklyReview(date?: Date) {
 
         const [transactions, prevWeekStart, prevWeekEnd] = [
             await prisma.transaction.findMany({
-                where: { date: { gte: start, lte: end }, type: "expense", isDuplicate: false },
+                where: { date: { gte: start, lte: end }, type: "expense", isDuplicate: false, householdId: user.householdId },
                 include: { category: true },
                 orderBy: { date: "desc" },
             }),
@@ -20,7 +24,7 @@ export async function getWeeklyReview(date?: Date) {
         ];
 
         const prevTransactions = await prisma.transaction.findMany({
-            where: { date: { gte: prevWeekStart, lte: prevWeekEnd }, type: "expense", isDuplicate: false },
+            where: { date: { gte: prevWeekStart, lte: prevWeekEnd }, type: "expense", isDuplicate: false, householdId: user.householdId },
         });
 
         const total = transactions.reduce((s, t) => s + t.amount, 0);
@@ -38,7 +42,7 @@ export async function getWeeklyReview(date?: Date) {
 
         const byCategory = await prisma.transaction.groupBy({
             by: ["categoryId"],
-            where: { date: { gte: start, lte: end }, type: "expense", isDuplicate: false },
+            where: { date: { gte: start, lte: end }, type: "expense", isDuplicate: false, householdId: user.householdId },
             _sum: { amount: true },
         });
 
@@ -54,7 +58,7 @@ export async function getWeeklyReview(date?: Date) {
                 change,
                 transactionCount: transactions.length,
                 byDay,
-                byCategory: byCategory.filter((c) => c._sum.amount > 0).map((c) => ({
+                byCategory: byCategory.filter((c) => (c._sum.amount ?? 0) > 0).map((c) => ({
                     id: c.categoryId,
                     amount: c._sum.amount || 0,
                 })),
@@ -68,13 +72,16 @@ export async function getWeeklyReview(date?: Date) {
 }
 
 export async function getMonthlyReview(month?: string) {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
     try {
         const target = month ? new Date(`${month}-01`) : new Date();
         const start = startOfMonth(target);
         const end = endOfMonth(target);
 
         const transactions = await prisma.transaction.findMany({
-            where: { date: { gte: start, lte: end }, type: "expense", isDuplicate: false },
+            where: { date: { gte: start, lte: end }, type: "expense", isDuplicate: false, householdId: user.householdId },
             include: { category: true },
             orderBy: { date: "desc" },
         });
@@ -82,7 +89,7 @@ export async function getMonthlyReview(month?: string) {
         const prevStart = subMonths(start, 1);
         const prevEnd = subMonths(end, 1);
         const prevTransactions = await prisma.transaction.findMany({
-            where: { date: { gte: prevStart, lte: prevEnd }, type: "expense", isDuplicate: false },
+            where: { date: { gte: prevStart, lte: prevEnd }, type: "expense", isDuplicate: false, householdId: user.householdId },
         });
 
         const total = transactions.reduce((s, t) => s + t.amount, 0);

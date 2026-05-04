@@ -5,7 +5,8 @@ import { getAuthUser } from "@/lib/auth";
 import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 
 export async function exportTransactionsToCSV(month?: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const targetMonth = month ? new Date(`${month}-01`) : new Date();
         const start = startOfMonth(targetMonth);
@@ -15,6 +16,7 @@ export async function exportTransactionsToCSV(month?: string) {
             where: {
                 date: { gte: start, lte: end },
                 isDuplicate: false,
+                householdId: user.householdId,
             },
             include: { category: true, account: true },
             orderBy: { date: "desc" },
@@ -51,14 +53,19 @@ export async function exportTransactionsToCSV(month?: string) {
 }
 
 export async function exportTransactionsToJSON(month?: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const targetMonth = month ? new Date(`${month}-01`) : new Date();
         const start = startOfMonth(targetMonth);
         const end = endOfMonth(targetMonth);
 
         const transactions = await prisma.transaction.findMany({
-            where: { date: { gte: start, lte: end }, isDuplicate: false },
+            where: { 
+                date: { gte: start, lte: end }, 
+                isDuplicate: false,
+                householdId: user.householdId,
+            },
             include: { category: true },
             orderBy: { date: "desc" },
         });

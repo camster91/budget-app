@@ -6,68 +6,10 @@ import { revalidatePath } from "next/cache";
 import {
     startOfDay, endOfDay, differenceInDays,
     addDays, addWeeks, addMonths, isBefore, isAfter,
-    parseISO, format, subDays, getDay,
+    parseISO, format, subDays, getDay, setDate, getDaysInMonth,
 } from "date-fns";
 
-// ═════════════════════════════════════════════════════════════
-//  DATE HELPERS — Multi-income, multi-frequency aware
-// ═════════════════════════════════════════════════════════════
-
-function getNextPayDate(income: {
-    frequency: string;
-    startDate: Date;
-    dayOfMonth: number | null;
-}, from: Date = new Date()): Date {
-    const { frequency, startDate, dayOfMonth } = income;
-    let next = new Date(startDate);
-
-    while (isBefore(next, from)) {
-        if (frequency === "weekly") next = addWeeks(next, 1);
-        else if (frequency === "biweekly") next = addWeeks(next, 2);
-        else {
-            next = addMonths(next, 1);
-            if (dayOfMonth) {
-                const daysInMonth = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
-                next.setDate(Math.min(dayOfMonth, daysInMonth));
-            }
-        }
-    }
-    return next;
-}
-
-function getPeriodStart(income: {
-    frequency: string;
-    startDate: Date;
-}, nextPayDate: Date): Date {
-    const { frequency, startDate } = income;
-    let periodStart = new Date(startDate);
-
-    while (true) {
-        let candidate: Date;
-        if (frequency === "weekly") candidate = addWeeks(periodStart, 1);
-        else if (frequency === "biweekly") candidate = addWeeks(periodStart, 2);
-        else candidate = addMonths(periodStart, 1);
-
-        if (isBefore(candidate, nextPayDate) || candidate.getTime() === nextPayDate.getTime()) {
-            periodStart = candidate;
-        } else {
-            break;
-        }
-    }
-    return periodStart;
-}
-
-function isBillDueInPeriod(bill: BillLike, periodStart: Date, periodEnd: Date): boolean {
-    const startDay = periodStart.getDate();
-    const endDay = periodEnd.getDate();
-    const startMonth = periodStart.getMonth();
-    const endMonth = periodEnd.getMonth();
-
-    if (startMonth === endMonth) {
-        return bill.dueDay >= startDay && bill.dueDay < endDay;
-    }
-    return bill.dueDay >= startDay || bill.dueDay < endDay;
-}
+import { getNextPayDate, getPeriodStart, isBillDueInPeriod } from '@/lib/dateUtils';
 
 // ═════════════════════════════════════════════════════════════
 //  INTERFACES
@@ -108,6 +50,8 @@ export interface DailySnapshot {
     streak: number;
     bestStreak: number;
     categoryBreakdownToday: { name: string; amount: number; color: string | null }[];
+    spendingScore: number;
+    scoreLabel: string;
 }
 
 // ═════════════════════════════════════════════════════════════
@@ -115,11 +59,16 @@ export interface DailySnapshot {
 // ═════════════════════════════════════════════════════════════
 
 export async function getDailySnapshot(): Promise<{ success: boolean; data?: DailySnapshot; error?: string }> {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
-        const incomes = await prisma.income.findMany({ where: { isActive: true } });
+        const incomes = await prisma.income.findMany({ where: { isActive: true, householdId: user.householdId } });
         if (incomes.length === 0) {
             return { success: false, error: "No income configured. Go to Settings > Income." };
         }
+
+        // Auto-cleanup: run a silent check for duplicates on every dashboard load
+        await findAndMergeDuplicates().catch(() => {});
 
         const now = new Date();
         const todayStart = startOfDay(now);
@@ -140,7 +89,7 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
 
         // Bills due in this period
         const bills = await prisma.bill.findMany({
-            where: { isActive: true },
+            where: { isActive: true, householdId: user.householdId },
             include: { category: true },
         });
         const upcomingBills = bills
@@ -171,6 +120,7 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
                 date: { gte: todayStart, lte: todayEnd },
                 isDiscretionary: true,
                 isDuplicate: false,
+                householdId: user.householdId,
             },
             include: { category: true },
             orderBy: { date: "desc" },
@@ -185,6 +135,7 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
                 date: { gte: periodStart, lt: yesterday },
                 isDiscretionary: true,
                 isDuplicate: false,
+                householdId: user.householdId,
             },
         });
         const totalSpentSoFar = periodSpending.reduce((s, t) => s + t.amount, 0);
@@ -231,10 +182,10 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
         }
 
         // Streak calculation
-        const streak = await calculateStreak(dailyAllowance);
+        const streak = await calculateStreak(user.householdId, dailyAllowance);
 
         // Best streak from history
-        const bestStreak = await calculateBestStreak(dailyAllowance);
+        const bestStreak = await calculateBestStreak(user.householdId, dailyAllowance);
 
         // Category breakdown today
         const categoryBreakdownToday = await prisma.transaction.groupBy({
@@ -244,13 +195,14 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
                 date: { gte: todayStart, lte: todayEnd },
                 isDiscretionary: true,
                 isDuplicate: false,
+                householdId: user.householdId,
             },
             _sum: { amount: true },
         });
 
         const categoryIds = categoryBreakdownToday.map((c) => c.categoryId).filter(Boolean) as string[];
         const categoryColors = categoryIds.length > 0
-            ? await prisma.category.findMany({ where: { id: { in: categoryIds } }, select: { id: true, name: true, color: true } })
+            ? await prisma.category.findMany({ where: { id: { in: categoryIds }, householdId: user.householdId }, select: { id: true, name: true, color: true } })
             : [];
         const colorMap = Object.fromEntries(categoryColors.map((c) => [c.id, c]));
 
@@ -264,7 +216,7 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
             .sort((a, b) => b.amount - a.amount);
 
         // Smart Insights
-        const smartInsights = await generateSmartInsights({
+        const smartInsights = await generateSmartInsights(user.householdId, {
             accumulatedSurplus, dailyAllowance, spentToday, remainingToday,
             daysRemaining, upcomingBills, avgDailySpend, pacePercent,
         });
@@ -339,7 +291,7 @@ interface InsightInput {
     pacePercent: number;
 }
 
-async function generateSmartInsights(input: InsightInput): Promise<string[]> {
+async function generateSmartInsights(householdId: string, input: InsightInput): Promise<string[]> {
     const insights: string[] = [];
     const { accumulatedSurplus, dailyAllowance, spentToday, remainingToday, daysRemaining, upcomingBills, avgDailySpend, pacePercent } = input;
 
@@ -382,6 +334,7 @@ async function generateSmartInsights(input: InsightInput): Promise<string[]> {
             type: "expense",
             date: { gte: startOfDay(new Date()) },
             isDuplicate: true,
+            householdId,
         },
     });
     if (duplicatesToday > 0) {
@@ -396,7 +349,8 @@ async function generateSmartInsights(input: InsightInput): Promise<string[]> {
 // ═════════════════════════════════════════════════════════════
 
 export async function addQuickSpend(formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const amount = parseFloat(formData.get("amount") as string);
         const description = (formData.get("description") as string) || "Quick spend";
@@ -414,6 +368,7 @@ export async function addQuickSpend(formData: FormData) {
                 amount,
                 date: { gte: fiveMinAgo },
                 type: "expense",
+                householdId: user.householdId,
             },
         });
 
@@ -433,6 +388,7 @@ export async function addQuickSpend(formData: FormData) {
                 fingerprint: `${amount}-${normalizedDesc}-${new Date().toISOString().slice(0, 10)}`,
                 source: "manual",
                 categoryId: categoryId || null,
+                householdId: user.householdId,
             },
         });
 
@@ -446,9 +402,10 @@ export async function addQuickSpend(formData: FormData) {
 }
 
 export async function deleteTransactionAndRevalidate(id: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
-        await prisma.transaction.delete({ where: { id } });
+        await prisma.transaction.delete({ where: { id, householdId: user.householdId } });
         revalidatePath("/daily");
         return { success: true };
     } catch (error) {
@@ -461,10 +418,11 @@ export async function deleteTransactionAndRevalidate(id: string) {
 // ═════════════════════════════════════════════════════════════
 
 export async function findAndMergeDuplicates() {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const recent = await prisma.transaction.findMany({
-            where: { type: "expense", date: { gte: subDays(new Date(), 30) } },
+            where: { type: "expense", date: { gte: subDays(new Date(), 30) }, householdId: user.householdId },
             orderBy: { date: "desc" },
         });
 
@@ -477,7 +435,7 @@ export async function findAndMergeDuplicates() {
             
             if (seen.has(key)) {
                 await prisma.transaction.update({
-                    where: { id: tx.id },
+                    where: { id: tx.id, householdId: user.householdId },
                     data: { isDuplicate: true, duplicateOfId: seen.get(key)! },
                 });
                 merged++;
@@ -490,6 +448,63 @@ export async function findAndMergeDuplicates() {
         return { success: true, data: { merged } };
     } catch (error) {
         return { success: false, error: "Dedupe failed" };
+    }
+}
+
+export async function getDataHealth() {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+    try {
+        const [
+            totalTransactions,
+            duplicateCount,
+            uncategorizedCount,
+            linkedAccounts,
+            pendingReceipts
+        ] = await Promise.all([
+            prisma.transaction.count({ where: { householdId: user.householdId } }),
+            prisma.transaction.count({ where: { isDuplicate: true, householdId: user.householdId } }),
+            prisma.transaction.count({ where: { categoryId: null, type: "expense", householdId: user.householdId } }),
+            prisma.account.count({ where: { plaidItemId: { not: null }, householdId: user.householdId } }),
+            prisma.screenshotReceipt.count({ where: { status: "pending", householdId: user.householdId } })
+        ]);
+
+        return {
+            success: true,
+            data: {
+                totalTransactions,
+                duplicateCount,
+                uncategorizedCount,
+                linkedAccounts,
+                pendingReceipts,
+                overallHealth: totalTransactions > 0 
+                    ? Math.round(((totalTransactions - duplicateCount - uncategorizedCount) / totalTransactions) * 100) 
+                    : 100
+            }
+        };
+    } catch (error) {
+        return { success: false, error: "Failed to fetch health metrics" };
+    }
+}
+
+export async function batchCleanupTransactions() {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+    try {
+        // Find and delete all confirmed duplicates
+        const result = await prisma.transaction.deleteMany({
+            where: { 
+                isDuplicate: true,
+                duplicateOfId: { not: null },
+                householdId: user.householdId,
+            }
+        });
+
+        revalidatePath("/daily");
+        revalidatePath("/transactions");
+        return { success: true, data: { deleted: result.count } };
+    } catch (error) {
+        return { success: false, error: "Cleanup failed" };
     }
 }
 
@@ -510,7 +525,7 @@ function getDaysInCurrentMonth() {
 //  STREAK ENGINE
 // ═════════════════════════════════════════════════════════════
 
-async function calculateStreak(dailyAllowance: number): Promise<number> {
+async function calculateStreak(householdId: string, dailyAllowance: number): Promise<number> {
     try {
         if (dailyAllowance <= 0) return 0;
         let streak = 0;
@@ -525,6 +540,7 @@ async function calculateStreak(dailyAllowance: number): Promise<number> {
                     date: { gte: dayStart, lte: dayEnd },
                     isDiscretionary: true,
                     isDuplicate: false,
+                    householdId,
                 },
                 _sum: { amount: true },
             });
@@ -545,7 +561,7 @@ async function calculateStreak(dailyAllowance: number): Promise<number> {
     }
 }
 
-async function calculateBestStreak(dailyAllowance: number): Promise<number> {
+async function calculateBestStreak(householdId: string, dailyAllowance: number): Promise<number> {
     try {
         if (dailyAllowance <= 0) return 0;
         const txs = await prisma.transaction.findMany({
@@ -554,6 +570,7 @@ async function calculateBestStreak(dailyAllowance: number): Promise<number> {
                 isDiscretionary: true,
                 isDuplicate: false,
                 date: { gte: subDays(new Date(), 90) },
+                householdId,
             },
             orderBy: { date: "asc" },
             select: { date: true, amount: true },
@@ -580,4 +597,58 @@ async function calculateBestStreak(dailyAllowance: number): Promise<number> {
     } catch {
         return 0;
     }
+}
+
+// ═════════════════════════════════════════════════════════════
+//  SPENDING SCORE ENGINE
+// ═════════════════════════════════════════════════════════════
+
+interface ScoreInput {
+    pacePercent: number;
+    accumulatedSurplus: number;
+    dailyAllowance: number;
+    totalIncome: number;
+    upcomingBillsTotal: number;
+    streak: number;
+}
+
+function computeSpendingScore(input: ScoreInput): { score: number; label: string } {
+    let score = 70; // Baseline
+
+    // Pace impact (up to +/- 20)
+    if (input.pacePercent > 110) score += 15;
+    else if (input.pacePercent > 100) score += 5;
+    else if (input.pacePercent < 80) score -= 15;
+    else if (input.pacePercent < 95) score -= 5;
+
+    // Surplus impact (up to +10)
+    if (input.accumulatedSurplus > input.dailyAllowance * 2) score += 10;
+    else if (input.accumulatedSurplus > 0) score += 5;
+    else if (input.accumulatedSurplus < -input.dailyAllowance) score -= 10;
+
+    // Streak impact (up to +10)
+    if (input.streak > 7) score += 10;
+    else if (input.streak > 3) score += 5;
+    else if (input.streak < 0) score -= 5;
+
+    // Savings rate impact (up to +10)
+    const discretionaryTotal = input.totalIncome - input.upcomingBillsTotal;
+    if (discretionaryTotal > 0) {
+        const potentialSavings = input.accumulatedSurplus;
+        const rate = (potentialSavings / discretionaryTotal) * 100;
+        if (rate > 20) score += 10;
+        else if (rate > 10) score += 5;
+    }
+
+    score = Math.max(0, Math.min(100, score));
+
+    let label = "C";
+    if (score >= 90) label = "A+";
+    else if (score >= 80) label = "A";
+    else if (score >= 70) label = "B";
+    else if (score >= 60) label = "C";
+    else if (score >= 50) label = "D";
+    else label = "F";
+
+    return { score: Math.round(score), label };
 }

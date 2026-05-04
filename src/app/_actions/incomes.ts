@@ -5,8 +5,13 @@ import { getAuthUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 export async function getIncomes() {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
-        const incomes = await prisma.income.findMany({ orderBy: { createdAt: "desc" } });
+        const incomes = await prisma.income.findMany({ 
+            where: { householdId: user.householdId },
+            orderBy: { createdAt: "desc" } 
+        });
         return { success: true, data: incomes };
     } catch (error) {
         return { success: false, error: "Failed to fetch incomes" };
@@ -14,7 +19,8 @@ export async function getIncomes() {
 }
 
 export async function createIncome(formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const name = (formData.get("name") as string) || "Income";
         const amount = parseFloat(formData.get("amount") as string);
@@ -27,7 +33,14 @@ export async function createIncome(formData: FormData) {
         }
 
         const income = await prisma.income.create({
-            data: { name, amount, frequency, startDate, dayOfMonth: dayOfMonth || null },
+            data: { 
+                name, 
+                amount, 
+                frequency, 
+                startDate, 
+                dayOfMonth: dayOfMonth || null,
+                householdId: user.householdId,
+            },
         });
 
         revalidatePath("/daily");
@@ -40,7 +53,8 @@ export async function createIncome(formData: FormData) {
 }
 
 export async function updateIncome(id: string, formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const name = (formData.get("name") as string) || "Income";
         const amount = parseFloat(formData.get("amount") as string);
@@ -50,7 +64,7 @@ export async function updateIncome(id: string, formData: FormData) {
         const isActive = formData.get("isActive") === "true";
 
         const income = await prisma.income.update({
-            where: { id },
+            where: { id, householdId: user.householdId },
             data: { name, amount, frequency, startDate, dayOfMonth: dayOfMonth || null, isActive },
         });
 
@@ -63,9 +77,10 @@ export async function updateIncome(id: string, formData: FormData) {
 }
 
 export async function deleteIncome(id: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
-        await prisma.income.delete({ where: { id } });
+        await prisma.income.delete({ where: { id, householdId: user.householdId } });
         revalidatePath("/daily");
         revalidatePath("/settings");
         return { success: true };

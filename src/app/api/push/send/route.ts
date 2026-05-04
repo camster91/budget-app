@@ -1,3 +1,5 @@
+export const dynamic = "force-static";
+
 import { triggerSpendingAlert, triggerBillReminder } from "@/app/_actions/push";
 
 export async function POST() {

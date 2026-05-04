@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isTransfer } from "@/lib/utils/transactionUtils";
+import { getAuthUser } from "@/lib/auth";
 
 export type CSVRow = Record<string, string>;
 
@@ -12,6 +13,9 @@ export interface ImportOptions {
 }
 
 export async function importCSVTransactions(data: CSVRow[], options: ImportOptions) {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+
     try {
         let importedCount = 0;
         const errors = [];
@@ -44,6 +48,7 @@ export async function importCSVTransactions(data: CSVRow[], options: ImportOptio
                         date,
                         type: type.toLowerCase() === 'income' || amount > 0 ? 'income' : 'expense',
                         isTransfer: isTransferTransaction,
+                        householdId: user.householdId,
                     },
                 });
 

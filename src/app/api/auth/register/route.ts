@@ -1,24 +1,23 @@
+export const dynamic = "force-static";
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, signToken, setTokenCookie } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
+    if (!checkRateLimit(`register:${ip}`, 3, 60 * 60 * 1000)) { // 3 registrations per hour
+      return NextResponse.json({ error: "Too many registration attempts" }, { status: 429 });
+    }
+
     const { email, password, name } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
         { status: 400 }
-      );
-    }
-
-    // Single-user app: block registration once an account exists
-    const userCount = await prisma.user.count();
-    if (userCount > 0) {
-      return NextResponse.json(
-        { error: "Registration is disabled" },
-        { status: 403 }
       );
     }
 
@@ -31,12 +30,30 @@ export async function POST(request: Request) {
     }
 
     const hashed = await hashPassword(password);
-    const user = await prisma.user.create({
-      data: { email, password: hashed, name },
+    
+    // Create household and user in a transaction
+    const { user, household } = await prisma.$transaction(async (tx) => {
+      const household = await tx.household.create({
+        data: { name: `${name || email}'s Household` },
+      });
+
+      const user = await tx.user.create({
+        data: { 
+          email, 
+          password: hashed, 
+          name,
+          householdId: household.id
+        },
+      });
+
+      return { user, household };
     });
 
-    const token = signToken({ userId: user.id, email: user.email });
-    const response = NextResponse.json(
+    const token = signToken({ 
+      userId: user.id, 
+      email: user.email, 
+      householdId: user.householdId || ""
+    });    const response = NextResponse.json(
       { user: { id: user.id, email: user.email, name: user.name } },
       { status: 201 }
     );

@@ -5,8 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
 export async function getCategories() {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const categories = await prisma.category.findMany({
+            where: { householdId: user.householdId },
             orderBy: { name: "asc" },
         });
         return { success: true, data: categories };
@@ -16,7 +19,8 @@ export async function getCategories() {
 }
 
 export async function createCategory(formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const name = formData.get("name") as string;
         const icon = formData.get("icon") as string;
@@ -31,6 +35,7 @@ export async function createCategory(formData: FormData) {
                 color,
                 type,
                 rules,
+                householdId: user.householdId
             },
         });
         revalidatePath("/categories");
@@ -41,7 +46,8 @@ export async function createCategory(formData: FormData) {
 }
 
 export async function updateCategory(id: string, formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const name = formData.get("name") as string;
         const icon = formData.get("icon") as string;
@@ -49,7 +55,7 @@ export async function updateCategory(id: string, formData: FormData) {
         const rules = formData.get("rules") as string;
 
         await prisma.category.update({
-            where: { id },
+            where: { id, householdId: user.householdId },
             data: {
                 name,
                 icon,
@@ -65,13 +71,14 @@ export async function updateCategory(id: string, formData: FormData) {
 }
 
 export async function updateCategoryBudgetCap(id: string, formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const dailyCapRaw = formData.get("dailyCap") as string;
         const dailyCap = dailyCapRaw === "" || dailyCapRaw === null ? null : parseFloat(dailyCapRaw);
 
         await prisma.category.update({
-            where: { id },
+            where: { id, householdId: user.householdId },
             data: { dailyCap },
         });
         revalidatePath("/settings");
@@ -82,14 +89,15 @@ export async function updateCategoryBudgetCap(id: string, formData: FormData) {
 }
 
 export async function deleteCategory(id: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         await prisma.$transaction([
-            prisma.transaction.updateMany({ where: { categoryId: id }, data: { categoryId: null } }),
-            prisma.goal.updateMany({ where: { categoryId: id }, data: { categoryId: null } }),
-            prisma.budget.deleteMany({ where: { categoryId: id } }),
-            prisma.bill.deleteMany({ where: { categoryId: id } }),
-            prisma.category.delete({ where: { id } }),
+            prisma.transaction.updateMany({ where: { categoryId: id, householdId: user.householdId }, data: { categoryId: null } }),
+            prisma.goal.updateMany({ where: { categoryId: id, householdId: user.householdId }, data: { categoryId: null } }),
+            prisma.budget.deleteMany({ where: { categoryId: id, householdId: user.householdId } }),
+            prisma.bill.deleteMany({ where: { categoryId: id, householdId: user.householdId } }),
+            prisma.category.delete({ where: { id, householdId: user.householdId } }),
         ]);
         revalidatePath("/categories");
         revalidatePath("/bills");

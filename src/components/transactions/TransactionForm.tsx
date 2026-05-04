@@ -9,15 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { queueOfflineAction } from "@/lib/offlineSync";
 
 const transactionSchema = z.object({
     type: z.enum(["expense", "income"]),
-    amount: z.string().refine((v) =>> !isNaN(Number(v)) && Number(v) > 0, "Amount must be a positive number"),
+    amount: z.string().refine((v) => !isNaN(Number(v)) && Number(v) > 0, "Amount must be a positive number"),
     description: z.string().min(1, "Description is required").max(100),
     categoryId: z.string().optional(),
     category: z.string().optional(),
     date: z.string().min(1, "Date is required"),
-    isDiscretionary: z.boolean().default(true),
+    isDiscretionary: z.boolean(),
 });
 
 type TransactionValues = z.infer<typeof transactionSchema>;
@@ -51,6 +52,22 @@ export function TransactionForm({ categories = [] }: TransactionFormProps) {
         formData.append("isDiscretionary", data.isDiscretionary ? "true" : "false");
         if (data.categoryId) formData.append("categoryId", data.categoryId);
         else if (data.category) formData.append("category", data.category);
+
+        if (!navigator.onLine) {
+            await queueOfflineAction("TRANSACTION_CREATE", {
+                type: data.type,
+                amount: data.amount,
+                description: data.description,
+                date: data.date,
+                isDiscretionary: data.isDiscretionary ? "true" : "false",
+                categoryId: data.categoryId,
+                category: data.category
+            });
+            setOpen(false);
+            reset();
+            toast.success("Saved offline. Will sync when connected.");
+            return;
+        }
 
         const res = await createTransaction(formData);
 

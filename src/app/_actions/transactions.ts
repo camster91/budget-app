@@ -7,8 +7,11 @@ import { isTransfer } from "@/lib/utils/transactionUtils";
 import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
 
 export async function getTransactions() {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const transactions = await prisma.transaction.findMany({
+            where: { householdId: user.householdId },
             orderBy: {
                 date: "desc",
             },
@@ -24,7 +27,8 @@ export async function getTransactions() {
 }
 
 export async function createTransaction(formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const amount = parseFloat(formData.get("amount") as string);
         const description = formData.get("description") as string;
@@ -41,7 +45,7 @@ export async function createTransaction(formData: FormData) {
 
         // Auto-categorization
         if (!categoryId) {
-            const categories = await prisma.category.findMany();
+            const categories = await prisma.category.findMany({ where: { householdId: user.householdId }});
             categoryId = categorizeTransaction(description, categories) || "";
         }
 
@@ -49,7 +53,7 @@ export async function createTransaction(formData: FormData) {
             const category = await prisma.category.upsert({
                 where: { name: categoryName },
                 update: {},
-                create: { name: categoryName, type },
+                create: { name: categoryName, type, householdId: user.householdId },
             });
             categoryId = category.id;
         }
@@ -63,6 +67,7 @@ export async function createTransaction(formData: FormData) {
                 categoryId: categoryId || null,
                 isTransfer: isTransfer(description),
                 isDiscretionary: type === "income" ? false : isDiscretionary,
+                householdId: user.householdId,
             },
         });
 
@@ -77,7 +82,8 @@ export async function createTransaction(formData: FormData) {
 
 
 export async function updateTransaction(id: string, formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const amount = parseFloat(formData.get("amount") as string);
         const description = formData.get("description") as string;
@@ -86,7 +92,7 @@ export async function updateTransaction(id: string, formData: FormData) {
         const categoryId = formData.get("categoryId") as string;
 
         await prisma.transaction.update({
-            where: { id },
+            where: { id, householdId: user.householdId },
             data: {
                 amount,
                 description,
@@ -105,10 +111,11 @@ export async function updateTransaction(id: string, formData: FormData) {
 }
 
 export async function deleteTransaction(id: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         await prisma.transaction.delete({
-            where: { id }
+            where: { id, householdId: user.householdId }
         });
         revalidatePath("/transactions");
         revalidatePath("/");

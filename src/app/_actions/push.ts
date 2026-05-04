@@ -25,6 +25,8 @@ export async function getPushSubscription() {
 }
 
 export async function triggerSpendingAlert(): Promise<PushMessage | null> {
+    const user = await getAuthUser();
+    if (!user) return null;
     try {
         const todayStart = startOfDay(new Date());
         const todayEnd = endOfDay(new Date());
@@ -35,6 +37,7 @@ export async function triggerSpendingAlert(): Promise<PushMessage | null> {
                 date: { gte: todayStart, lte: todayEnd },
                 isDiscretionary: true,
                 isDuplicate: false,
+                householdId: user.householdId,
             },
             _sum: { amount: true },
         });
@@ -72,10 +75,12 @@ export async function triggerSpendingAlert(): Promise<PushMessage | null> {
 }
 
 export async function triggerBillReminder(): Promise<PushMessage | null> {
+    const user = await getAuthUser();
+    if (!user) return null;
     try {
         const today = new Date();
         const upcoming = await prisma.bill.findMany({
-            where: { isActive: true },
+            where: { isActive: true, householdId: user.householdId },
         });
 
         const soon = upcoming.filter((b) => {

@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
 export async function createGoal(formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const name = formData.get("name") as string;
         const targetAmount = parseFloat(formData.get("targetAmount") as string);
@@ -19,7 +20,8 @@ export async function createGoal(formData: FormData) {
                 targetAmount, 
                 currentAmount, 
                 categoryId,
-                targetDate: targetDateStr ? new Date(targetDateStr) : null
+                targetDate: targetDateStr ? new Date(targetDateStr) : null,
+                householdId: user.householdId,
             },
         });
         revalidatePath("/goals");
@@ -30,7 +32,8 @@ export async function createGoal(formData: FormData) {
 }
 
 export async function updateGoal(id: string, formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const name = formData.get("name") as string;
         const targetAmount = parseFloat(formData.get("targetAmount") as string);
@@ -39,7 +42,7 @@ export async function updateGoal(id: string, formData: FormData) {
         const targetDateStr = formData.get("targetDate") as string;
 
         await prisma.goal.update({
-            where: { id },
+            where: { id, householdId: user.householdId },
             data: {
                 name,
                 targetAmount,
@@ -56,9 +59,10 @@ export async function updateGoal(id: string, formData: FormData) {
 }
 
 export async function deleteGoal(id: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
-        await prisma.goal.delete({ where: { id } });
+        await prisma.goal.delete({ where: { id, householdId: user.householdId } });
         revalidatePath("/goals");
         return { success: true };
     } catch (error) {

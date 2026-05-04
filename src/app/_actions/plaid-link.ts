@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { plaidClient } from "@/lib/plaid";
+import { encrypt } from "@/lib/encryption";
 import {
   CountryCode,
   Products,
@@ -10,10 +11,11 @@ import {
 import { revalidatePath } from "next/cache";
 
 export async function createLinkToken() {
-  if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+  const user = await getAuthUser();
+  if (!user) return { success: false, error: "Unauthorized" };
   try {
     const tokenRes = await plaidClient.linkTokenCreate({
-      user: { client_user_id: "user-placeholder" },
+      user: { client_user_id: user.userId },
       client_name: "GlowOS Finance",
       products: [Products.Transactions],
       country_codes: [CountryCode.Us, CountryCode.Ca],
@@ -29,7 +31,8 @@ export async function createLinkToken() {
 }
 
 export async function exchangePublicToken(publicToken: string) {
-  if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+  const user = await getAuthUser();
+  if (!user) return { success: false, error: "Unauthorized" };
   try {
     const exchangeRes = await plaidClient.itemPublicTokenExchange({
       public_token: publicToken,
@@ -43,8 +46,9 @@ export async function exchangePublicToken(publicToken: string) {
         name: "Linked Bank",
         type: "checking",
         institution: "Plaid Bank",
-        plaidAccessToken: accessToken,
+        plaidAccessToken: encrypt(accessToken),
         plaidItemId: itemId,
+        householdId: user.householdId,
       },
     });
 

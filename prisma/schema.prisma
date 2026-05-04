@@ -11,6 +11,39 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Household {
+  id        String   @id @default(uuid())
+  name      String   @default("My Household")
+  
+  users              User[]
+  transactions       Transaction[]
+  categories         Category[]
+  budgets            Budget[]
+  accounts           Account[]
+  bills              Bill[]
+  goals              Goal[]
+  incomes            Income[]
+  screenshotReceipts ScreenshotReceipt[]
+  spendingPatterns   SpendingPattern[]
+  dailyPeriods       DailyPeriod[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id          String     @id @default(uuid())
+  email       String     @unique
+  password    String
+  name        String?
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([householdId])
+}
+
 model Transaction {
   id          String   @id @default(uuid())
   amount      Float
@@ -45,8 +78,14 @@ model Transaction {
   category    Category? @relation(fields: [categoryId], references: [id])
   categoryId  String?
 
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([householdId])
+  @@index([householdId, date])
 }
 
 model Category {
@@ -72,8 +111,13 @@ model Category {
   bills        Bill[]
   goals        Goal[]
 
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([householdId])
 }
 
 model Budget {
@@ -83,6 +127,9 @@ model Budget {
   
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
+
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -102,13 +149,19 @@ model Account {
   // Plaid integration
   plaidAccessToken String? // Encrypted access token
   plaidItemId String? // Plaid item ID
+  plaidCursor String? // Cursor for incremental sync
   plaidLastSynced DateTime? // Last successful sync timestamp
   
   transactions Transaction[]
   bills        Bill[]
+
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([householdId])
 }
 
 model Bill {
@@ -125,9 +178,14 @@ model Bill {
   isActive    Boolean  @default(true)
   
   transactions Transaction[]
+
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([householdId])
 }
 
 model Goal {
@@ -139,17 +197,13 @@ model Goal {
   category    Category? @relation(fields: [categoryId], references: [id])
   categoryId  String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([householdId])
 }
 
 // Multiple income sources
@@ -161,6 +215,9 @@ model Income {
   startDate   DateTime @db.Date
   dayOfMonth  Int?     // For monthly: day of month (1-31)
   isActive    Boolean  @default(true)
+
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -181,6 +238,9 @@ model ScreenshotReceipt {
   
   // Linked on approval
   transactionId String?
+
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
   
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -196,6 +256,9 @@ model SpendingPattern {
   dayOfMonth    Int?     // for monthly
   confidence    Float    @default(0.5)
   lastSeen      DateTime
+
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -210,6 +273,9 @@ model DailyPeriod {
   billsTotal      Float
   dailyAllowance  Float
   accumulatedSurplus Float @default(0)
+
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

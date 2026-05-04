@@ -5,10 +5,12 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
 export async function getBudgets(period?: string) {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     const targetPeriod = period || new Date().toISOString().slice(0, 7);
     try {
         const budgets = await prisma.budget.findMany({
-            where: { period: targetPeriod },
+            where: { period: targetPeriod, householdId: user.householdId },
             include: { category: true },
             orderBy: { createdAt: "desc" },
         });
@@ -22,6 +24,7 @@ export async function getBudgets(period?: string) {
                     categoryId: budget.categoryId,
                     date: { gte: startDate, lte: endDate },
                     type: "expense",
+                    householdId: user.householdId
                 },
                 _sum: { amount: true },
             });
@@ -43,7 +46,8 @@ export async function getBudgets(period?: string) {
 }
 
 export async function createBudget(formData: FormData) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const amount = parseFloat(formData.get("amount") as string);
         const categoryId = formData.get("categoryId") as string;
@@ -59,7 +63,7 @@ export async function createBudget(formData: FormData) {
             const category = await prisma.category.upsert({
                 where: { name: categoryName },
                 update: {},
-                create: { name: categoryName, type: "expense" },
+                create: { name: categoryName, type: "expense", householdId: user.householdId },
             });
             resolvedCategoryId = category.id;
         }
@@ -67,7 +71,7 @@ export async function createBudget(formData: FormData) {
         await prisma.budget.upsert({
             where: { categoryId_period: { categoryId: resolvedCategoryId, period } },
             update: { amount },
-            create: { amount, period, categoryId: resolvedCategoryId },
+            create: { amount, period, categoryId: resolvedCategoryId, householdId: user.householdId },
         });
 
         revalidatePath("/budgets");
@@ -80,9 +84,10 @@ export async function createBudget(formData: FormData) {
 }
 
 export async function deleteBudget(id: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
-        await prisma.budget.delete({ where: { id } });
+        await prisma.budget.delete({ where: { id, householdId: user.householdId } });
         revalidatePath("/budgets");
         return { success: true };
     } catch (error) {

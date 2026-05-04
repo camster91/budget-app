@@ -10,14 +10,14 @@ export default async function ReviewPage() {
         getMonthlyReview(),
     ]);
 
-    const months = Array.from({ length: 12 }, (_, i) =
+    const months = Array.from({ length: 12 }, (_, i) =>
         format(subMonths(new Date(), i), "yyyy-MM")
     );
 
     return (
         <ReviewClient
-            initialWeekly={weekly}
-            initialMonthly={monthly}
+            initialWeekly={weekly || null}
+            initialMonthly={monthly || null}
             months={months}
         />
     );

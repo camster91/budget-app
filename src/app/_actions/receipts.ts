@@ -18,7 +18,8 @@ export async function saveReceiptParse(input: {
     rawText: string;
     parsed: ParsedReceipt;
 }) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const receipt = await prisma.screenshotReceipt.create({
             data: {
@@ -29,10 +30,11 @@ export async function saveReceiptParse(input: {
                 rawItems: input.parsed.items.length > 0 ? JSON.stringify(input.parsed.items) : null,
                 confidence: input.parsed.confidence,
                 status: "pending",
+                householdId: user.householdId,
             },
         });
 
-        const categoryId = await suggestCategoryForMerchant(input.parsed.merchant);
+        const categoryId = await suggestCategoryForMerchant(user.householdId, input.parsed.merchant);
 
         return {
             success: true,
@@ -49,13 +51,14 @@ export async function saveReceiptParse(input: {
     }
 }
 
-async function suggestCategoryForMerchant(merchant?: string): Promise<string | null> {
+async function suggestCategoryForMerchant(householdId: string, merchant?: string): Promise<string | null> {
     if (!merchant) return null;
     const normalized = merchant.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
     const learned = await prisma.$queryRaw<{ categoryId: string; hits: bigint }[]>`
         WITH cleaned AS (
             SELECT REGEXP_REPLACE(LOWER(description), '[^a-z0-9 ]', '', 'g') AS merchant, "categoryId"
-            FROM "Transaction" WHERE type = 'expense' AND "categoryId" IS NOT NULL
+            FROM "Transaction" 
+            WHERE type = 'expense' AND "categoryId" IS NOT NULL AND "householdId" = ${householdId}
         )
         SELECT "categoryId", COUNT(*)::bigint AS hits
         FROM cleaned
@@ -69,9 +72,11 @@ async function suggestCategoryForMerchant(merchant?: string): Promise<string | n
 }
 
 export async function getPendingReceipts() {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const receipts = await prisma.screenshotReceipt.findMany({
-            where: { status: "pending" },
+            where: { status: "pending", householdId: user.householdId },
             orderBy: { createdAt: "desc" },
             take: 20,
         });
@@ -84,9 +89,12 @@ export async function getPendingReceipts() {
 export async function approveReceipt(receiptId: string, overrides?: {
     amount?: number; merchant?: string; date?: Date; categoryId?: string;
 }) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
-        const receipt = await prisma.screenshotReceipt.findUnique({ where: { id: receiptId } });
+        const receipt = await prisma.screenshotReceipt.findFirst({ 
+            where: { id: receiptId, householdId: user.householdId } 
+        });
         if (!receipt) return { success: false, error: "Receipt not found" };
 
         const amount = overrides?.amount ?? receipt.rawAmount ?? 0;
@@ -95,7 +103,7 @@ export async function approveReceipt(receiptId: string, overrides?: {
 
         let categoryId = overrides?.categoryId;
         if (!categoryId && receipt.rawMerchant) {
-            categoryId = await suggestCategoryForMerchant(receipt.rawMerchant) || null;
+            categoryId = await suggestCategoryForMerchant(user.householdId, receipt.rawMerchant) || undefined;
         }
 
         const tx = await prisma.transaction.create({
@@ -107,11 +115,12 @@ export async function approveReceipt(receiptId: string, overrides?: {
                 isDiscretionary: true,
                 source: "screenshot",
                 categoryId: categoryId || null,
+                householdId: user.householdId,
             },
         });
 
         await prisma.screenshotReceipt.update({
-            where: { id: receiptId },
+            where: { id: receiptId, householdId: user.householdId },
             data: { status: "processed", transactionId: tx.id },
         });
 
@@ -123,10 +132,11 @@ export async function approveReceipt(receiptId: string, overrides?: {
 }
 
 export async function rejectReceipt(receiptId: string) {
-    if (!await getAuthUser()) return { success: false, error: "Unauthorized" };
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         await prisma.screenshotReceipt.update({
-            where: { id: receiptId },
+            where: { id: receiptId, householdId: user.householdId },
             data: { status: "rejected" },
         });
         return { success: true };
@@ -136,6 +146,8 @@ export async function rejectReceipt(receiptId: string) {
 }
 
 export async function getSmartMerchantSuggestions(query: string): Promise<{ success: boolean; data?: string[]; error?: string }> {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
     try {
         const normalized = query.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
         if (!normalized || normalized.length < 2) return { success: true, data: [] };
@@ -145,6 +157,7 @@ export async function getSmartMerchantSuggestions(query: string): Promise<{ succ
                    COUNT(*)::bigint AS count
             FROM "Transaction"
             WHERE type = 'expense'
+                AND "householdId" = ${user.householdId}
                 AND REGEXP_REPLACE(LOWER(description), '[^a-z0-9 ]', '', 'g') LIKE '%' || ${normalized} || '%'
             GROUP BY REGEXP_REPLACE(LOWER(description), '[^a-z0-9 ]', '', 'g')
             ORDER BY count DESC
