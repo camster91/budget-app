@@ -64,7 +64,7 @@ export function MobileNav() {
                                 <PiggyBank className="h-6 w-6" />
                             </div>
                             <span className="font-bold text-xl tracking-tight text-white">
-                                Antigravity
+                                Budget App
                             </span>
                         </SheetTitle>
                     </SheetHeader>

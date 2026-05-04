@@ -54,7 +54,7 @@ export default function RegisterPageClient() {
                     <div className="p-3 rounded-2xl bg-primary/20 text-primary mb-4 shadow-[0_0_30px_rgba(99,102,241,0.3)]">
                         <PiggyBank className="h-8 w-8" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gradient tracking-tight">Antigravity</h1>
+                    <h1 className="text-3xl font-bold text-gradient tracking-tight">Budget App</h1>
                     <p className="text-muted-foreground text-sm mt-1">Create your account</p>
                 </div>
 

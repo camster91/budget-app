@@ -50,7 +50,7 @@ export function Sidebar() {
                         <PiggyBank className="h-6 w-6" />
                     </div>
                     <span className="font-bold text-xl tracking-tight text-gradient">
-                        Antigravity
+                        Budget App
                     </span>
                 </Link>
             </div>
