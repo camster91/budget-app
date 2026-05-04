@@ -34,7 +34,7 @@ describe('parseReceiptImage', () => {
       },
     };
 
-    (global.fetch as any).mockResolvedValue({
+    (global.fetch as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockAiResponse),
     });
@@ -54,7 +54,7 @@ describe('parseReceiptImage', () => {
   it('should return raw text if AI parsing fails', async () => {
     const mockFile = new File([''], 'receipt.jpg', { type: 'image/jpeg' });
 
-    (global.fetch as any).mockResolvedValue({
+    (global.fetch as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue({
       ok: false,
     });
 
@@ -68,7 +68,7 @@ describe('parseReceiptImage', () => {
   it('should handle network errors gracefully', async () => {
     const mockFile = new File([''], 'receipt.jpg', { type: 'image/jpeg' });
 
-    (global.fetch as any).mockRejectedValue(new Error('Network error'));
+    (global.fetch as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockRejectedValue(new Error('Network error'));
 
     const result = await parseReceiptImage(mockFile);
 
@@ -79,18 +79,18 @@ describe('parseReceiptImage', () => {
 
 describe('isOcrSupported', () => {
     it('should return true if window and WebAssembly exist', () => {
-        // @ts-ignore
+        // @ts-expect-error: mocking global window object
         global.window = { WebAssembly: {} };
         expect(isOcrSupported()).toBe(true);
     });
 
     it('should return false if window is undefined', () => {
-        // @ts-ignore
+        // @ts-expect-error: mocking global window object
         const originalWindow = global.window;
-        // @ts-ignore
+        // @ts-expect-error: mocking global window object
         delete global.window;
         expect(isOcrSupported()).toBe(false);
-        // @ts-ignore
+        // @ts-expect-error: mocking global window object
         global.window = originalWindow;
     });
 });

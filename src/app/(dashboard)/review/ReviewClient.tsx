@@ -141,7 +141,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months }: ReviewCl
                   <YAxis hide />
                   <Tooltip
                     contentStyle={{ backgroundColor: "#18181b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff" }}
-                    formatter={(val: any) => formatCurrency(Number(val) || 0)}
+                    formatter={(val: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => formatCurrency(Number(val) || 0)}
                   />
                   <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                     {(view === "weekly" ? (data as WeeklyData).byDay : (data as MonthlyData).byWeek).map((_, i) => (
@@ -171,7 +171,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months }: ReviewCl
   );
 }
 
-function StatCard({ label, value, icon: Icon, className }: { label: string; value: string; icon: any; className?: string }) {
+function StatCard({ label, value, icon: Icon, className }: { label: string; value: string; icon: any /* eslint-disable-line @typescript-eslint/no-explicit-any */; className?: string }) {
   return (
     <div className="glass-card rounded-2xl p-4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">

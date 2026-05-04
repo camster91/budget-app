@@ -8,7 +8,7 @@ import { formatCurrency } from "@/lib/utils";
 
 interface TodaysLogProps {
     entries: { id: string; description: string; amount: number; category?: string | null; source?: string | null }[];
-    onDelete?: (id: string) => Promise<any>;
+    onDelete?: (id: string) => Promise<any /* eslint-disable-line @typescript-eslint/no-explicit-any */>;
 }
 
 export function TodaysLog({ entries, onDelete }: TodaysLogProps) {

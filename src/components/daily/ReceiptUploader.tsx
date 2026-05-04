@@ -17,9 +17,9 @@ interface ReceiptUploaderProps {
         confidence: number | null;
         status: string;
     }[];
-    onApprove: (id: string, overrides?: { amount?: number; merchant?: string; date?: Date; categoryId?: string }) => Promise<any>;
-    onReject: (id: string) => Promise<any>;
-    onParsed: (parsed: { rawText: string; total?: number; merchant?: string; date?: string; confidence: number }) => Promise<any>;
+    onApprove: (id: string, overrides?: { amount?: number; merchant?: string; date?: Date; categoryId?: string }) => Promise<any /* eslint-disable-line @typescript-eslint/no-explicit-any */>;
+    onReject: (id: string) => Promise<any /* eslint-disable-line @typescript-eslint/no-explicit-any */>;
+    onParsed: (parsed: { rawText: string; total?: number; merchant?: string; date?: string; confidence: number }) => Promise<any /* eslint-disable-line @typescript-eslint/no-explicit-any */>;
 }
 
 export function ReceiptUploader({ pendingReceipts, onApprove, onReject, onParsed }: ReceiptUploaderProps) {

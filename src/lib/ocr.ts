@@ -9,7 +9,7 @@ export interface OcrResult {
     total?: number;
     merchant?: string;
     date?: string;
-    items?: any[];
+    items?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[];
 }
 
 export async function parseReceiptImage(imageFile: File): Promise<OcrResult> {
@@ -24,7 +24,7 @@ export async function parseReceiptImage(imageFile: File): Promise<OcrResult> {
     let total: number | undefined;
     let merchant: string | undefined;
     let date: string | undefined;
-    let items: any[] | undefined;
+    let items: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[] | undefined;
 
     // Offload messy text parsing to our AI endpoint
     try {

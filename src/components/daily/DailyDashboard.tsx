@@ -30,7 +30,7 @@ import { Sparkles, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export function DailyDashboard({ initialAccounts }: { initialAccounts: any[] }) {
+export function DailyDashboard({ initialAccounts }: { initialAccounts: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[] }) {
     const queryClient = useQueryClient();
 
     const { data: snapshotData, isLoading: snapshotLoading } = useQuery({

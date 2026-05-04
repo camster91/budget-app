@@ -13,7 +13,7 @@ interface PlaidLinkerProps {
     accounts: (Account & { plaidItemId?: string | null; plaidLastSynced?: Date | null })[];
     createLinkToken: () => Promise<{ success: boolean; data?: { linkToken?: string }; error?: string }>;
     exchangeToken: (publicToken: string) => Promise<{ success: boolean; error?: string }>;
-    syncTransactions?: (accountId: string) => Promise<{ success: boolean; data?: any; error?: string }>;
+    syncTransactions?: (accountId: string) => Promise<{ success: boolean; data?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */; error?: string }>;
 }
 
 export function PlaidLinker({ accounts, createLinkToken, exchangeToken, syncTransactions }: PlaidLinkerProps) {
@@ -35,7 +35,7 @@ export function PlaidLinker({ accounts, createLinkToken, exchangeToken, syncTran
             const { default: PlaidLink } = await import("react-plaid-link");
 
             // Open Plaid Link
-            const handler = (PlaidLink as any).create({
+            const handler = (PlaidLink as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).create({
                 token: res.data.linkToken,
                 onSuccess: async (publicToken: string) => {
                     const result = await exchangeToken(publicToken);

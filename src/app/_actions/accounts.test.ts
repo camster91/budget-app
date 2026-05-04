@@ -14,13 +14,13 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
-      findMany: vi.fn(),
+      findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */: vi.fn(),
     },
     transaction: {
-      updateMany: vi.fn(),
+      updateMany /* eslint-disable-line @typescript-eslint/no-explicit-any */: vi.fn(),
     },
     bill: {
-      deleteMany: vi.fn(),
+      deleteMany /* eslint-disable-line @typescript-eslint/no-explicit-any */: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -33,12 +33,12 @@ vi.mock('next/cache', () => ({
 describe('Accounts Actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (getAuthUser as any).mockResolvedValue({ userId: 'user-1', email: 'test@example.com', householdId: 'hh-1' });
+    (getAuthUser as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue({ userId: 'user-1', email: 'test@example.com', householdId: 'hh-1' });
   });
 
   describe('createAccount', () => {
     it('should return unauthorized if no user', async () => {
-      (getAuthUser as any).mockResolvedValue(null);
+      (getAuthUser as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(null);
       const fd = new FormData();
       const res = await createAccount(fd);
       expect(res.success).toBe(false);
@@ -53,7 +53,7 @@ describe('Accounts Actions', () => {
       fd.append('balance', '1500.50');
       fd.append('color', '#ff0000');
 
-      (prisma.account.create as any).mockResolvedValue({ id: 'acc-1' });
+      (prisma.account.create as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue({ id: 'acc-1' });
 
       const res = await createAccount(fd);
       expect(res.success).toBe(true);
@@ -71,7 +71,7 @@ describe('Accounts Actions', () => {
 
     it('should handle database errors', async () => {
       const fd = new FormData();
-      (prisma.account.create as any).mockRejectedValue(new Error('DB Error'));
+      (prisma.account.create as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockRejectedValue(new Error('DB Error'));
       const res = await createAccount(fd);
       expect(res.success).toBe(false);
       expect(res.error).toBe('Failed to create account');
@@ -80,14 +80,14 @@ describe('Accounts Actions', () => {
 
   describe('updateAccountBalance', () => {
     it('should return unauthorized if no user', async () => {
-      (getAuthUser as any).mockResolvedValue(null);
+      (getAuthUser as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(null);
       const res = await updateAccountBalance('acc-1', 2000);
       expect(res.success).toBe(false);
       expect(res.error).toBe('Unauthorized');
     });
 
     it('should update balance successfully', async () => {
-      (prisma.account.update as any).mockResolvedValue({});
+      (prisma.account.update as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue({});
       const res = await updateAccountBalance('acc-1', 2000);
       expect(res.success).toBe(true);
       expect(prisma.account.update).toHaveBeenCalledWith({
@@ -99,7 +99,7 @@ describe('Accounts Actions', () => {
     });
 
     it('should handle database errors', async () => {
-      (prisma.account.update as any).mockRejectedValue(new Error('DB Error'));
+      (prisma.account.update as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockRejectedValue(new Error('DB Error'));
       const res = await updateAccountBalance('acc-1', 2000);
       expect(res.success).toBe(false);
       expect(res.error).toBe('Failed to update balance');
@@ -108,14 +108,14 @@ describe('Accounts Actions', () => {
 
   describe('deleteAccount', () => {
     it('should return unauthorized if no user', async () => {
-      (getAuthUser as any).mockResolvedValue(null);
+      (getAuthUser as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(null);
       const res = await deleteAccount('acc-1');
       expect(res.success).toBe(false);
       expect(res.error).toBe('Unauthorized');
     });
 
     it('should delete account successfully in a transaction', async () => {
-      (prisma.$transaction as any).mockResolvedValue([]);
+      (prisma.$transaction as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue([]);
       const res = await deleteAccount('acc-1');
       expect(res.success).toBe(true);
       expect(prisma.$transaction).toHaveBeenCalled();
@@ -124,7 +124,7 @@ describe('Accounts Actions', () => {
     });
 
     it('should handle database errors', async () => {
-      (prisma.$transaction as any).mockRejectedValue(new Error('DB Error'));
+      (prisma.$transaction as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockRejectedValue(new Error('DB Error'));
       const res = await deleteAccount('acc-1');
       expect(res.success).toBe(false);
       expect(res.error).toBe('Failed to delete account');
@@ -134,11 +134,11 @@ describe('Accounts Actions', () => {
   describe('getAccounts', () => {
     it('should return accounts list', async () => {
       const mockAccounts = [{ id: '1', name: 'Check' }];
-      (prisma.account.findMany as any).mockResolvedValue(mockAccounts);
+      (prisma.account.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */ as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(mockAccounts);
       
       const res = await getAccounts();
       expect(res).toEqual(mockAccounts);
-      expect(prisma.account.findMany).toHaveBeenCalledWith({
+      expect(prisma.account.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */).toHaveBeenCalledWith({
         orderBy: { createdAt: 'asc' },
       });
     });

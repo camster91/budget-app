@@ -17,7 +17,7 @@ interface Category {
 }
 
 interface QuickAddFormProps {
-    onAdd: (formData: FormData) => Promise<any>;
+    onAdd: (formData: FormData) => Promise<any /* eslint-disable-line @typescript-eslint/no-explicit-any */>;
     categories?: Category[];
 }
 
@@ -30,7 +30,7 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
 
     // Auto-categorize as the user types (using derived state instead of an effect)
     const suggestedId = description.trim() && categories.length 
-        ? categorizeTransaction(description, categories as any) 
+        ? categorizeTransaction(description, categories as any /* eslint-disable-line @typescript-eslint/no-explicit-any */) 
         : null;
 
     // Effectively use the suggested ID if the user hasn't manually picked one

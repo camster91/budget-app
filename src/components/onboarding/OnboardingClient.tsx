@@ -257,7 +257,7 @@ export function OnboardingClient({ createIncome, createBill, createCategory }: O
                             <div className="h-20 w-20 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center mx-auto">
                                 <Check className="h-10 w-10" />
                             </div>
-                            <h1 className="text-3xl font-black text-gradient">You're all set!</h1>
+                            <h1 className="text-3xl font-black text-gradient">You&apos;re all set!</h1>
                             <p className="text-muted-foreground">Your daily budget is now live. Any unused money rolls over to tomorrow.</p>
                             <div className="grid grid-cols-3 gap-3 text-center">
                                 <div className="p-3 rounded-xl bg-white/[0.03]">

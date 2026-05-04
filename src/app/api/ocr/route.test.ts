@@ -41,7 +41,7 @@ describe('OCR API Route', () => {
   });
 
   it('should return 401 if unauthorized', async () => {
-    (getAuthUser as any).mockResolvedValue(null);
+    (getAuthUser as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(null);
     const req = new Request('http://localhost/api/ocr', {
       method: 'POST',
       body: JSON.stringify({ rawText: 'test' }),
@@ -52,7 +52,7 @@ describe('OCR API Route', () => {
   });
 
   it('should return 400 if no rawText provided', async () => {
-    (getAuthUser as any).mockResolvedValue({ userId: '1', householdId: 'h1' });
+    (getAuthUser as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue({ userId: '1', householdId: 'h1' });
     const req = new Request('http://localhost/api/ocr', {
       method: 'POST',
       body: JSON.stringify({}),
@@ -63,7 +63,7 @@ describe('OCR API Route', () => {
   });
 
   it('should parse receipt successfully with AI', async () => {
-    (getAuthUser as any).mockResolvedValue({ userId: '1', householdId: 'h1' });
+    (getAuthUser as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue({ userId: '1', householdId: 'h1' });
     const req = new Request('http://localhost/api/ocr', {
       method: 'POST',
       body: JSON.stringify({ rawText: 'Parsed this text' }),
@@ -79,12 +79,12 @@ describe('OCR API Route', () => {
   });
 
   it('should return 500 if AI fails', async () => {
-    (getAuthUser as any).mockResolvedValue({ userId: '1', householdId: 'h1' });
+    (getAuthUser as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue({ userId: '1', householdId: 'h1' });
     
     // Trigger failure by making mockGenerateContent throw or return empty
     const { GoogleGenAI } = await import('@google/genai');
     const aiInstance = new GoogleGenAI({ apiKey: 'test' });
-    (aiInstance.models.generateContent as any).mockRejectedValue(new Error('AI Error'));
+    (aiInstance.models.generateContent as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockRejectedValue(new Error('AI Error'));
 
     const req = new Request('http://localhost/api/ocr', {
       method: 'POST',

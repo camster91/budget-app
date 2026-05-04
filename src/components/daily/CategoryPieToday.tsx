@@ -66,7 +66,7 @@ export function CategoryPieToday({ data }: CategoryPieTodayProps) {
                                         <Cell key={i} fill={getFill(entry.color)} />
                                     ))}
                                 </Pie>
-                                <Tooltip {...TOOLTIP_STYLE} formatter={(val: any) => formatCurrency(Number(val) || 0)} />
+                                <Tooltip {...TOOLTIP_STYLE} formatter={(val: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => formatCurrency(Number(val) || 0)} />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>

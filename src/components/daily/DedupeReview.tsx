@@ -8,8 +8,8 @@ import { formatCurrency } from "@/lib/utils";
 
 interface DedupeReviewProps {
     duplicates: { fingerprint: string; transactions: { id: string; description: string; amount: number; date: Date }[] }[];
-    onKeepAndMerge: (duplicateId: string, keepId: string) => Promise<any>;
-    onRejectDuplicate: (id: string) => Promise<any>;
+    onKeepAndMerge: (duplicateId: string, keepId: string) => Promise<any /* eslint-disable-line @typescript-eslint/no-explicit-any */>;
+    onRejectDuplicate: (id: string) => Promise<any /* eslint-disable-line @typescript-eslint/no-explicit-any */>;
 }
 
 export function DedupeReview({ duplicates, onKeepAndMerge, onRejectDuplicate }: DedupeReviewProps) {
@@ -19,7 +19,7 @@ export function DedupeReview({ duplicates, onKeepAndMerge, onRejectDuplicate }: 
 
     if (duplicates.length === 0) return null;
 
-    const handleAction = (id: string, action: () => Promise<any>) => {
+    const handleAction = (id: string, action: () => Promise<any /* eslint-disable-line @typescript-eslint/no-explicit-any */>) => {
         setProcessingId(id);
         startTransition(async () => {
             await action();

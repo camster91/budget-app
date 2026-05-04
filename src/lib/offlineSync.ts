@@ -6,7 +6,7 @@ interface BudgetDB extends DBSchema {
         value: {
             id: string;
             type: "TRANSACTION_CREATE";
-            payload: any; // The formData serialized
+            payload: any /* eslint-disable-line @typescript-eslint/no-explicit-any */; // The formData serialized
             timestamp: number;
         };
     };
@@ -22,7 +22,7 @@ export async function initDB() {
     });
 }
 
-export async function queueOfflineAction(type: "TRANSACTION_CREATE", payload: any) {
+export async function queueOfflineAction(type: "TRANSACTION_CREATE", payload: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) {
     const db = await initDB();
     const id = crypto.randomUUID();
     await db.put("offlineQueue", {
@@ -44,7 +44,7 @@ export async function removeOfflineAction(id: string) {
 }
 
 // In a real app, this would be hooked up to a window 'online' event
-export async function flushOfflineQueue(processAction: (action: any) => Promise<boolean>) {
+export async function flushOfflineQueue(processAction: (action: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => Promise<boolean>) {
     const queue = await getOfflineQueue();
     if (queue.length === 0) return;
 

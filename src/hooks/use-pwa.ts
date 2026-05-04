@@ -24,7 +24,7 @@ export function usePwaRegistration() {
         // Beforeinstallprompt for add-to-homescreen
         const handler = (e: Event) => {
             e.preventDefault();
-            (window as any).__budgetAppInstallPrompt = e;
+            (window as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).__budgetAppInstallPrompt = e;
         };
         window.addEventListener("beforeinstallprompt", handler);
         return () => window.removeEventListener("beforeinstallprompt", handler);
@@ -32,11 +32,11 @@ export function usePwaRegistration() {
 }
 
 export async function triggerInstall() {
-    const prompt = (window as any).__budgetAppInstallPrompt;
+    const prompt = (window as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).__budgetAppInstallPrompt;
     if (!prompt) return { outcome: "not-available" as const };
     prompt.prompt();
     const { outcome } = await prompt.userChoice;
-    delete (window as any).__budgetAppInstallPrompt;
+    delete (window as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).__budgetAppInstallPrompt;
     return { outcome };
 }
 

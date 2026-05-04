@@ -15,7 +15,7 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
       delete: vi.fn(),
       findUnique: vi.fn(),
-      findMany: vi.fn(),
+      findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */: vi.fn(),
     },
     transaction: {
       create: vi.fn(),
@@ -30,7 +30,7 @@ vi.mock('next/cache', () => ({
 describe('Bills Actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (getAuthUser as any).mockResolvedValue({ userId: 'user-1', email: 'test@example.com', householdId: 'hh-1' });
+    (getAuthUser as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue({ userId: 'user-1', email: 'test@example.com', householdId: 'hh-1' });
   });
 
   describe('createBill', () => {
@@ -42,7 +42,7 @@ describe('Bills Actions', () => {
       fd.append('categoryId', 'cat-1');
       fd.append('accountId', 'acc-1');
 
-      (prisma.bill.create as any).mockResolvedValue({ id: 'bill-1' });
+      (prisma.bill.create as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue({ id: 'bill-1' });
 
       const res = await createBill(fd);
       expect(res.success).toBe(true);
@@ -62,7 +62,7 @@ describe('Bills Actions', () => {
 
   describe('getBills', () => {
     it('should return bills', async () => {
-      (prisma.bill.findMany as any).mockResolvedValue([{ id: '1' }]);
+      (prisma.bill.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */ as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue([{ id: '1' }]);
       const res = await getBills();
       expect(res.success).toBe(true);
       expect(res.data).toEqual([{ id: '1' }]);
