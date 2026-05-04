@@ -1,6 +1,6 @@
 {
-  "name": "GlowOS Finance",
-  "short_name": "GlowOS",
+  "name": "Budget App",
+  "short_name": "Budget",
   "description": "Daily spending tracker with AI insights",
   "start_url": "/daily",
   "display": "standalone",

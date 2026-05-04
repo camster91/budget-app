@@ -42,7 +42,7 @@ export async function exportTransactionsToCSV(month?: string) {
             success: true,
             data: {
                 csv,
-                filename: `glowos-${format(targetMonth, "yyyy-MM")}.csv`,
+                filename: `budget-app-${format(targetMonth, "yyyy-MM")}.csv`,
                 count: transactions.length,
             },
         };
@@ -74,7 +74,7 @@ export async function exportTransactionsToJSON(month?: string) {
             success: true,
             data: {
                 json: JSON.stringify(transactions, null, 2),
-                filename: `glowos-${format(targetMonth, "yyyy-MM")}.json`,
+                filename: `budget-app-${format(targetMonth, "yyyy-MM")}.json`,
                 count: transactions.length,
             },
         };

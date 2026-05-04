@@ -20,7 +20,7 @@ async function seed() {
     // ─── User ──────────────────────────────────────────────────
     const user = await prisma.user.create({
         data: {
-            email: "demo@glowos.finance",
+            email: "demo@budgetapp.local",
             password: "$2a$10$hashedpasswordplaceholder",
             name: "Demo User",
         },

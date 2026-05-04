@@ -161,7 +161,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months }: ReviewCl
               const url = window.URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href = url;
-              a.download = `glowos-${view === "weekly" ? "weekly" : selectedMonth}.csv`;
+              a.download = `budget-app-${view === "weekly" ? "weekly" : selectedMonth}.csv`;
               a.click();
             }} />
           </div>

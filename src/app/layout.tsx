@@ -8,13 +8,13 @@ import { QueryProvider } from "@/components/QueryProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "GlowOS Finance",
+    title: "Budget App",
     description: "Daily spending tracker with AI insights",
     manifest: "/manifest.json",
     appleWebApp: {
         capable: true,
         statusBarStyle: "black-translucent",
-        title: "GlowOS",
+        title: "Budget App",
     },
     icons: {
         apple: "/icon-192.png",
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <link rel="manifest" href="/manifest.json" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-                <meta name="apple-mobile-web-app-title" content="GlowOS" />
+                <meta name="apple-mobile-web-app-title" content="Budget App" />
                 <meta name="mobile-web-app-capable" content="yes" />
             </head>
             <body className={`${inter.className} min-h-screen bg-background text-foreground`}>

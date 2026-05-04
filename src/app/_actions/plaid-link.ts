@@ -16,7 +16,7 @@ export async function createLinkToken() {
   try {
     const tokenRes = await plaidClient.linkTokenCreate({
       user: { client_user_id: user.userId },
-      client_name: "GlowOS Finance",
+      client_name: "Budget App",
       products: [Products.Transactions],
       country_codes: [CountryCode.Us, CountryCode.Ca],
       language: "en",

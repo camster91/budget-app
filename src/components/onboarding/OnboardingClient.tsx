@@ -145,7 +145,7 @@ export function OnboardingClient({ createIncome, createBill, createCategory }: O
                             <div className="h-20 w-20 rounded-2xl bg-primary/15 text-primary flex items-center justify-center mx-auto">
                                 <Sparkles className="h-10 w-10" />
                             </div>
-                            <h1 className="text-3xl font-black text-gradient">Welcome to GlowOS</h1>
+                            <h1 className="text-3xl font-black text-gradient">Welcome to Budget App</h1>
                             <p className="text-muted-foreground">
                                 We just need 2 minutes to get your daily budget working.
                             </p>

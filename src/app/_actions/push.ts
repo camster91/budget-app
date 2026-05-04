@@ -47,7 +47,7 @@ export async function triggerSpendingAlert(): Promise<PushMessage | null> {
 
         if (total > dailyAllowance * 0.8 && total <= dailyAllowance) {
             return {
-                title: "GlowOS: Watch it",
+                title: "Budget App: Watch it",
                 body: `You've spent ${Math.round((total / dailyAllowance) * 100)}% of today's budget. ${(dailyAllowance - total).toFixed(0)} left.`,
                 tag: "budget-warning",
                 requireInteraction: false,
@@ -56,7 +56,7 @@ export async function triggerSpendingAlert(): Promise<PushMessage | null> {
 
         if (total > dailyAllowance) {
             return {
-                title: "GlowOS: Over budget",
+                title: "Budget App: Over budget",
                 body: `You overspent by ${(total - dailyAllowance).toFixed(0)}. Tomorrow's allowance is now reduced.`,
                 tag: "budget-over",
                 requireInteraction: true,
@@ -90,7 +90,7 @@ export async function triggerBillReminder(): Promise<PushMessage | null> {
 
         if (soon.length > 0) {
             return {
-                title: `GlowOS: Bill due soon`,
+                title: `Budget App: Bill due soon`,
                 body: `${soon.map((b) => `${b.name} ($${b.amount})`).join(", ")}`,
                 tag: "bill-reminder",
                 url: "/daily",
@@ -101,4 +101,6 @@ export async function triggerBillReminder(): Promise<PushMessage | null> {
     } catch {
         return null;
     }
+}
+}
 }
