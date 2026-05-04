@@ -102,5 +102,3 @@ export async function triggerBillReminder(): Promise<PushMessage | null> {
         return null;
     }
 }
-}
-}

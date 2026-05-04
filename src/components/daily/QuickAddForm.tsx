@@ -27,30 +27,17 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
     const [description, setDescription] = useState("");
     const [categoryId, setCategoryId] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isAutoSelected, setIsAutoSelected] = useState(false);
 
-    // Auto-categorize as the user types
-    useEffect(() => {
-        if (!description.trim() || !categories.length) {
-            if (isAutoSelected) {
-                setCategoryId("");
-                setIsAutoSelected(false);
-            }
-            return;
-        }
+    // Auto-categorize as the user types (using derived state instead of an effect)
+    const suggestedId = description.trim() && categories.length 
+        ? categorizeTransaction(description, categories as any) 
+        : null;
 
-        const suggestedId = categorizeTransaction(description, categories as any);
-        if (suggestedId) {
-            setCategoryId(suggestedId);
-            setIsAutoSelected(true);
-        } else if (isAutoSelected) {
-            // Only clear if it was an auto-selection, don't clear if user manually picked
-            setCategoryId("");
-            setIsAutoSelected(false);
-        }
-    }, [description, categories, isAutoSelected]);
+    // Effectively use the suggested ID if the user hasn't manually picked one
+    const activeCategoryId = categoryId || suggestedId || "";
+    const isAutoSelected = !categoryId && !!suggestedId;
 
-    const selectedCategory = categories.find((c) => c.id === categoryId);
+    const selectedCategory = categories.find((c) => c.id === activeCategoryId);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -60,13 +47,12 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
         const formData = new FormData();
         formData.append("amount", amount);
         formData.append("description", description || "Quick spend");
-        if (categoryId) formData.append("categoryId", categoryId);
+        if (activeCategoryId) formData.append("categoryId", activeCategoryId);
 
         await onAdd(formData);
         setAmount("");
         setDescription("");
         setCategoryId("");
-        setIsAutoSelected(false);
         setIsSubmitting(false);
     }
 
