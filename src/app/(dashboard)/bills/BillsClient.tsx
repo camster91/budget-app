@@ -27,6 +27,7 @@ interface BillsClientProps {
     bills: Bill[];
     categories: Category[];
     accounts: Account[];
+    paidBillIds?: Set<string>;
 }
 
 function getNextDueDate(dueDay: number): Date {
@@ -58,7 +59,7 @@ interface EditState {
     accountId: string;
 }
 
-export function BillsClient({ bills: initialBills, categories, accounts }: BillsClientProps) {
+export function BillsClient({ bills: initialBills, categories, accounts, paidBillIds = new Set() }: BillsClientProps) {
     const router = useRouter();
     const [bills, setBills] = useState(initialBills);
     const [showForm, setShowForm] = useState(false);
@@ -377,10 +378,10 @@ export function BillsClient({ bills: initialBills, categories, accounts }: Bills
                                                                 }
                                                             });
                                                         }}
-                                                        disabled={isPending}
+                                                        disabled={isPending || paidBillIds.has(bill.id)}
                                                     >
                                                         <HandCoins className="h-3 w-3" />
-                                                        Mark Paid
+                                                        {paidBillIds.has(bill.id) ? "Paid" : "Mark Paid"}
                                                     </Button>
                                                 </div>
 

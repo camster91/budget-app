@@ -85,6 +85,7 @@ export async function markBillAsPaid(id: string) {
         revalidatePath("/");
         return { success: true };
     } catch (error) {
+        console.error("[markBillAsPaid]", error);
         return { success: false, error: "Failed to mark bill as paid" };
     }
 }
