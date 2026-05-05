@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from "recharts";
-import { Calendar, TrendingUp, TrendingDown, Download } from "lucide-react";
+import { Calendar, TrendingUp, TrendingDown, Download, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, cn } from "@/lib/utils";
+import { SmartCategorizationPanel } from "@/components/dashboard/SmartCategorizationPanel";
 
 interface WeeklyData {
   weekRange: string;
@@ -29,13 +30,17 @@ interface MonthlyData {
 }
 
 interface ReviewClientProps {
-  initialWeekly: WeeklyData | null;
-  initialMonthly: MonthlyData | null;
-  months: string[];
+    initialWeekly: WeeklyData | null;
+    initialMonthly: MonthlyData | null;
+    months: string[];
+    learnedRules?: { merchant: string; categoryId: string; categoryName: string; hits: number; confidence: number }[];
+    suggestedBills?: { name: string; categoryId: string; categoryName: string; avgAmount: number; frequency: "monthly" | "biweekly" | "weekly"; confidence: number; accountId: string }[];
+    categories?: { id: string; name: string }[];
+    accounts?: { id: string; name: string }[];
 }
 
-export function ReviewClient({ initialWeekly, initialMonthly, months }: ReviewClientProps) {
-  const [view, setView] = useState<"weekly" | "monthly">("weekly");
+export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRules = [], suggestedBills = [], categories = [], accounts = [] }: ReviewClientProps) {
+  const [view, setView] = useState<"weekly" | "monthly" | "smart">("weekly");
   const [selectedMonth, setSelectedMonth] = useState(months[0]);
   const [monthly, setMonthly] = useState(initialMonthly);
   const [weekly, setWeekly] = useState(initialWeekly);
@@ -79,6 +84,16 @@ export function ReviewClient({ initialWeekly, initialMonthly, months }: ReviewCl
           >
             Monthly
           </button>
+          <button
+            onClick={() => setView("smart")}
+            className={cn(
+              "px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5",
+              view === "smart" ? "bg-white/[0.05] text-white" : "text-muted-foreground hover:text-white/70"
+            )}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Smart
+          </button>
         </div>
       </div>
 
@@ -97,6 +112,17 @@ export function ReviewClient({ initialWeekly, initialMonthly, months }: ReviewCl
             </button>
           ))}
         </div>
+      )}
+
+      {view === "smart" && (
+        <SmartCategorizationPanel
+          learnedRules={learnedRules}
+          suggestedBills={suggestedBills}
+          categories={categories}
+          accounts={accounts}
+          onRuleApplied={() => {/* Refresh data */}}
+          onBillCreated={() => {/* Refresh data */}}
+        />
       )}
 
       {!data ? (
