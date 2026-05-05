@@ -5,19 +5,18 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  COOLIFY_URL: https://coolify.ashbi.ca
+  APP_UUID: ok08c00scw48cgo4kgsgkkww
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Coolify Deploy
         run: |
-          response=$(curl -s -w "\n%{http_code}" \
-            "${{ secrets.COOLIFY_WEBHOOK }}" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}")
-          http_code=$(echo "$response" | tail -1)
-          body=$(echo "$response" | head -n -1)
-          echo "$body"
-          if [ "$http_code" != "200" ]; then
-            echo "Deploy failed with status $http_code"
-            exit 1
-          fi
+          curl --request POST \
+            "${{ env.COOLIFY_URL }}/api/v1/deployments/${{ env.APP_UUID }}" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP_CODE:%{http_code}"
