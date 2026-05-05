@@ -19,4 +19,5 @@ jobs:
             "${{ env.COOLIFY_URL }}/api/v1/deployments/${{ env.APP_UUID }}" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
             -H "Content-Type: application/json" \
+            -k \
             -w "\nHTTP_CODE:%{http_code}"
