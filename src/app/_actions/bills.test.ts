@@ -15,7 +15,7 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
       delete: vi.fn(),
       findUnique: vi.fn(),
-      findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */: vi.fn(),
+      findMany  : vi.fn(),
     },
     transaction: {
       create: vi.fn(),

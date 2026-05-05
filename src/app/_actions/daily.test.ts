@@ -14,7 +14,7 @@ describe('getDailySnapshot', () => {
   });
 
   it('should return error if no income configured', async () => {
-    (prisma.income.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */ as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue([]);
+    (prisma.income.findMany   as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue([]);
     
     const result = await getDailySnapshot();
     
@@ -46,12 +46,12 @@ describe('getDailySnapshot', () => {
       }
     ];
 
-    (prisma.income.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */ as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(mockIncome);
-    (prisma.bill.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */ as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(mockBills);
-    (prisma.transaction.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */ as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue([]);
+    (prisma.income.findMany   as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(mockIncome);
+    (prisma.bill.findMany   as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(mockBills);
+    (prisma.transaction.findMany   as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue([]);
     (prisma.transaction.groupBy as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue([]);
     (prisma.transaction.count as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(0);
-    (prisma.category.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */ as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue([]);
+    (prisma.category.findMany   as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue([]);
 
     // Mock Date to 2026-05-15
     vi.setSystemTime(new Date('2026-05-15T12:00:00Z'));

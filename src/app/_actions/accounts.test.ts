@@ -14,13 +14,13 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
-      findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */: vi.fn(),
+      findMany  : vi.fn(),
     },
     transaction: {
-      updateMany /* eslint-disable-line @typescript-eslint/no-explicit-any */: vi.fn(),
+      updateMany  : vi.fn(),
     },
     bill: {
-      deleteMany /* eslint-disable-line @typescript-eslint/no-explicit-any */: vi.fn(),
+      deleteMany  : vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -135,11 +135,11 @@ describe('Accounts Actions', () => {
   describe('getAccounts', () => {
     it('should return accounts list', async () => {
       const mockAccounts = [{ id: '1', name: 'Check' }];
-      (prisma.account.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */ as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(mockAccounts);
+      (prisma.account.findMany   as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(mockAccounts);
       
       const res = await getAccounts();
       expect(res).toEqual(mockAccounts);
-      expect(prisma.account.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */).toHaveBeenCalledWith({
+      expect(prisma.account.findMany  ).toHaveBeenCalledWith({
         where: { householdId: 'hh-1' },
         orderBy: { createdAt: 'asc' },
       });

@@ -18,8 +18,8 @@ export default async function SettingsPage() {
 
     if (!user) redirect("/login");
 
-    const incomes = await prisma.income.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */({ orderBy: { createdAt: "desc" } });
-    const categories = await prisma.category.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */({ orderBy: { name: "asc" } });
+    const incomes = await prisma.income.findMany  ({ orderBy: { createdAt: "desc" } });
+    const categories = await prisma.category.findMany  ({ orderBy: { name: "asc" } });
 
     return (
         <SettingsClient

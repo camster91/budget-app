@@ -32,8 +32,8 @@ const PRESET_COLORS = [
 
 function parseRules(rulesStr: string | null): Rule[] {
     if (!rulesStr) return [];
-    try { 
-        const p = JSON.parse(rulesStr); 
+    try {
+        const p = JSON.parse(rulesStr);
         if (Array.isArray(p) && p.length > 0 && typeof p[0] === 'object' && 'keyword' in p[0]) {
             return p as Rule[];
         }
@@ -47,19 +47,19 @@ function parseRules(rulesStr: string | null): Rule[] {
 
 // ─── Category Card (view mode) ───────────────────────────────────────────────
 
-function CategoryCard({ 
-    category, 
-    onEdit, 
-    onDelete, 
-    isPending 
-}: { 
-    category: Category; 
-    onEdit: () => void; 
-    onDelete: () => void; 
+function CategoryCard({
+    category,
+    onEdit,
+    onDelete,
+    isPending
+}: {
+    category: Category;
+    onEdit: () => void;
+    onDelete: () => void;
     isPending: boolean;
 }) {
     const rules = parseRules(category.rules);
-    
+
     return (
         <motion.div
             layout
@@ -139,15 +139,15 @@ function CategoryCard({
 
 // ─── Edit Form (inline) ───────────────────────────────────────────────────────
 
-function EditCategoryForm({ 
-    category, 
-    onSave, 
-    onCancel, 
-    isPending 
-}: { 
-    category: Category; 
-    onSave: (formData: FormData) => void; 
-    onCancel: () => void; 
+function EditCategoryForm({
+    category,
+    onSave,
+    onCancel,
+    isPending
+}: {
+    category: Category;
+    onSave: (formData: FormData) => void;
+    onCancel: () => void;
     isPending: boolean;
 }) {
     const [name, setName] = useState(category.name);
@@ -167,8 +167,7 @@ function EditCategoryForm({
         setRules(rules.filter((_, i) => i !== index));
     }
 
-    function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
+    function handleSubmit() {
         const formData = new FormData();
         formData.set("name", name);
         formData.set("icon", icon);
@@ -187,20 +186,20 @@ function EditCategoryForm({
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <CardTitle className="text-base">Edit: {category.name}</CardTitle>
                     <div className="flex items-center gap-1">
-                        <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="icon" 
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
                             className="h-6 w-6 hover:text-emerald-400"
-                            onClick={handleSubmit as any}
+                            onClick={handleSubmit}
                             disabled={isPending}
                         >
                             <Check className="h-3 w-3" />
                         </Button>
-                        <Button 
+                        <Button
                             type="button"
-                            variant="ghost" 
-                            size="icon" 
+                            variant="ghost"
+                            size="icon"
                             className="h-6 w-6"
                             onClick={onCancel}
                             disabled={isPending}
@@ -213,33 +212,33 @@ function EditCategoryForm({
                     <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <input type="hidden" name="id" value={category.id} />
                         <input type="hidden" name="rules" value={JSON.stringify(rules)} />
-                        
+
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Name</label>
-                            <Input 
-                                name="name" 
+                            <Input
+                                name="name"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                required 
-                                className="rounded-xl bg-white/[0.05] border-white/[0.1]" 
+                                required
+                                className="rounded-xl bg-white/[0.05] border-white/[0.1]"
                             />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Icon (emoji)</label>
-                            <Input 
-                                name="icon" 
+                            <Input
+                                name="icon"
                                 value={icon}
                                 onChange={(e) => setIcon(e.target.value)}
-                                maxLength={2} 
-                                className="rounded-xl bg-white/[0.05] border-white/[0.1]" 
+                                maxLength={2}
+                                className="rounded-xl bg-white/[0.05] border-white/[0.1]"
                             />
                         </div>
-                        
+
                         {/* Rule builder */}
                         <div className="space-y-2 sm:col-span-2 lg:col-span-4">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Auto-match Rules</label>
                             <div className="flex gap-2">
-                                <select 
+                                <select
                                     value={newRuleType}
                                     onChange={(e) => setNewRuleType(e.target.value as 'contains' | 'equals')}
                                     className="w-32 bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary"
@@ -247,8 +246,8 @@ function EditCategoryForm({
                                     <option value="contains">Contains</option>
                                     <option value="equals">Equals</option>
                                 </select>
-                                <Input 
-                                    placeholder="e.g. walmart" 
+                                <Input
+                                    placeholder="e.g. walmart"
                                     value={newRuleKeyword}
                                     onChange={(e) => setNewRuleKeyword(e.target.value)}
                                     onKeyDown={(e) => {
@@ -257,7 +256,7 @@ function EditCategoryForm({
                                             handleAddRule();
                                         }
                                     }}
-                                    className="flex-1 rounded-xl bg-white/[0.05] border-white/[0.1]" 
+                                    className="flex-1 rounded-xl bg-white/[0.05] border-white/[0.1]"
                                 />
                                 <Button type="button" onClick={handleAddRule} variant="outline" className="rounded-xl shrink-0">
                                     Add
@@ -270,8 +269,8 @@ function EditCategoryForm({
                                         <div key={idx} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs text-white">
                                             <span className="opacity-60 font-mono">{rule.type}:</span>
                                             <span className="font-bold">{rule.keyword}</span>
-                                            <button 
-                                                type="button" 
+                                            <button
+                                                type="button"
                                                 onClick={() => handleRemoveRule(idx)}
                                                 className="ml-1 opacity-50 hover:opacity-100 hover:text-rose-400"
                                             >
@@ -282,7 +281,7 @@ function EditCategoryForm({
                                 </div>
                             )}
                         </div>
-                        
+
                         <div className="space-y-2 sm:col-span-2 lg:col-span-3">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Color</label>
                             <div className="flex gap-2">
@@ -300,7 +299,7 @@ function EditCategoryForm({
                                 ))}
                             </div>
                         </div>
-                        
+
                         <div className="flex items-end">
                             <Button type="submit" disabled={isPending} className="w-full rounded-xl">
                                 {isPending ? "Saving..." : "Save Changes"}
@@ -315,13 +314,13 @@ function EditCategoryForm({
 
 // ─── Create Category Form ─────────────────────────────────────────────────────
 
-function CreateCategoryForm({ 
-    onCancel, 
-    onSuccess, 
-    isPending 
-}: { 
-    onCancel: () => void; 
-    onSuccess: () => void; 
+function CreateCategoryForm({
+    onCancel,
+    onSuccess,
+    isPending
+}: {
+    onCancel: () => void;
+    onSuccess: () => void;
     isPending: boolean;
 }) {
     const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
@@ -360,7 +359,7 @@ function CreateCategoryForm({
                 <CardContent>
                     <form action={handleCreate} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <input type="hidden" name="rules" value={JSON.stringify(rules)} />
-                        
+
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Name</label>
                             <Input name="name" placeholder="e.g. Groceries" required className="rounded-xl bg-white/[0.05] border-white/[0.1]" />
@@ -376,12 +375,12 @@ function CreateCategoryForm({
                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Icon (emoji)</label>
                             <Input name="icon" placeholder="🛒" maxLength={2} className="rounded-xl bg-white/[0.05] border-white/[0.1]" />
                         </div>
-                        
+
                         {/* Rule builder */}
                         <div className="space-y-2 sm:col-span-2 lg:col-span-4">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Auto-match Rules</label>
                             <div className="flex gap-2">
-                                <select 
+                                <select
                                     value={newRuleType}
                                     onChange={(e) => setNewRuleType(e.target.value as 'contains' | 'equals')}
                                     className="w-32 bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary"
@@ -389,8 +388,8 @@ function CreateCategoryForm({
                                     <option value="contains">Contains</option>
                                     <option value="equals">Equals</option>
                                 </select>
-                                <Input 
-                                    placeholder="e.g. walmart" 
+                                <Input
+                                    placeholder="e.g. walmart"
                                     value={newRuleKeyword}
                                     onChange={(e) => setNewRuleKeyword(e.target.value)}
                                     onKeyDown={(e) => {
@@ -399,7 +398,7 @@ function CreateCategoryForm({
                                             handleAddRule();
                                         }
                                     }}
-                                    className="flex-1 rounded-xl bg-white/[0.05] border-white/[0.1]" 
+                                    className="flex-1 rounded-xl bg-white/[0.05] border-white/[0.1]"
                                 />
                                 <Button type="button" onClick={handleAddRule} variant="outline" className="rounded-xl shrink-0">
                                     Add
@@ -412,8 +411,8 @@ function CreateCategoryForm({
                                         <div key={idx} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs text-white">
                                             <span className="opacity-60 font-mono">{rule.type}:</span>
                                             <span className="font-bold">{rule.keyword}</span>
-                                            <button 
-                                                type="button" 
+                                            <button
+                                                type="button"
                                                 onClick={() => handleRemoveRule(idx)}
                                                 className="ml-1 opacity-50 hover:opacity-100 hover:text-rose-400"
                                             >
@@ -424,7 +423,7 @@ function CreateCategoryForm({
                                 </div>
                             )}
                         </div>
-                        
+
                         <div className="space-y-2 sm:col-span-2 lg:col-span-3">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Color</label>
                             <div className="flex gap-2">
@@ -442,7 +441,7 @@ function CreateCategoryForm({
                                 ))}
                             </div>
                         </div>
-                        
+
                         <div className="flex items-end">
                             <Button type="submit" disabled={isPending} className="w-full rounded-xl">
                                 {isPending ? "Creating..." : "Create"}
@@ -518,8 +517,8 @@ export function CategoriesClient({ categories: initialCategories }: CategoriesCl
 
             <AnimatePresence>
                 {showCreateForm && (
-                    <CreateCategoryForm 
-                        onCancel={() => setShowCreateForm(false)} 
+                    <CreateCategoryForm
+                        onCancel={() => setShowCreateForm(false)}
                         onSuccess={() => setShowCreateForm(false)}
                         isPending={isPending}
                     />

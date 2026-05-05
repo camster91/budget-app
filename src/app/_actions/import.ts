@@ -6,6 +6,7 @@ import { isTransfer } from "@/lib/utils/transactionUtils";
 import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
 import { getAuthUser } from "@/lib/auth";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CSVRow = Record<string, any>;
 
 export interface ImportOptions {
