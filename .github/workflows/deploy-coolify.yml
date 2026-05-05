@@ -15,9 +15,16 @@ jobs:
     steps:
       - name: Trigger Coolify Deploy
         run: |
-          curl --request POST \
-            "${{ env.COOLIFY_URL }}/api/v1/deployments/${{ env.APP_UUID }}" \
+          response=$(curl --request POST \
+            "${{ env.COOLIFY_URL }}/api/v1/applications/${{ env.APP_UUID }}/restart" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
             -H "Content-Type: application/json" \
             -k \
-            -w "\nHTTP_CODE:%{http_code}"
+            -w "\nHTTP_CODE:%{http_code}")
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+          echo "$body"
+          echo "Exit code: $http_code"
+          if [ "$http_code" != "200" ]; then
+            exit 1
+          fi
