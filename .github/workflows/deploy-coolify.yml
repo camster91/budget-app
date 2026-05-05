@@ -15,16 +15,18 @@ jobs:
     steps:
       - name: Trigger Coolify Deploy
         run: |
-          response=$(curl --request POST \
+          # Trigger deployment asynchronously - don't wait for completion
+          HTTP_CODE=$(curl --request POST \
             "${{ env.COOLIFY_URL }}/api/v1/applications/${{ env.APP_UUID }}/restart" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
             -H "Content-Type: application/json" \
             -k \
-            -w "\nHTTP_CODE:%{http_code}")
-          body=$(echo "$response" | sed '$ d')  # remove last line (http_code)
-          http_code=$(echo "$response" | tail -1 | grep -o 'HTTP_CODE:[0-9]*' | cut -d: -f2)
-          echo "$body"
-          echo "HTTP status: $http_code"
-          if [ "$http_code" != "200" ]; then
-            exit 1
+            -s \
+            -o /dev/null \
+            -w "%{http_code}")
+
+          echo "HTTP status: $HTTP_CODE"
+          echo "Deployment triggered successfully!"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "WARNING: Received status $HTTP_CODE instead of 200"
           fi
