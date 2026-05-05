@@ -50,12 +50,17 @@ export async function createTransaction(formData: FormData) {
         }
 
         if (!categoryId && categoryName) {
-            const category = await prisma.category.upsert({
-                where: { name: categoryName },
-                update: {},
-                create: { name: categoryName, type, householdId: user.householdId },
+            const existing = await prisma.category.findFirst({
+                where: { name: categoryName, householdId: user.householdId }
             });
-            categoryId = category.id;
+            if (existing) {
+                categoryId = existing.id;
+            } else {
+                const category = await prisma.category.create({
+                    data: { name: categoryName, type, householdId: user.householdId },
+                });
+                categoryId = category.id;
+            }
         }
 
         await prisma.transaction.create({

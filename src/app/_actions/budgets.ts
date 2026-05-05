@@ -60,12 +60,17 @@ export async function createBudget(formData: FormData) {
 
         let resolvedCategoryId = categoryId;
         if (!resolvedCategoryId && categoryName) {
-            const category = await prisma.category.upsert({
-                where: { name: categoryName },
-                update: {},
-                create: { name: categoryName, type: "expense", householdId: user.householdId },
+            const existing = await prisma.category.findFirst({
+                where: { name: categoryName, householdId: user.householdId }
             });
-            resolvedCategoryId = category.id;
+            if (existing) {
+                resolvedCategoryId = existing.id;
+            } else {
+                const category = await prisma.category.create({
+                    data: { name: categoryName, type: "expense", householdId: user.householdId },
+                });
+                resolvedCategoryId = category.id;
+            }
         }
 
         await prisma.budget.upsert({

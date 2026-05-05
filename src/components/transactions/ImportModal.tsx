@@ -13,20 +13,32 @@ interface ImportModalProps {
 }
 
 type ImportStep = "upload" | "preview" | "importing" | "complete";
+type FileType = "csv" | "pdf";
 
 export function ImportModal({ open, onOpenChange }: ImportModalProps) {
   const [step, setStep] = useState<ImportStep>("upload");
   const [file, setFile] = useState<File | null>(null);
-  const [previewData, setPreviewData] = useState<CSVRow[]>([]);
+  const [fileType, setFileType] = useState<FileType>("csv");
+  const [bank, setBank] = useState<string>("tangerine");
+  const [previewData, setPreviewData] = useState<any[]>([]);
   const [importResults, setImportResults] = useState<{ imported: number; errors?: unknown[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
 
     setFile(selectedFile);
     setError(null);
+
+    const isPdf = selectedFile.type === "application/pdf" || selectedFile.name.endsWith(".pdf");
+    setFileType(isPdf ? "pdf" : "csv");
+
+    if (isPdf) {
+      setStep("preview");
+      setPreviewData([{ description: "PDF Statement", amount: "Processing..." }]);
+      return;
+    }
 
     Papa.parse(selectedFile, {
       header: true,
@@ -47,12 +59,34 @@ export function ImportModal({ open, onOpenChange }: ImportModalProps) {
     setStep("importing");
 
     try {
-      const results = await new Promise<CSVRow[]>((resolve) => {
-        Papa.parse(file, {
-          header: true,
-          complete: (results) => resolve(results.data as CSVRow[]),
+      let results: any[];
+
+      if (fileType === "pdf") {
+        // PDF handling: send to server for parsing
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("bank", bank);
+
+        const response = await fetch("/api/import/pdf", {
+          method: "POST",
+          body: formData,
         });
-      });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to parse PDF");
+        }
+
+        const data = await response.json();
+        results = data.transactions;
+      } else {
+        results = await new Promise<CSVRow[]>((resolve) => {
+          Papa.parse(file, {
+            header: true,
+            complete: (results) => resolve(results.data as CSVRow[]),
+          });
+        });
+      }
 
       const result = await importCSVTransactions(results, { skipTransfers: true, autoCategorize: true });
       if (result.success) {
@@ -84,12 +118,25 @@ export function ImportModal({ open, onOpenChange }: ImportModalProps) {
         </DialogHeader>
 
         {step === "upload" && (
-          <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg">
-            <input type="file" onChange={handleFileSelect} accept=".csv" className="hidden" id="csv-upload" />
-            <label htmlFor="csv-upload" className="cursor-pointer flex flex-col items-center gap-2">
-              <Upload className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm">Click to upload CSV</span>
-            </label>
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium">Select Bank</label>
+              <select 
+                value={bank} 
+                onChange={(e) => setBank(e.target.value)}
+                className="w-full p-2 bg-background border rounded-md text-sm"
+              >
+                <option value="tangerine">Tangerine</option>
+                <option value="generic">Generic (CSV only)</option>
+              </select>
+            </div>
+            <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg">
+              <input type="file" onChange={handleFileSelect} accept=".csv,.pdf" className="hidden" id="file-upload" />
+              <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                <Upload className="h-8 w-8 text-muted-foreground" />
+                <span className="text-sm">Click to upload CSV or PDF</span>
+              </label>
+            </div>
           </div>
         )}
 

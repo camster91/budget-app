@@ -90,7 +90,7 @@ model Transaction {
 
 model Category {
   id        String   @id @default(uuid())
-  name      String   @unique
+  name      String
   icon      String?  // Emoji or Lucide icon name
   color     String?  // Hex code or Tailwind class
   type      String   @default("expense") // "income" or "expense"
@@ -117,6 +117,7 @@ model Category {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([name, householdId])
   @@index([householdId])
 }
 

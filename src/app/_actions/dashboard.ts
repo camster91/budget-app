@@ -6,7 +6,11 @@ import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { getAuthUser } from "@/lib/auth";
 
 async function aggregateByType(householdId: string, type: string, gte?: Date, lte?: Date) {
-    const where: Prisma.TransactionWhereInput = { type, householdId };
+    const where: Prisma.TransactionWhereInput = { 
+        type, 
+        householdId,
+        isTransfer: false // Exclude transfers from major summary aggregates
+    };
     if (gte || lte) where.date = { ...(gte && { gte }), ...(lte && { lte }) };
     const result = await prisma.transaction.aggregate({ where, _sum: { amount: true } });
     return result._sum.amount || 0;
@@ -96,6 +100,7 @@ export async function getDashboardSummary() {
                         categoryId: b.categoryId,
                         date: { gte: thisMonthStart, lte: thisMonthEnd },
                         type: "expense",
+                        isTransfer: false,
                         householdId: user.householdId,
                     },
                     _sum: { amount: true },

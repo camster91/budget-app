@@ -10,10 +10,11 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
       include: ['src/**/*.ts', 'src/**/*.tsx'],
-      exclude: ['src/test/**', 'src/components/ui/**', 'src/app/layout.tsx', 'src/app/page.tsx'],
+      exclude: ['src/test/**', 'src/components/ui/**', 'src/app/layout.tsx', 'src/app/page.tsx', 'e2e/**'],
     },
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    exclude: ['e2e/**', 'node_modules/**', 'playwright-report/**', 'test-results/**'],
   },
 });

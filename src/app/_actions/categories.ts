@@ -28,6 +28,14 @@ export async function createCategory(formData: FormData) {
         const type = formData.get("type") as string;
         const rules = formData.get("rules") as string; // Expecting JSON string
 
+        // Check for duplicate name in this household
+        const existing = await prisma.category.findFirst({
+            where: { name, householdId: user.householdId },
+        });
+        if (existing) {
+            return { success: false, error: "A category with this name already exists" };
+        }
+
         await prisma.category.create({
             data: {
                 name,
@@ -41,6 +49,7 @@ export async function createCategory(formData: FormData) {
         revalidatePath("/categories");
         return { success: true };
     } catch (error) {
+        console.error("Failed to create category:", error);
         return { success: false, error: "Failed to create category" };
     }
 }
@@ -66,6 +75,7 @@ export async function updateCategory(id: string, formData: FormData) {
         revalidatePath("/categories");
         return { success: true };
     } catch (error) {
+        console.error("Failed to update category:", error);
         return { success: false, error: "Failed to update category" };
     }
 }
@@ -103,6 +113,7 @@ export async function deleteCategory(id: string) {
         revalidatePath("/bills");
         return { success: true };
     } catch (error) {
+        console.error("Failed to delete category:", error);
         return { success: false, error: "Failed to delete category" };
     }
 }

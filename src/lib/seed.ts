@@ -28,21 +28,23 @@ async function seed() {
     console.log("👤 User created:", user.email);
 
     // ─── Categories ────────────────────────────────────────────
-    const categories = await prisma.category.createMany({
-        data: [
-            { name: "Coffee & Snacks", icon: "☕", color: "#d97706", type: "expense" },
-            { name: "Groceries", icon: "🛒", color: "#059669", type: "expense" },
-            { name: "Gas", icon: "⛽", color: "#dc2626", type: "expense" },
-            { name: "Streaming", icon: "📺", color: "#7c3aed", type: "expense" },
-            { name: "Dining Out", icon: "🍔", color: "#ea580c", type: "expense" },
-            { name: "Transport", icon: "🚌", color: "#2563eb", type: "expense" },
-            { name: "Shopping", icon: "🛍️", color: "#db2777", type: "expense" },
-            { name: "Rent", icon: "🏠", color: "#7c2d12", type: "expense" },
-            { name: "Salary", icon: "💰", color: "#059669", type: "income" },
-            { name: "Freelance", icon: "💻", color: "#4f46e5", type: "income" },
-        ],
-    });
-    console.log("🗂️  Categories seeded");
+    const categoriesData = [
+        { name: "Coffee & Snacks", icon: "☕", color: "#d97706", type: "expense", rules: JSON.stringify([{ keyword: "STARBUCKS", type: "contains" }, { keyword: "TIM HORTONS", type: "contains" }, { keyword: "SECOND CUP", type: "contains" }]) },
+        { name: "Groceries", icon: "🛒", color: "#059669", type: "expense", rules: JSON.stringify([{ keyword: "METRO", type: "contains" }, { keyword: "WALMART", type: "contains" }, { keyword: "COSTCO", type: "contains" }, { keyword: "WHOLE FOODS", type: "contains" }, { keyword: "TRADER JOE'S", type: "contains" }, { keyword: "INSTACART", type: "contains" }]) },
+        { name: "Gas", icon: "⛽", color: "#dc2626", type: "expense", rules: JSON.stringify([{ keyword: "SHELL", type: "contains" }, { keyword: "ESSO", type: "contains" }, { keyword: "PETRO CANADA", type: "contains" }, { keyword: "GAS STATION", type: "contains" }]) },
+        { name: "Streaming", icon: "📺", color: "#7c3aed", type: "expense", rules: JSON.stringify([{ keyword: "NETFLIX", type: "contains" }, { keyword: "SPOTIFY", type: "contains" }, { keyword: "YOUTUBE", type: "contains" }, { keyword: "DISNEY+", type: "contains" }]) },
+        { name: "Dining Out", icon: "🍔", color: "#ea580c", type: "expense", rules: JSON.stringify([{ keyword: "MCDONALD'S", type: "contains" }, { keyword: "SUBWAY", type: "contains" }, { keyword: "CHIPOTLE", type: "contains" }, { keyword: "UBER EATS", type: "contains" }, { keyword: "DOORDASH", type: "contains" }]) },
+        { name: "Transport", icon: "🚌", color: "#2563eb", type: "expense", rules: JSON.stringify([{ keyword: "UBER", type: "contains" }, { keyword: "LYFT", type: "contains" }, { keyword: "TTC", type: "contains" }, { keyword: "PRESTO", type: "contains" }]) },
+        { name: "Shopping", icon: "🛍️", color: "#db2777", type: "expense", rules: JSON.stringify([{ keyword: "AMAZON", type: "contains" }, { keyword: "TARGET", type: "contains" }, { keyword: "SHEIN", type: "contains" }, { keyword: "ETSY", type: "contains" }]) },
+        { name: "Rent", icon: "🏠", color: "#7c2d12", type: "expense" },
+        { name: "Salary", icon: "💰", color: "#059669", type: "income", rules: JSON.stringify([{ keyword: "DEPOSIT FROM EMPLOYER", type: "contains" }, { keyword: "SALARY", type: "contains" }]) },
+        { name: "Freelance", icon: "💻", color: "#4f46e5", type: "income", rules: JSON.stringify([{ keyword: "STRIPE", type: "contains" }, { keyword: "UPWORK", type: "contains" }, { keyword: "PAYPAL", type: "contains" }]) },
+    ];
+
+    for (const cat of categoriesData) {
+        await prisma.category.create({ data: cat });
+    }
+    console.log("🗂️  Categories seeded with rules");
 
     const catMap = await prisma.category.findMany();
     const byName = Object.fromEntries(catMap.map((c) => [c.name, c.id]));

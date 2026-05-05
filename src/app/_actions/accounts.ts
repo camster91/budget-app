@@ -27,6 +27,7 @@ export async function createAccount(formData: FormData) {
         revalidatePath("/accounts");
         return { success: true };
     } catch (error) {
+        console.error("Failed to create account:", error);
         return { success: false, error: "Failed to create account" };
     }
 }
@@ -43,6 +44,7 @@ export async function updateAccountBalance(id: string, balance: number) {
         revalidatePath("/");
         return { success: true };
     } catch (error) {
+        console.error("Failed to update balance:", error);
         return { success: false, error: "Failed to update balance" };
     }
 }
@@ -69,6 +71,7 @@ export async function deleteAccount(id: string) {
         revalidatePath("/");
         return { success: true };
     } catch (error) {
+        console.error("Failed to delete account:", error);
         return { success: false, error: "Failed to delete account" };
     }
 }

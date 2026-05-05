@@ -64,6 +64,7 @@ describe('Accounts Actions', () => {
           institution: 'TD',
           balance: 1500.50,
           color: '#ff0000',
+          householdId: 'hh-1',
         },
       });
       expect(revalidatePath).toHaveBeenCalledWith('/accounts');
@@ -91,7 +92,7 @@ describe('Accounts Actions', () => {
       const res = await updateAccountBalance('acc-1', 2000);
       expect(res.success).toBe(true);
       expect(prisma.account.update).toHaveBeenCalledWith({
-        where: { id: 'acc-1' },
+        where: { id: 'acc-1', householdId: 'hh-1' },
         data: { balance: 2000 },
       });
       expect(revalidatePath).toHaveBeenCalledWith('/accounts');
@@ -139,6 +140,7 @@ describe('Accounts Actions', () => {
       const res = await getAccounts();
       expect(res).toEqual(mockAccounts);
       expect(prisma.account.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */).toHaveBeenCalledWith({
+        where: { householdId: 'hh-1' },
         orderBy: { createdAt: 'asc' },
       });
     });

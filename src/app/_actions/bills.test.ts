@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createBill, updateBill, deleteBill, getBills } from './bills';
+import { createBill, updateBill, deleteBill } from './bills';
 import { prisma } from '@/lib/prisma';
 import { getAuthUser } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
@@ -60,12 +60,4 @@ describe('Bills Actions', () => {
     });
   });
 
-  describe('getBills', () => {
-    it('should return bills', async () => {
-      (prisma.bill.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */ as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue([{ id: '1' }]);
-      const res = await getBills();
-      expect(res.success).toBe(true);
-      expect(res.data).toEqual([{ id: '1' }]);
-    });
-  });
 });

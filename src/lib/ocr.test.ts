@@ -79,18 +79,14 @@ describe('parseReceiptImage', () => {
 
 describe('isOcrSupported', () => {
     it('should return true if window and WebAssembly exist', () => {
-        // @ts-expect-error: mocking global window object
-        global.window = { WebAssembly: {} };
+        global.window = { WebAssembly: {} } as any;
         expect(isOcrSupported()).toBe(true);
     });
 
     it('should return false if window is undefined', () => {
-        // @ts-expect-error: mocking global window object
         const originalWindow = global.window;
-        // @ts-expect-error: mocking global window object
-        delete global.window;
+        delete (global as any).window;
         expect(isOcrSupported()).toBe(false);
-        // @ts-expect-error: mocking global window object
         global.window = originalWindow;
     });
 });
