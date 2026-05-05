@@ -429,7 +429,11 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                 </div>
             </div>
 
-            <ImportModal open={isImportModalOpen} onOpenChange={setIsImportModalOpen} />
+            <ImportModal 
+              open={isImportModalOpen} 
+              onOpenChange={setIsImportModalOpen}
+              categories={categories.map(c => ({ id: c.id, name: c.name, color: null }))}
+            />
         </>
     );
 }
