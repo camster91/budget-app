@@ -63,6 +63,18 @@ export async function updateCategory(id: string, formData: FormData) {
         const color = formData.get("color") as string;
         const rules = formData.get("rules") as string;
 
+        // Check for duplicate name in this household (excluding self)
+        const existing = await prisma.category.findFirst({
+            where: { 
+                name, 
+                householdId: user.householdId,
+                id: { not: id }
+            },
+        });
+        if (existing) {
+            return { success: false, error: "A category with this name already exists" };
+        }
+
         await prisma.category.update({
             where: { id, householdId: user.householdId },
             data: {
