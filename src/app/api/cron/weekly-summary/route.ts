@@ -7,7 +7,11 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
     // Basic auth check for cron jobs
     const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET || "dev-cron-secret"}`) {
+    const CRON_SECRET = process.env.CRON_SECRET;
+    if (!CRON_SECRET) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (authHeader !== `Bearer ${CRON_SECRET}`) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

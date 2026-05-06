@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -340,7 +340,12 @@ function CreateCategoryForm({
 
     function handleCreate(formData: FormData) {
         formData.set("color", selectedColor);
-        onSuccess();
+        startTransition(async () => {
+            const result = await createCategory(formData);
+            if (result?.success) {
+                onSuccess();
+            }
+        });
     }
 
     return (

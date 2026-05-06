@@ -528,29 +528,38 @@ function getDaysInCurrentMonth() {
 async function calculateStreak(householdId: string, dailyAllowance: number): Promise<number> {
     try {
         if (dailyAllowance <= 0) return 0;
+
+        const start = startOfDay(subDays(new Date(), 29));
+        const end = endOfDay(new Date());
+
+        const txList = await prisma.transaction.findMany({
+            where: {
+                type: "expense",
+                date: { gte: start, lte: end },
+                isDiscretionary: true,
+                isDuplicate: false,
+                householdId,
+            },
+            orderBy: { date: "desc" },
+        });
+
+        // Sum spending per day
+        const byDay = new Map<string, number>();
+        for (const tx of txList) {
+            const dayKey = tx.date.toISOString().slice(0, 10);
+            byDay.set(dayKey, (byDay.get(dayKey) ?? 0) + tx.amount);
+        }
+
         let streak = 0;
         for (let i = 0; i < 30; i++) {
             const day = subDays(new Date(), i);
-            const dayStart = startOfDay(day);
-            const dayEnd = endOfDay(day);
+            const dayKey = startOfDay(day).toISOString().slice(0, 10);
+            const total = byDay.get(dayKey) ?? 0;
 
-            const spent = await prisma.transaction.aggregate({
-                where: {
-                    type: "expense",
-                    date: { gte: dayStart, lte: dayEnd },
-                    isDiscretionary: true,
-                    isDuplicate: false,
-                    householdId,
-                },
-                _sum: { amount: true },
-            });
-
-            const total = spent._sum.amount || 0;
             if (i === 0 && total === 0) continue; // no spending today = neutral
             if (total <= dailyAllowance) {
                 streak++;
             } else {
-                // If today is the first day and already over, it's a negative streak
                 if (i === 0 && total > dailyAllowance) streak = -1;
                 break;
             }

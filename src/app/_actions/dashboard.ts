@@ -92,29 +92,35 @@ export async function getDashboardSummary() {
                 color: categoryMap[c.categoryId!]?.color ?? "#6366f1",
             }));
 
-        // Enrich budgets with spending
-        const enrichedBudgets = await Promise.all(
-            budgets.map(async (b) => {
-                const agg = await prisma.transaction.aggregate({
-                    where: {
-                        categoryId: b.categoryId,
-                        date: { gte: thisMonthStart, lte: thisMonthEnd },
-                        type: "expense",
-                        isTransfer: false,
-                        householdId: user.householdId,
-                    },
-                    _sum: { amount: true },
-                });
-                const spent = agg._sum.amount || 0;
-                return {
-                    id: b.id,
-                    name: b.category.name,
-                    amount: b.amount,
-                    spent,
-                    progress: (spent / b.amount) * 100,
-                };
-            })
+        // Enrich budgets with spending — single batch query instead of N+1
+        const budgetCategoryIds = budgets.map((b) => b.categoryId).filter(Boolean) as string[];
+        const budgetSpending = budgetCategoryIds.length
+            ? await prisma.transaction.groupBy({
+                by: ["categoryId"],
+                where: {
+                    categoryId: { in: budgetCategoryIds },
+                    date: { gte: thisMonthStart, lte: thisMonthEnd },
+                    type: "expense",
+                    isTransfer: false,
+                    householdId: user.householdId,
+                },
+                _sum: { amount: true },
+              })
+            : [];
+        const spendingMap = Object.fromEntries(
+            budgetSpending.map((s) => [s.categoryId, s._sum.amount || 0])
         );
+
+        const enrichedBudgets = budgets.map((b) => {
+            const spent = spendingMap[b.categoryId] ?? 0;
+            return {
+                id: b.id,
+                name: b.category.name,
+                amount: b.amount,
+                spent,
+                progress: (spent / b.amount) * 100,
+            };
+        });
 
         // Net worth from account balances, or transaction-based fallback
         const accountNetWorth = accounts.reduce(

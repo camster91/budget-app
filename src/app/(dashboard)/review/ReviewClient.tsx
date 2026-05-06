@@ -41,14 +41,21 @@ interface ReviewClientProps {
 
 export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRules = [], suggestedBills = [], categories = [], accounts = [] }: ReviewClientProps) {
   const [view, setView] = useState<"weekly" | "monthly" | "smart">("weekly");
-  const [selectedMonth, setSelectedMonth] = useState(months[0]);
+  const [selectedMonth, setSelectedMonth] = useState(months[0] ?? null);
+  const [monthlyLoading, setMonthlyLoading] = useState(false);
   const [monthly, setMonthly] = useState(initialMonthly);
   const [weekly, setWeekly] = useState(initialWeekly);
 
   async function loadMonth(month: string) {
-    const res = await fetch(`/api/review/monthly?month=${month}`);
-    const data = await res.json();
-    if (data.success) setMonthly(data.data);
+    setMonthlyLoading(true);
+    try {
+      const res = await fetch(`/api/review/monthly?month=${month}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.success) setMonthly(data.data);
+    } finally {
+      setMonthlyLoading(false);
+    }
   }
 
   const data = view === "monthly" ? monthly : weekly;
@@ -183,6 +190,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRul
             <TopCategories categories={(data as WeeklyData).byCategory || []} />
             <ExportPanel onExportCSV={async () => {
               const res = await fetch(`/api/export/csv${view === "monthly" ? `?month=${selectedMonth}` : ""}`);
+              if (!res.ok) return;
               const blob = await res.blob();
               const url = window.URL.createObjectURL(blob);
               const a = document.createElement("a");
