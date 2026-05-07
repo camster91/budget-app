@@ -1,4 +1,5 @@
-export const dynamic = "force-static";
+// force-dynamic because this endpoint is per-user and must not be cached
+export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
