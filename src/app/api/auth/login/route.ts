@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   let email: string, password: string;
   try {
     const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
-    if (!checkRateLimit(`login:`, 5, 60 * 1000)) {
+    if (!checkRateLimit(`login:${ip}`, 5, 60 * 1000)) {
       return NextResponse.json({ error: "Too many login attempts" }, { status: 429 });
     }
     ({ email, password } = await request.json());
@@ -30,11 +30,16 @@ export async function POST(request: Request) {
     if (!valid) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
-    const token = signToken({ userId: user.id, email: user.email, householdId: user.householdId || "" });
+    const householdId = user.householdId || "";
+    const token = signToken({ userId: user.id, email: user.email, householdId });
     const response = NextResponse.json({ user: { id: user.id, email: user.email, name: user.name } });
     response.cookies.set(setTokenCookie(token));
     return response;
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (e) {
+    console.error("[LOGIN ERROR]", e);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
