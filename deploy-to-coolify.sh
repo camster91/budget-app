@@ -5,6 +5,34 @@
 
 set -e
 
+# ── Telegram alerting on deploy failure ──────────────────────────────────────
+TELEGRAM_BOT_TOKEN=""  # TODO(cam): set TELEGRAM_BOT_TOKEN env var before running
+TELEGRAM_CHAT_ID=""    # TODO(cam): set TELEGRAM_CHAT_ID env var before running
+
+send_deploy_alert() {
+  local level="$1"   # "success" | "failure"
+  local message="$2"
+  if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+    echo "[telegram] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — skipping deploy alert"
+    echo "[telegram] Level: $level | Message: $message"
+    return
+  fi
+  local emoji="✅"
+  [ "$level" = "failure" ] && emoji="🚨"
+  local text="${emoji} *Deploy ${level^}* | budget-app | $(date '+%Y-%m-%d %H:%M:%S')"$'\n\n'"${message}"
+  curl -s -X POST \
+    "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+    -H "Content-Type: application/json" \
+    -d "{\"chat_id\": \"${TELEGRAM_CHAT_ID}\", \"text\": \"${text}\", \"parse_mode\": \"Markdown\"}" \
+    > /dev/null
+  echo "[telegram] Deploy ${level} alert sent"
+}
+
+on_deploy_failure() {
+  send_deploy_alert "failure" "Deploy to Coolify failed.\n\nCheck Coolify logs for details."
+}
+trap 'on_deploy_failure' ERR
+
 # Configuration
 COOLIFY_URL="http://187.77.26.99:8000"
 API_TOKEN="2|OyUt8feqoaBUVu1Uvvkq59CCqNjIdj4j2Vf0OXYf"
@@ -131,6 +159,7 @@ fi
 
 echo ""
 echo "🎉 Deployment process completed!"
+send_deploy_alert "success" "Deploy to Coolify succeeded.\n\nApp: https://${DOMAIN}"
 echo "📊 Check Coolify dashboard: $COOLIFY_URL"
 echo "🌐 Your app will be available at: https://$DOMAIN"
 echo ""
