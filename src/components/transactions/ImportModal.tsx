@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { importCSVTransactions, type CSVRow } from "@/app/_actions/import";
 import { formatCurrency, cn } from "@/lib/utils";
+import { isTransfer } from "@/lib/utils/transactionUtils";
 import Papa from "papaparse";
 import { toast } from "sonner";
 
@@ -157,8 +158,7 @@ export function ImportModal({ open, onOpenChange, categories = [] }: ImportModal
           const description = String(row["Description"] || row["description"] || "");
           const amount = parseFloat(String(row["Amount"] || row["amount"] || "0"));
           const dateStr = String(row["Date"] || row["date"] || "");
-          const descLower = description.toLowerCase();
-          const isTransfer = ["transfer", "payment to", "interac"].some(k => descLower.includes(k));
+          const isTransferTransaction = isTransfer(description);
           const type = amount > 0 ? "income" : "expense";
           const matched = previewCategorize(description, categories);
 
@@ -168,7 +168,7 @@ export function ImportModal({ open, onOpenChange, categories = [] }: ImportModal
             date: dateStr,
             type: type as "income" | "expense",
             matchedCategory: matched,
-            isTransfer,
+            isTransfer: isTransferTransaction,
           };
         });
 
@@ -203,8 +203,7 @@ export function ImportModal({ open, onOpenChange, categories = [] }: ImportModal
           const description = String(row["Description"] || row["description"] || "");
           const amount = parseFloat(String(row["Amount"] || row["amount"] || "0"));
           const dateStr = String(row["Date"] || row["date"] || "");
-          const descLower = description.toLowerCase();
-          const isTransfer = ["transfer", "payment to", "interac"].some(k => descLower.includes(k));
+          const isTransferTransaction = isTransfer(description);
           const type = amount > 0 ? "income" : "expense";
           const matched = previewCategorize(description, categories);
 
@@ -214,7 +213,7 @@ export function ImportModal({ open, onOpenChange, categories = [] }: ImportModal
             date: dateStr,
             type: type as "income" | "expense",
             matchedCategory: matched,
-            isTransfer,
+            isTransfer: isTransferTransaction,
           };
         });
 
