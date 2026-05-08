@@ -113,12 +113,12 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
         const availableToSpend = totalIncome - upcomingBillsTotal;
         const dailyAllowance = daysTotal > 0 ? availableToSpend / daysTotal : 0;
 
-        // Today's discretionary spending
+        // Today's real spending (exclude internal transfers)
         const todayEntries = await prisma.transaction.findMany({
             where: {
                 type: "expense",
                 date: { gte: todayStart, lte: todayEnd },
-                isDiscretionary: true,
+                isTransfer: false, // Exclude internal account transfers per Cam's rule — don't exclude any real spending
                 isDuplicate: false,
                 householdId: user.householdId,
             },
@@ -133,7 +133,7 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
             where: {
                 type: "expense",
                 date: { gte: periodStart, lt: yesterday },
-                isDiscretionary: true,
+                isTransfer: false, // Exclude internal account transfers per Cam's rule — don't exclude any real spending
                 isDuplicate: false,
                 householdId: user.householdId,
             },
@@ -193,7 +193,7 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
             where: {
                 type: "expense",
                 date: { gte: todayStart, lte: todayEnd },
-                isDiscretionary: true,
+                isTransfer: false, // Exclude internal account transfers per Cam's rule — don't exclude any real spending
                 isDuplicate: false,
                 householdId: user.householdId,
             },
@@ -380,8 +380,7 @@ export async function addQuickSpend(formData: FormData) {
                 description,
                 date: new Date(),
                 type: "expense",
-                isDiscretionary: true,
-                isTransfer: false,
+                isTransfer: false, // Exclude internal account transfers per Cam's rule — don't exclude any real spending
                 isRecurring: false,
                 isDuplicate,
                 duplicateOfId: duplicate?.id || null,
@@ -536,7 +535,7 @@ async function calculateStreak(householdId: string, dailyAllowance: number): Pro
             where: {
                 type: "expense",
                 date: { gte: start, lte: end },
-                isDiscretionary: true,
+                isTransfer: false, // Exclude internal account transfers per Cam's rule — don't exclude any real spending
                 isDuplicate: false,
                 householdId,
             },
@@ -576,7 +575,7 @@ async function calculateBestStreak(householdId: string, dailyAllowance: number):
         const txs = await prisma.transaction.findMany({
             where: {
                 type: "expense",
-                isDiscretionary: true,
+                isTransfer: false, // Exclude internal account transfers per Cam's rule — don't exclude any real spending
                 isDuplicate: false,
                 date: { gte: subDays(new Date(), 90) },
                 householdId,
