@@ -2,7 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
-import { startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay, differenceInDays, isBefore } from "date-fns";
+import { getNextPayDate, getPeriodStart, isBillDueInPeriod } from "@/lib/dateUtils";
 
 export interface PushMessage {
     title: string;
@@ -35,7 +36,7 @@ export async function triggerSpendingAlert(): Promise<PushMessage | null> {
             where: {
                 type: "expense",
                 date: { gte: todayStart, lte: todayEnd },
-                isDiscretionary: true,
+                isTransfer: false,
                 isDuplicate: false,
                 householdId: user.householdId,
             },
@@ -43,7 +44,9 @@ export async function triggerSpendingAlert(): Promise<PushMessage | null> {
         });
 
         const total = spent._sum.amount || 0;
-        const dailyAllowance = 65; // would be calculated from income
+        const dailyAllowance = await calculateDailyAllowance(user.householdId!);
+
+        if (dailyAllowance <= 0) return null;
 
         if (total > dailyAllowance * 0.8 && total <= dailyAllowance) {
             return {
@@ -71,6 +74,40 @@ export async function triggerSpendingAlert(): Promise<PushMessage | null> {
         return null;
     } catch {
         return null;
+    }
+}
+
+async function calculateDailyAllowance(householdId: string): Promise<number> {
+    try {
+        const incomes = await prisma.income.findMany({
+            where: { isActive: true, householdId },
+        });
+        if (incomes.length === 0) return 0;
+
+        const now = new Date();
+
+        // Find the nearest upcoming pay date across ALL income sources
+        const payDates = incomes.map((i) => getNextPayDate(i, now));
+        const nextPayDate = payDates.reduce((a, b) => (isBefore(a, b) ? a : b));
+        const primaryIncome = incomes[payDates.indexOf(nextPayDate)];
+        const periodStart = getPeriodStart(primaryIncome, nextPayDate);
+        const daysTotal = Math.max(1, differenceInDays(nextPayDate, periodStart));
+
+        // Total income this period
+        const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
+
+        // Bills due in this period
+        const bills = await prisma.bill.findMany({
+            where: { isActive: true, householdId },
+        });
+        const upcomingBillsTotal = bills
+            .filter((b) => isBillDueInPeriod(b, periodStart, nextPayDate))
+            .reduce((s, b) => s + b.amount, 0);
+
+        const availableToSpend = totalIncome - upcomingBillsTotal;
+        return daysTotal > 0 ? availableToSpend / daysTotal : 0;
+    } catch {
+        return 0;
     }
 }
 
