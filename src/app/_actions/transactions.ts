@@ -95,6 +95,9 @@ export async function updateTransaction(id: string, formData: FormData) {
         const date = new Date(formData.get("date") as string);
         const type = formData.get("type") as string;
         const categoryId = formData.get("categoryId") as string;
+        const isDiscretionary = formData.get("isDiscretionary") !== null
+            ? (formData.get("isDiscretionary") as string) !== "false"
+            : undefined;
 
         await prisma.transaction.update({
             where: { id, householdId: user.householdId },
@@ -104,6 +107,7 @@ export async function updateTransaction(id: string, formData: FormData) {
                 date,
                 type,
                 categoryId: categoryId || null,
+                ...(isDiscretionary !== undefined && { isDiscretionary }),
             },
         });
 

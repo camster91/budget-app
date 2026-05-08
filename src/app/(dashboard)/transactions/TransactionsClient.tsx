@@ -25,6 +25,7 @@ interface Transaction {
     type: string;
     category: Category | null;
     categoryId: string | null;
+    isDiscretionary: boolean;
 }
 
 interface TransactionsClientProps {
@@ -68,6 +69,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
             date: typeof t.date === "string" ? t.date.slice(0, 10) : t.date.toISOString().slice(0, 10),
             type: t.type,
             categoryId: t.categoryId || "",
+            isDiscretionary: t.isDiscretionary,
         });
     }
 
@@ -78,6 +80,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
         fd.append("date", String(editForm.date || ""));
         fd.append("type", editForm.type || "expense");
         fd.append("categoryId", editForm.categoryId || "");
+        fd.append("isDiscretionary", editForm.isDiscretionary ? "true" : "false");
 
         startTransition(async () => {
             const result = await updateTransaction(id, fd);
@@ -92,6 +95,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                   date: editForm.date ? new Date(editForm.date as string) : t.date,
                                   type: editForm.type || t.type,
                                   categoryId: editForm.categoryId || null,
+                                  isDiscretionary: editForm.isDiscretionary ?? t.isDiscretionary,
                                   category: categories.find((c) => c.id === editForm.categoryId) || null,
                               }
                             : t
