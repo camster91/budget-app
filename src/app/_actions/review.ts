@@ -15,7 +15,7 @@ export async function getWeeklyReview(date?: Date) {
 
         const [transactions, prevWeekStart, prevWeekEnd] = [
             await prisma.transaction.findMany({
-                where: { date: { gte: start, lte: end }, type: "expense", isDuplicate: false, householdId: user.householdId },
+                where: { date: { gte: start, lte: end }, type: "expense", isTransfer: false, isDuplicate: false, householdId: user.householdId },
                 include: { category: true },
                 orderBy: { date: "desc" },
             }),
@@ -24,7 +24,7 @@ export async function getWeeklyReview(date?: Date) {
         ];
 
         const prevTransactions = await prisma.transaction.findMany({
-            where: { date: { gte: prevWeekStart, lte: prevWeekEnd }, type: "expense", isDuplicate: false, householdId: user.householdId },
+            where: { date: { gte: prevWeekStart, lte: prevWeekEnd }, type: "expense", isTransfer: false, isDuplicate: false, householdId: user.householdId },
         });
 
         const total = transactions.reduce((s, t) => s + t.amount, 0);
@@ -42,7 +42,7 @@ export async function getWeeklyReview(date?: Date) {
 
         const byCategory = await prisma.transaction.groupBy({
             by: ["categoryId"],
-            where: { date: { gte: start, lte: end }, type: "expense", isDuplicate: false, householdId: user.householdId },
+            where: { date: { gte: start, lte: end }, type: "expense", isTransfer: false, isDuplicate: false, householdId: user.householdId },
             _sum: { amount: true },
         });
 
@@ -81,7 +81,7 @@ export async function getMonthlyReview(month?: string) {
         const end = endOfMonth(target);
 
         const transactions = await prisma.transaction.findMany({
-            where: { date: { gte: start, lte: end }, type: "expense", isDuplicate: false, householdId: user.householdId },
+            where: { date: { gte: start, lte: end }, type: "expense", isTransfer: false, isDuplicate: false, householdId: user.householdId },
             include: { category: true },
             orderBy: { date: "desc" },
         });
@@ -89,7 +89,7 @@ export async function getMonthlyReview(month?: string) {
         const prevStart = subMonths(start, 1);
         const prevEnd = subMonths(end, 1);
         const prevTransactions = await prisma.transaction.findMany({
-            where: { date: { gte: prevStart, lte: prevEnd }, type: "expense", isDuplicate: false, householdId: user.householdId },
+            where: { date: { gte: prevStart, lte: prevEnd }, type: "expense", isTransfer: false, isDuplicate: false, householdId: user.householdId },
         });
 
         const total = transactions.reduce((s, t) => s + t.amount, 0);
