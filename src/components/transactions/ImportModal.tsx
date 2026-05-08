@@ -236,7 +236,6 @@ export function ImportModal({ open, onOpenChange, categories = [] }: ImportModal
       }));
 
       const result = await importCSVTransactions(transactionsToImport, {
-        skipTransfers: true,
         autoCategorize: Object.keys(categoryOverrides).length === 0,
       });
 

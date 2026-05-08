@@ -10,7 +10,6 @@ import { getAuthUser } from "@/lib/auth";
 export type CSVRow = Record<string, any>;
 
 export interface ImportOptions {
-    skipTransfers: boolean;
     autoCategorize: boolean;
 }
 
@@ -40,10 +39,9 @@ export async function importCSVTransactions(data: CSVRow[], options: ImportOptio
 
                 const date = new Date(dateStr);
                 const isTransferTransaction = isTransfer(description);
-
-                if (options.skipTransfers && isTransferTransaction) {
-                    continue;
-                }
+                // isDiscretionary: expenses are discretionary, income is not
+                // Transfer transactions are NOT discretionary (internal money movement)
+                const isDiscretionary = type === 'expense' && !isTransferTransaction;
 
                 let categoryId = row['categoryId'] || row['category_id'];
                 if (!categoryId && options.autoCategorize) {
@@ -57,6 +55,7 @@ export async function importCSVTransactions(data: CSVRow[], options: ImportOptio
                         date,
                         type: type.toLowerCase() === 'income' || amount > 0 ? 'income' : 'expense',
                         isTransfer: isTransferTransaction,
+                        isDiscretionary,
                         categoryId,
                         householdId: user.householdId,
                     },
