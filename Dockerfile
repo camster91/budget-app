@@ -80,5 +80,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 # Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start Next.js server binding to all interfaces
-CMD ["node", "server.js"]
+# Run Prisma migrations before starting server
+CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]

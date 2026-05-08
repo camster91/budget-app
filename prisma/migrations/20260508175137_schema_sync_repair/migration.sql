@@ -8,6 +8,7 @@
 -- Category (may have been rolled back from multi_tenant_categories)
 -- ================================================================
 ALTER TABLE "Category" ADD COLUMN IF NOT EXISTS "rules" TEXT;
+ALTER TABLE "Category" ADD COLUMN IF NOT EXISTS "householdId" TEXT;
 
 -- Drop old global-unique constraint (safe to run even if already dropped)
 DROP INDEX IF EXISTS "Category_name_key";
@@ -16,16 +17,23 @@ DROP INDEX IF EXISTS "Category_name_key";
 CREATE UNIQUE INDEX IF NOT EXISTS "Category_name_householdId_unique" ON "Category"("name", "householdId");
 
 -- ================================================================
+-- User
+-- ================================================================
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "householdId" TEXT;
+
+-- ================================================================
 -- Account
 -- ================================================================
 ALTER TABLE "Account" ADD COLUMN IF NOT EXISTS "color" TEXT;
 ALTER TABLE "Account" ADD COLUMN IF NOT EXISTS "isDefault" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Account" ADD COLUMN IF NOT EXISTS "householdId" TEXT;
 
 -- ================================================================
 -- Transaction
 -- ================================================================
 ALTER TABLE "Transaction" ADD COLUMN IF NOT EXISTS "statementId" TEXT;
 ALTER TABLE "Transaction" ADD COLUMN IF NOT EXISTS "reconciled" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Transaction" ADD COLUMN IF NOT EXISTS "householdId" TEXT;
 
 -- ================================================================
 -- Income
@@ -33,11 +41,24 @@ ALTER TABLE "Transaction" ADD COLUMN IF NOT EXISTS "reconciled" BOOLEAN NOT NULL
 ALTER TABLE "Income" ADD COLUMN IF NOT EXISTS "startDate" DATE NOT NULL DEFAULT CURRENT_DATE;
 ALTER TABLE "Income" ADD COLUMN IF NOT EXISTS "dayOfMonth" INTEGER;
 ALTER TABLE "Income" ADD COLUMN IF NOT EXISTS "isActive" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "Income" ADD COLUMN IF NOT EXISTS "householdId" TEXT;
+
+-- ================================================================
+-- Budget
+-- ================================================================
+ALTER TABLE "Budget" ADD COLUMN IF NOT EXISTS "householdId" TEXT;
 
 -- ================================================================
 -- Goal
 -- ================================================================
 ALTER TABLE "Goal" ADD COLUMN IF NOT EXISTS "targetDate" TIMESTAMP(3);
+ALTER TABLE "Goal" ADD COLUMN IF NOT EXISTS "householdId" TEXT;
+
+-- ================================================================
+-- Bill
+-- ================================================================
+ALTER TABLE "Bill" ADD COLUMN IF NOT EXISTS "householdId" TEXT;
+ALTER TABLE "Bill" ADD COLUMN IF NOT EXISTS "isActive" BOOLEAN NOT NULL DEFAULT true;
 
 -- ================================================================
 -- DailyPeriod (schema was restructured from date-based to period-based)
