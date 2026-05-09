@@ -107,6 +107,7 @@ export async function updateTransaction(id: string, formData: FormData) {
                 date,
                 type,
                 categoryId: categoryId || null,
+                isTransfer: isTransfer(description),
                 ...(isDiscretionary !== undefined && { isDiscretionary }),
             },
         });

@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDailySnapshot, getDataHealth, batchCleanupTransactions, addQuickSpend, deleteTransactionAndRevalidate } from "@/app/_actions/daily";
 import { getCategories } from "@/app/_actions/categories";
-import { toggleNoSpendMode } from "@/app/_actions/nospend";
+import { toggleNoSpendMode, isNoSpendActive } from "@/app/_actions/nospend";
 import * as actions from "@/app/_actions/receipts";
 import * as patternActions from "@/app/_actions/patterns";
 import { createLinkToken, exchangePublicToken } from "@/app/_actions/plaid-link";
@@ -88,6 +88,13 @@ export function DailyDashboard({ initialAccounts }: { initialAccounts: any /* es
         queryFn: async () => {
             const res = await getDataHealth();
             return res.data;
+        },
+    });
+
+    const { data: noSpendActive } = useQuery({
+        queryKey: ["no-spend-active"],
+        queryFn: async () => {
+            return await isNoSpendActive();
         },
     });
 
@@ -233,7 +240,7 @@ export function DailyDashboard({ initialAccounts }: { initialAccounts: any /* es
             <PatternInsights patterns={patterns || []} />
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <NoSpendToggle isActive={false} onToggle={async (active) => {
+                <NoSpendToggle isActive={noSpendActive ?? false} onToggle={async (active) => {
                     const fd = new FormData();
                     fd.append("isActive", active ? "true" : "false");
                     await toggleNoSpendMode(fd);
