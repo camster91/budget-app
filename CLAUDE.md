@@ -16,7 +16,7 @@ Single-user, self-hosted on a VPS via Coolify (Docker). Built with Next.js App R
 | Charts | Recharts (AreaChart, PieChart) |
 | Animations | Framer Motion |
 | Auth | Custom JWT in httpOnly cookie |
-| Bank sync | Plaid SDK (installed, not yet implemented) |
+| Bank sync | Plaid SDK (implemented, conditionally shown when PLAID_CLIENT_ID is set) |
 | Toasts | Sonner |
 | Icons | Lucide React |
 | CSV | papaparse |
@@ -157,7 +157,7 @@ The `Button` component does NOT implement Radix `asChild`. Wrap `<Link>` with ex
 | Dashboard — stats, cashflow chart, spending by category, budget health | Complete |
 | Auth — login, register, JWT, profile/password update | Complete |
 | 404 page | Complete |
-| Plaid bank sync | TODO |
+| Plaid bank sync | Complete (conditionally rendered when PLAID_CLIENT_ID env var is set) |
 | Date range filter on transactions | TODO |
 | Budget month selector (past/future months) | TODO |
 | Bill mark-as-paid + payment history | TODO |
@@ -165,14 +165,16 @@ The `Button` component does NOT implement Radix `asChild`. Wrap `<Link>` with ex
 
 ---
 
-## Plaid Integration (TODO)
+## Plaid Integration
 
-SDK installed. Needs:
-- `.env`: `PLAID_CLIENT_ID`, `PLAID_SECRET`, `PLAID_ENV`
-- `POST /api/plaid/create-link-token` — returns link token for Plaid Link widget
-- `POST /api/plaid/exchange-token` — exchanges public token for access token, stores on User
-- `POST /api/plaid/sync` — fetches transactions from Plaid, upserts into DB
-- `<PlaidLink>` component using `react-plaid-link`
+Plaid bank sync is fully implemented with conditional rendering:
+- Server actions: `src/app/_actions/plaid-link.ts` (link token, exchange), `src/app/_actions/plaid-sync.ts` (transaction sync)
+- Client component: `src/components/plaid/PlaidLinker.tsx` (Pl laid Link modal + account management)
+- UI is hidden on Daily Dashboard and Accounts pages unless `PLAID_CLIENT_ID` env var is set
+
+To activate:
+- Set `.env`: `PLAID_CLIENT_ID`, `PLAID_SECRET`, `PLAID_ENV`
+- PlaidLinker will automatically appear on `/daily` and `/accounts`
 
 ---
 
