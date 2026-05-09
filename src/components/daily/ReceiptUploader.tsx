@@ -85,7 +85,12 @@ export function ReceiptUploader({ pendingReceipts, onApprove, onReject, onParsed
 
     return (
         <div className="space-y-4">
-            <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+            <div
+                role="button"
+                tabIndex={0}
+                aria-label="Upload receipt"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); !isParsing && fileInputRef.current?.click(); } }}
+                onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
                 onClick={() => !isParsing && fileInputRef.current?.click()}
                 className={`relative cursor-pointer glass-card rounded-2xl p-6 text-center transition-all duration-300 border-dashed border-2 ${
                     isDragging ? "border-primary/50 bg-primary/5" : isParsing ? "border-white/[0.04] opacity-60" : "border-white/[0.08]"
