@@ -30,7 +30,7 @@ import { Sparkles, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export function DailyDashboard({ initialAccounts }: { initialAccounts: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[] }) {
+export function DailyDashboard({ initialAccounts, plaidConfigured = false }: { initialAccounts: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]; plaidConfigured?: boolean }) {
     const queryClient = useQueryClient();
 
     const { data: snapshotData, isLoading: snapshotLoading } = useQuery({
@@ -246,6 +246,7 @@ export function DailyDashboard({ initialAccounts }: { initialAccounts: any /* es
                     await toggleNoSpendMode(fd);
                     queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
                 }} />
+                {plaidConfigured && (
                 <PlaidLinker
                     accounts={initialAccounts}
                     createLinkToken={createLinkToken}
@@ -256,6 +257,7 @@ export function DailyDashboard({ initialAccounts }: { initialAccounts: any /* es
                         return res;
                     }}
                 />
+                )}
                 {health && (
                     <DataHealthWidget 
                         metrics={health} 

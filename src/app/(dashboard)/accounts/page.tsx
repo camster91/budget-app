@@ -13,9 +13,12 @@ export default async function AccountsPage() {
     if (!user) redirect("/login");
 
     const accounts = await getAccounts();
+    const plaidConfigured = Boolean(process.env.PLAID_CLIENT_ID);
+
     return (
         <div className="space-y-8">
             <AccountsClient accounts={accounts} />
+            {plaidConfigured && (
             <div className="mt-12 pt-8 border-t border-white/10 max-w-md">
                 <PlaidLinker
                     accounts={accounts}
@@ -24,6 +27,7 @@ export default async function AccountsPage() {
                     syncTransactions={syncPlaidTransactions}
                 />
             </div>
+            )}
         </div>
     );
 }

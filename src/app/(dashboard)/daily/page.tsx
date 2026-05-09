@@ -13,5 +13,7 @@ export default async function DailyPage() {
         where: { householdId: user.householdId }
     });
 
-    return <DailyDashboard initialAccounts={accounts} />;
+    const plaidConfigured = Boolean(process.env.PLAID_CLIENT_ID);
+
+    return <DailyDashboard initialAccounts={accounts} plaidConfigured={plaidConfigured} />;
 }
