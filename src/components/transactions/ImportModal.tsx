@@ -282,7 +282,7 @@ export function ImportModal({ open, onOpenChange, categories = [] }: ImportModal
               <select
                 value={bank}
                 onChange={(e) => setBank(e.target.value as BankType)}
-                className="w-full p-2.5 bg-white/[0.04] border border-white/[0.1] rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full p-2.5 bg-white/[0.04] border border-white/[0.1] rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="tangerine">Tangerine (PDF + CSV)</option>
                 <option value="generic">Generic Bank (CSV only)</option>
@@ -414,7 +414,7 @@ export function ImportModal({ open, onOpenChange, categories = [] }: ImportModal
                             </span>
                           ) : (
                             <select
-                              className="w-full bg-white/[0.05] border border-white/[0.1] rounded-lg px-2 py-1 text-[10px] text-white"
+                              className="w-full bg-white/[0.05] border border-white/[0.1] rounded-lg px-2 py-1 text-[10px] text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                               value={categoryOverrides[i] || ""}
                               onChange={(e) => {
                                 if (e.target.value) {
