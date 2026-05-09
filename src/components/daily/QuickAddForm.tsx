@@ -140,10 +140,11 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
                                 <Input
                                     id="quick-desc"
                                     placeholder="Coffee, Gas, Lunch..."
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                className="h-11"
-                            />
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    className="h-11"
+                                />
+                            </div>
                         </div>
 
                         {categories.length > 0 && (
