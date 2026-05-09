@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import { startOfMonth, addDays } from "date-fns";
+import { formatCurrency } from "./utils";
 
 /**
  * Seed the database with demo data for the Daily Spending Tracker.
@@ -61,7 +62,7 @@ async function seed() {
             isActive: true,
         },
     });
-    console.log("💰 Income created:", income.name, fmt(income.amount));
+    console.log("💰 Income created:", income.name, formatCurrency(income.amount));
 
     // ─── Bills ─────────────────────────────────────────────────
     const bills = await prisma.bill.createMany({
@@ -156,10 +157,6 @@ function generateTransactions(today: Date, byName: Record<string, string>) {
     }
 
     return txs;
-}
-
-function fmt(n: number) {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 }
 
 // Only run if directly executed (not imported)

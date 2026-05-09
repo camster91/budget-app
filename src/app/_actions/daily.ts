@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { formatCurrency } from "@/lib/utils";
 import {
     startOfDay, endOfDay, differenceInDays,
     addDays, addWeeks, addMonths, isBefore, isAfter,
@@ -162,7 +163,7 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
             paceColor = "text-emerald-400";
             paceEmoji = "🌱";
         } else if (accumulatedSurplus > 0) {
-            paceLabel = `+$${fmt(accumulatedSurplus)} rolled over`;
+            paceLabel = `+$${formatCurrency(accumulatedSurplus)} rolled over`;
             paceColor = "text-emerald-400";
             paceEmoji = "✨";
         }
@@ -174,11 +175,11 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
 
         let projectionMessage = "";
         if (projectedEndBalance > 50) {
-            projectionMessage = `At this pace, you'll have ${fmt(projectedEndBalance)} left before payday`;
+            projectionMessage = `At this pace, you'll have ${formatCurrency(projectedEndBalance)} left before payday`;
         } else if (projectedEndBalance > -20) {
             projectionMessage = "You're cutting it close — watch your spending";
         } else {
-            projectionMessage = `At this pace, you'll overspend by ${fmt(Math.abs(projectedEndBalance))} before payday`;
+            projectionMessage = `At this pace, you'll overspend by ${formatCurrency(Math.abs(projectedEndBalance))} before payday`;
         }
 
         // Streak calculation
@@ -297,19 +298,19 @@ async function generateSmartInsights(householdId: string, input: InsightInput): 
 
     // Surplus streak
     if (accumulatedSurplus > dailyAllowance * 2) {
-        insights.push(`You've banked ${fmt(accumulatedSurplus)} — that's ${Math.floor(accumulatedSurplus / dailyAllowance)} days of cushion`);
+        insights.push(`You've banked ${formatCurrency(accumulatedSurplus)} — that's ${Math.floor(accumulatedSurplus / dailyAllowance)} days of cushion`);
     }
 
     // Overspend alert
     if (remainingToday < 0) {
-        insights.push(`You overspent by ${fmt(Math.abs(remainingToday))} today. Tomorrow's allowance drops to ${fmt(dailyAllowance + remainingToday)}`);
+        insights.push(`You overspent by ${formatCurrency(Math.abs(remainingToday))} today. Tomorrow's allowance drops to ${formatCurrency(dailyAllowance + remainingToday)}`);
     }
 
     // Bill warning
     const soonBills = upcomingBills.filter(b => b.daysUntil <= 3);
     if (soonBills.length > 0) {
         const total = soonBills.reduce((s, b) => s + b.amount, 0);
-        insights.push(`📅 ${soonBills.length} bill${soonBills.length > 1 ? 's' : ''} due soon (${fmt(total)})`);
+        insights.push(`📅 ${soonBills.length} bill${soonBills.length > 1 ? 's' : ''} due soon (${formatCurrency(total)})`);
     }
 
     // Speed indicator
@@ -510,10 +511,6 @@ export async function batchCleanupTransactions() {
 // ═════════════════════════════════════════════════════════════
 //  UTILS
 // ═════════════════════════════════════════════════════════════
-
-function fmt(amount: number) {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
-}
 
 function getDaysInCurrentMonth() {
     const now = new Date();
