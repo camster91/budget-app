@@ -2,6 +2,8 @@
 
 A modern, privacy-first **Daily Spending Tracker** with a fuel-gauge budget concept, smart receipt OCR, streak gamification, and offline PWA support.
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-budget.ashbi.ca-6366f1?style=for-the-badge)](https://budget.ashbi.ca)
+
 ## ✨ Features
 
 ### Daily Budget Engine
