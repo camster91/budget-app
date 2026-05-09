@@ -22,8 +22,13 @@ export default async function RegisterPage() {
                     </div>
                     <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-8 shadow-2xl">
                         <h2 className="text-xl font-bold text-white mb-2">Registration Closed</h2>
-                        <p className="text-muted-foreground text-sm mb-6">
+                        <p className="text-muted-foreground text-sm mb-4">
                             An account already exists on this instance. Please sign in with your existing credentials.
+                        </p>
+                        <p className="text-muted-foreground text-xs mb-6 leading-relaxed">
+                            This is a personal, single-user instance. If you need access, please contact the
+                            site administrator to request an account. New registrations are only available
+                            when no account exists yet.
                         </p>
                         <a
                             href="/login"
