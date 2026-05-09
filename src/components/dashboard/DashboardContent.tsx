@@ -59,8 +59,13 @@ const TOOLTIP_STYLE = {
     itemStyle: { color: "#fff" },
 };
 
+function getCurrentMonthLabel(): string {
+    return new Date().toLocaleString("en-CA", { month: "long", year: "numeric" });
+}
+
 export function DashboardContent({ data }: DashboardContentProps) {
     const t = useTranslations("dashboard");
+    const currentMonthLabel = getCurrentMonthLabel();
     const spending = data.spendingByCategory ?? [];
     const budgets = data.budgetHealth ?? [];
     const maxSpend = spending.reduce((m, c) => Math.max(m, c.amount), 0);
@@ -71,11 +76,11 @@ export function DashboardContent({ data }: DashboardContentProps) {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-gradient mb-1">{t("title")}</h2>
-                    <p className="text-muted-foreground text-sm font-medium">{t("subtitle")}</p>
+                    <p className="text-muted-foreground text-sm font-medium">{t("subtitle", { month: currentMonthLabel })}</p>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2">
+<Button variant="outline" size="sm" className="gap-2">
                     <Calendar className="h-4 w-4" />
-                    {t("thisMonth")}
+                    {currentMonthLabel}
                 </Button>
             </div>
 

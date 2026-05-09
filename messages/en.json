@@ -49,7 +49,7 @@
   },
   "dashboard": {
     "title": "Financial Pulse",
-    "subtitle": "Here's a summary of your wealth this month.",
+    "subtitle": "Here's a summary of your wealth in {month}.",
     "thisMonth": "This Month",
     "netWorth": "Net Worth",
     "income": "Income",
