@@ -80,5 +80,18 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 # Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
 
-# Run Prisma migrations before starting server
-CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
+# Run Prisma migrations + schema drift repair before starting server.
+# The fix_schema_drift migration uses ALTER TABLE ADD COLUMN IF NOT EXISTS
+# to handle columns that may be missing from production (causing 502 errors).
+# If prisma migrate deploy succeeds, great — the migration engine handles it.
+# If it partially fails, we still apply the raw SQL as a fallback.
+CMD ["sh", "-c", "\
+  echo '=== Running Prisma migrations...' && \
+  npx prisma migrate deploy; \
+  echo '=== Applying schema drift repair (safe re-run)...' && \
+  npx prisma db execute --file prisma/migrations/fix_schema_drift/migration.sql --schema prisma/schema.prisma 2>&1; \
+  echo '=== Generating Prisma client...' && \
+  npx prisma generate && \
+  echo '=== Starting server...' && \
+  node server.js\
+"]

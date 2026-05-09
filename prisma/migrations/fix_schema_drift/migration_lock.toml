@@ -1,0 +1,4 @@
+# Prisma Migrate lock file for database schema drift repair
+# This lock file must match the existing migrations' provider
+
+provider = "postgresql"
