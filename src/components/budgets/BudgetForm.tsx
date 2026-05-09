@@ -27,7 +27,7 @@ export function BudgetForm({ categories = [], autoOpen = false, period }: Budget
 
     const activePeriod = period || new Date().toISOString().slice(0, 7);
     const [year, month] = activePeriod.split("-").map(Number);
-    const periodLabel = new Date(year, month - 1, 1).toLocaleString("default", { month: "long", year: "numeric" });
+    const periodLabel = new Date(year, month - 1, 1).toLocaleString("en-CA", { month: "long", year: "numeric" });
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();

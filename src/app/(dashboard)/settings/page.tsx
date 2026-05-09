@@ -18,8 +18,14 @@ export default async function SettingsPage() {
 
     if (!user) redirect("/login");
 
-    const incomes = await prisma.income.findMany  ({ orderBy: { createdAt: "desc" } });
-    const categories = await prisma.category.findMany  ({ orderBy: { name: "asc" } });
+    const incomes = await prisma.income.findMany({
+        where: { householdId: auth.householdId },
+        orderBy: { createdAt: "desc" },
+    });
+    const categories = await prisma.category.findMany({
+        where: { householdId: auth.householdId },
+        orderBy: { name: "asc" },
+    });
 
     return (
         <SettingsClient

@@ -362,7 +362,7 @@ export function BillsClient({ bills: initialBills, categories, accounts, paidBil
                                                 </div>
                                                 <div className="mt-3 pt-3 border-t border-white/[0.05] flex items-center justify-between">
                                                     <p className="text-[10px] text-muted-foreground font-medium">
-                                                        Next due: {nextDate.toLocaleDateString(undefined, { month: "long", day: "numeric" })}
+                                                        Next due: {nextDate.toLocaleDateString("en-CA", { month: "long", day: "numeric" })}
                                                     </p>
                                                     <Button
                                                         variant="ghost"

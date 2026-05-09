@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import {
     BarChart, Bar, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
+import { formatDecimal } from "@/lib/locale";
 
 interface HourlySpend {
     hour: string;
@@ -56,7 +57,7 @@ export function VelocityGraph({ data }: VelocityGraphProps) {
                                 tick={{ fill: "#a1a1aa", fontSize: 10 }}
                             />
                             <YAxis hide />
-                            <Tooltip {...TOOLTIP_STYLE} formatter={(val: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => [`$${Number(val).toFixed(2)}`, "Spent"]} />
+                            <Tooltip {...TOOLTIP_STYLE} formatter={(val: any /* eslint-disable-line @typescript-eslint/no-explicit-any */) => [`$${formatDecimal(Number(val))}`, "Spent"]} />
                             <Bar
                                 dataKey="amount"
                                 fill="#6366f1"
@@ -74,7 +75,7 @@ export function VelocityGraph({ data }: VelocityGraphProps) {
 
             {total > 0 && (
                 <p className="text-xs text-muted-foreground mt-2 text-center">
-                    ${total.toFixed(2)} total · shows where in the day you spend most
+                    ${formatDecimal(total)} total · shows where in the day you spend most
                 </p>
             )}
         </motion.div>

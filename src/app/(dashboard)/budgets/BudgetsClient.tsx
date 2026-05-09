@@ -33,7 +33,7 @@ interface BudgetsClientProps {
 
 function formatPeriodLabel(period: string): string {
     const [year, month] = period.split("-");
-    return new Date(Number(year), Number(month) - 1, 1).toLocaleString("default", { month: "long", year: "numeric" });
+    return new Date(Number(year), Number(month) - 1, 1).toLocaleString("en-CA", { month: "long", year: "numeric" });
 }
 
 function offsetPeriod(period: string, months: number): string {

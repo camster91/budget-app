@@ -7,6 +7,7 @@ import { Calendar, TrendingUp, TrendingDown, Download, Sparkles } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { formatCurrency, cn } from "@/lib/utils";
 import { SmartCategorizationPanel } from "@/components/dashboard/SmartCategorizationPanel";
+import { formatDecimal } from "@/lib/locale";
 
 interface WeeklyData {
   weekRange: string;
@@ -145,7 +146,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRul
             />
             <StatCard
               label="Change"
-              value={`${data.change >= 0 ? "+" : ""}${data.change.toFixed(1)}%`}
+              value={`${data.change >= 0 ? "+" : ""}${formatDecimal(data.change, 1)}%`}
               icon={data.change <= 0 ? TrendingDown : TrendingUp}
               className={trendColor}
             />

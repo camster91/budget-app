@@ -148,7 +148,7 @@ export async function getDashboardSummary() {
                     aggregateByType(user.householdId, "expense", startOfMonth(date), endOfMonth(date)),
                 ]);
                 return {
-                    name: date.toLocaleString("default", { month: "short" }),
+                    name: date.toLocaleString("en-CA", { month: "short" }),
                     total: inc - exp,
                     income: inc,
                     expenses: exp,
@@ -163,7 +163,7 @@ export async function getDashboardSummary() {
                 monthlyIncome,
                 monthlyExpenses,
                 savingsRate,
-                incomeTrend: (incomeTrend >= 0 ? "+" : "") + incomeTrend.toFixed(1) + "%",
+                incomeTrend: (incomeTrend >= 0 ? "+" : "") + new Intl.NumberFormat("en-CA", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(incomeTrend) + "%",
                 chartData,
                 transactions: recentTransactions,
                 spendingByCategory,
