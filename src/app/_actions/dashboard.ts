@@ -27,9 +27,18 @@ export async function getDashboardSummary() {
         const lastMonthStart = startOfMonth(subMonths(now, 1));
         const lastMonthEnd = endOfMonth(subMonths(now, 1));
 
+        // Generate date ranges for the 6-month chart
+        const sixMonthsAgo = startOfMonth(subMonths(now, 5));
+        const monthRanges = Array.from({ length: 6 }, (_, i) => {
+            const date = subMonths(now, 5 - i);
+            return {
+                label: date.toLocaleString("en-CA", { month: "short" }),
+                start: startOfMonth(date),
+                end: endOfMonth(date),
+            };
+        });
+
         const [
-            totalIncome,
-            totalExpenses,
             monthlyIncome,
             monthlyExpenses,
             lastMonthIncome,
@@ -37,9 +46,9 @@ export async function getDashboardSummary() {
             recentTransactions,
             categorySpending,
             budgets,
+            // Single batch query: income + expense per month for chart
+            chartAggregations,
         ] = await Promise.all([
-            aggregateByType(user.householdId, "income"),
-            aggregateByType(user.householdId, "expense"),
             aggregateByType(user.householdId, "income", thisMonthStart, thisMonthEnd),
             aggregateByType(user.householdId, "expense", thisMonthStart, thisMonthEnd),
             aggregateByType(user.householdId, "income", lastMonthStart, lastMonthEnd),
@@ -72,6 +81,16 @@ export async function getDashboardSummary() {
                 include: { category: true },
                 take: 5,
                 orderBy: { amount: "desc" },
+            }),
+            // 6-month chart data — single batch query instead of 12 individual queries
+            prisma.transaction.groupBy({
+                by: ["type", "date"],
+                where: {
+                    householdId: user.householdId,
+                    isTransfer: false,
+                    date: { gte: sixMonthsAgo, lte: thisMonthEnd },
+                },
+                _sum: { amount: true },
             }),
         ]);
 
@@ -122,12 +141,23 @@ export async function getDashboardSummary() {
             };
         });
 
-        // Net worth from account balances, or transaction-based fallback
-        const accountNetWorth = accounts.reduce(
+        // Compute chart data from the single batch aggregation
+        // chartAggregations returns rows like { type: "income", date: 2026-01-01, _sum: { amount: 5000 } }
+        const chartData = monthRanges.map(({ label, start, end }) => {
+            const inc = chartAggregations
+                .filter((r) => r.type === "income" && r.date >= start && r.date <= end)
+                .reduce((sum, r) => sum + (r._sum.amount || 0), 0);
+            const exp = chartAggregations
+                .filter((r) => r.type === "expense" && r.date >= start && r.date <= end)
+                .reduce((sum, r) => sum + (r._sum.amount || 0), 0);
+            return { name: label, total: inc - exp, income: inc, expenses: exp };
+        });
+
+        // Net worth from account balances (more accurate than income-expenses)
+        const netWorth = accounts.reduce(
             (sum, a) => (a.type === "credit" ? sum - a.balance : sum + a.balance),
             0
         );
-        const netWorth = accounts.length > 0 ? accountNetWorth : totalIncome - totalExpenses;
 
         const savingsRate =
             monthlyIncome > 0
@@ -138,23 +168,6 @@ export async function getDashboardSummary() {
             lastMonthIncome > 0
                 ? ((monthlyIncome - lastMonthIncome) / lastMonthIncome) * 100
                 : 0;
-
-        // 6-month cashflow chart
-        const chartData = await Promise.all(
-            Array.from({ length: 6 }, (_, i) => 5 - i).map(async (i) => {
-                const date = subMonths(now, i);
-                const [inc, exp] = await Promise.all([
-                    aggregateByType(user.householdId, "income", startOfMonth(date), endOfMonth(date)),
-                    aggregateByType(user.householdId, "expense", startOfMonth(date), endOfMonth(date)),
-                ]);
-                return {
-                    name: date.toLocaleString("en-CA", { month: "short" }),
-                    total: inc - exp,
-                    income: inc,
-                    expenses: exp,
-                };
-            })
-        );
 
         return {
             success: true,
