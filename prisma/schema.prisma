@@ -26,6 +26,7 @@ model Household {
   screenshotReceipts ScreenshotReceipt[]
   spendingPatterns   SpendingPattern[]
   dailyPeriods       DailyPeriod[]
+  noSpendEntries     NoSpendEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -280,4 +281,17 @@ model DailyPeriod {
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+// Tracks no-spend days declared by the user
+model NoSpendEntry {
+  id        String   @id @default(uuid())
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  household   Household? @relation(fields: [householdId], references: [id])
+  householdId String?
+
+  @@unique([householdId, date])
+  @@index([householdId])
 }
