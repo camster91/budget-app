@@ -91,8 +91,9 @@ export function TransactionForm({ categories = [] }: TransactionFormProps) {
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
                     <div className="grid gap-2">
-                        <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Type</label>
+<label htmlFor="type" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Type</label>
                         <select
+                            id="type"
                             {...register("type")}
                             className="flex h-10 w-full rounded-xl border border-white/[0.1] bg-white/[0.05] px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         >
@@ -103,8 +104,9 @@ export function TransactionForm({ categories = [] }: TransactionFormProps) {
                     </div>
 
                     <div className="grid gap-2">
-                        <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Amount</label>
+<label htmlFor="amount" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Amount</label>
                         <Input
+                            id="amount"
                             {...register("amount")}
                             placeholder="0.00"
                             className="rounded-xl border-white/[0.1] bg-white/[0.05]"
@@ -113,8 +115,9 @@ export function TransactionForm({ categories = [] }: TransactionFormProps) {
                     </div>
 
                     <div className="grid gap-2">
-                        <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Description</label>
+<label htmlFor="description" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Description</label>
                         <Input
+                            id="description"
                             {...register("description")}
                             type="text"
                             placeholder="e.g. Grocery Store"
@@ -124,9 +127,10 @@ export function TransactionForm({ categories = [] }: TransactionFormProps) {
                     </div>
 
                     <div className="grid gap-2">
-                        <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Category</label>
+<label htmlFor="category" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Category</label>
                         {categories.length > 0 ? (
                             <select
+                                id="category"
                                 {...register("categoryId")}
                                 className="flex h-10 w-full rounded-xl border border-white/[0.1] bg-white/[0.05] px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
@@ -136,7 +140,8 @@ export function TransactionForm({ categories = [] }: TransactionFormProps) {
                                 ))}
                             </select>
                         ) : (
-                            <Input
+<Input
+                                id="category"
                                 {...register("category")}
                                 type="text"
                                 placeholder="Food, Rent, Salary..."
@@ -146,8 +151,9 @@ export function TransactionForm({ categories = [] }: TransactionFormProps) {
                     </div>
 
                     <div className="grid gap-2">
-                        <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Date</label>
+<label htmlFor="date" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Date</label>
                         <Input
+                            id="date"
                             {...register("date")}
                             type="date"
                             className="rounded-xl border-white/[0.1] bg-white/[0.05]"

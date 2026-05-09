@@ -17,14 +17,21 @@ export function CategoryForm() {
 
     return (
         <form action={handleSubmit} className="space-y-4">
-            <Input name="name" placeholder="Category Name" required />
-            <Input name="type" placeholder="Type (expense/income)" required />
+            <div className="grid gap-2">
+                <label htmlFor="cat-name" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Category Name</label>
+                <Input id="cat-name" name="name" placeholder="Category Name" required />
+            </div>
+            <div className="grid gap-2">
+                <label htmlFor="cat-type" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Type</label>
+                <Input id="cat-type" name="type" placeholder="Type (expense/income)" required />
+            </div>
             
             <div className="space-y-2">
                 <h4 className="font-medium text-sm">Rules</h4>
                 {rules.map((rule, index) => (
                     <div key={index} className="flex gap-2">
                         <Input 
+                            aria-label="Rule keyword"
                             value={rule.keyword} 
                             onChange={(e) => {
                                 const newRules = [...rules];
@@ -34,6 +41,7 @@ export function CategoryForm() {
                             placeholder="Keyword" 
                         />
                         <select 
+                            aria-label="Rule match type"
                             value={rule.type}
                             onChange={(e) => {
                                 const newRules = [...rules];
