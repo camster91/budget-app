@@ -278,7 +278,7 @@ export function GoalsClient({ goals: initialGoals, categories }: GoalsClientProp
                                                     )}
                                                     {goal.targetDate && (
                                                         <CardDescription className="text-[10px] mt-0.5">
-                                                            Target: {new Date(goal.targetDate).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
+                                                            Target: {new Date(goal.targetDate).toLocaleDateString("en-CA", { month: "short", year: "numeric" })}
                                                         </CardDescription>
                                                     )}
                                                 </div>

@@ -81,7 +81,7 @@ export function DedupeReview({ duplicates, onKeepAndMerge, onRejectDuplicate }: 
                                             >
                                                 <div className="min-w-0 flex-1 mr-2">
                                                     <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
-                                                        {new Date(t.date).toLocaleDateString()} at {new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        {new Date(t.date).toLocaleDateString("en-CA")} at {new Date(t.date).toLocaleTimeString("en-CA", { hour: '2-digit', minute: '2-digit' })}
                                                     </p>
                                                     <p className="text-sm font-medium text-white/80 truncate">{t.description}</p>
                                                 </div>

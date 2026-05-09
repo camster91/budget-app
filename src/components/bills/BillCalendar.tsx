@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { formatDecimal } from "@/lib/locale";
 
 interface Bill {
     id: string;
@@ -185,7 +186,7 @@ export function BillCalendar({ bills, onMarkPaid, isPaidThisMonth }: BillCalenda
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="text-sm font-bold text-white">${bill.amount.toFixed(2)}</div>
+                                        <div className="text-sm font-bold text-white">${formatDecimal(bill.amount)}</div>
                                         {!paid && onMarkPaid && (
                                             <Button
                                                 size="sm"

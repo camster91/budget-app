@@ -118,7 +118,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
     function exportCSV() {
         const header = ["Date", "Description", "Category", "Type", "Amount"];
         const rows = filtered.map((t) => [
-            new Date(t.date).toLocaleDateString(),
+            new Date(t.date).toLocaleDateString("en-CA"),
             `"${t.description.replace(/"/g, '""')}"`,
             t.category?.name || "Uncategorized",
             t.type,
@@ -351,7 +351,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                                             </span>
                                                         </td>
                                                         <td className="py-4 text-sm text-muted-foreground">
-                                                            {new Date(t.date).toLocaleDateString(undefined, {
+                                                            {new Date(t.date).toLocaleDateString("en-CA", {
                                                                 month: "short",
                                                                 day: "numeric",
                                                                 year: "numeric",
