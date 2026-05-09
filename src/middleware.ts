@@ -3,7 +3,7 @@ import { verifyToken } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
-const PUBLIC_PATHS = ["/login", "/register", "/api/auth", "/api/cron"];
+const PUBLIC_PATHS = ["/login", "/register", "/api/auth", "/api/cron", "/sw.js", "/manifest.json"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
