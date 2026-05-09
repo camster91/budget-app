@@ -75,7 +75,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-gradient mb-1">{t("title")}</h2>
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient mb-1">{t("title")}</h2>
                     <p className="text-muted-foreground text-sm font-medium">{t("subtitle", { month: currentMonthLabel })}</p>
                 </div>
 <Button variant="outline" size="sm" className="gap-2">
@@ -104,7 +104,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                                 <stat.icon className={cn("h-4 w-4", stat.color)} />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 tracking-tight break-all">
+                                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 tracking-tight">
                                     {typeof stat.value === "number" ? formatCurrency(stat.value) : stat.value}
                                 </div>
                                 <p className={cn(
@@ -142,7 +142,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                                                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <Tooltip {...TOOLTIP_STYLE} formatter={(v: number | undefined) => formatCurrency(v ?? 0)} />
+                                        <Tooltip {...TOOLTIP_STYLE} formatter={(v) => formatCurrency(typeof v === 'number' ? v : 0)} />
                                         <Area
                                             type="monotone"
                                             dataKey="total"
