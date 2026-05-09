@@ -48,7 +48,7 @@ export async function getDashboardSummary() {
                 select: { balance: true, type: true } 
             }),
             prisma.transaction.findMany({
-                where: { householdId: user.householdId },
+                where: { householdId: user.householdId, isTransfer: false },
                 take: 5,
                 orderBy: { date: "desc" },
                 include: { category: true },
