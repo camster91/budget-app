@@ -121,8 +121,10 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
 
                         <div className="grid grid-cols-[1fr_2fr] gap-3">
                             <div className="relative">
+                                <label htmlFor="quick-amount" className="sr-only">Amount</label>
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                                 <Input
+                                    id="quick-amount"
                                     type="number"
                                     step="0.01"
                                     min="0"
@@ -133,12 +135,16 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
                                     autoFocus
                                 />
                             </div>
-                            <Input
-                                placeholder="Coffee, Gas, Lunch..."
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                className="h-11"
-                            />
+                            <div className="relative">
+                                <label htmlFor="quick-desc" className="sr-only">Description</label>
+                                <Input
+                                    id="quick-desc"
+                                    placeholder="Coffee, Gas, Lunch..."
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    className="h-11"
+                                />
+                            </div>
                         </div>
 
                         {categories.length > 0 && (

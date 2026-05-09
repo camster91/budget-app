@@ -70,9 +70,10 @@ export function BudgetForm({ categories = [], autoOpen = false, period }: Budget
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 py-4">
                     <div className="grid gap-2">
-                        <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Category</label>
+<label htmlFor="budget-category" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Category</label>
                         {categories.length > 0 ? (
                             <select
+                                id="budget-category"
                                 value={categoryId}
                                 onChange={(e) => setCategoryId(e.target.value)}
                                 className="flex h-10 w-full rounded-xl border border-white/[0.1] bg-white/[0.05] px-3 py-1 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -84,7 +85,8 @@ export function BudgetForm({ categories = [], autoOpen = false, period }: Budget
                                 ))}
                             </select>
                         ) : (
-                            <Input
+<Input
+                                id="budget-category"
                                 value={categoryName}
                                 onChange={(e) => setCategoryName(e.target.value)}
                                 placeholder="Groceries, Rent…"
@@ -97,8 +99,9 @@ export function BudgetForm({ categories = [], autoOpen = false, period }: Budget
                     </div>
 
                     <div className="grid gap-2">
-                        <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Monthly Limit</label>
+<label htmlFor="budget-limit" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Monthly Limit</label>
                         <Input
+                            id="budget-limit"
                             type="number"
                             step="0.01"
                             value={amount}
