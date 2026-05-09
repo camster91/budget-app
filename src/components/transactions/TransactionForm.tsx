@@ -94,7 +94,7 @@ export function TransactionForm({ categories = [] }: TransactionFormProps) {
                         <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Type</label>
                         <select
                             {...register("type")}
-                            className="flex h-10 w-full rounded-xl border border-white/[0.1] bg-white/[0.05] px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                            className="flex h-10 w-full rounded-xl border border-white/[0.1] bg-white/[0.05] px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         >
                             <option value="expense">Expense</option>
                             <option value="income">Income</option>
@@ -128,7 +128,7 @@ export function TransactionForm({ categories = [] }: TransactionFormProps) {
                         {categories.length > 0 ? (
                             <select
                                 {...register("categoryId")}
-                                className="flex h-10 w-full rounded-xl border border-white/[0.1] bg-white/[0.05] px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                                className="flex h-10 w-full rounded-xl border border-white/[0.1] bg-white/[0.05] px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
                                 <option value="">Auto-detect</option>
                                 {categories.map((c) => (

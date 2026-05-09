@@ -45,7 +45,7 @@ export function Sidebar() {
     return (
         <div className="flex h-full w-64 flex-col glass border-r-0">
             <div className="flex h-20 items-center px-8">
-                <Link href="/" className="flex items-center gap-3 group">
+                <Link href="/" className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-xl">
                     <div className="p-2 rounded-xl bg-primary/20 text-primary group-hover:scale-110 transition-transform duration-300">
                         <PiggyBank className="h-6 w-6" />
                     </div>
@@ -68,6 +68,7 @@ export function Sidebar() {
                                 href={item.href}
                                 className={cn(
                                     "group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300",
+                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                                     isActive
                                         ? "text-white bg-white/[0.05] shadow-[0_0_20px_rgba(255,255,255,0.05)]"
                                         : "text-muted-foreground hover:text-white hover:bg-white/[0.02]"

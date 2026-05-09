@@ -65,7 +65,7 @@ function MerchantRuleCard({ rule, onApply, categories, isPending }: {
                             </Button>
                         ) : (
                             <select
-                                className="bg-white/[0.05] border border-white/[0.1] rounded-lg px-2 py-1 text-xs text-white h-7"
+                                className="bg-white/[0.05] border border-white/[0.1] rounded-lg px-2 py-1 text-xs text-white h-7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                 value={rule.categoryId}
                                 onChange={(e) => onApply(e.target.value)}
                                 disabled={isPending}

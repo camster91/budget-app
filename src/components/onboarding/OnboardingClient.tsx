@@ -187,7 +187,7 @@ export function OnboardingClient({ createIncome, createBill, createCategory }: O
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Frequency</label>
-                                    <select value={incomeFrequency} onChange={(e) => setIncomeFrequency(e.target.value)} className="h-10 w-full rounded-md border border-white/[0.08] bg-transparent px-3 text-sm text-white/90">
+                                    <select value={incomeFrequency} onChange={(e) => setIncomeFrequency(e.target.value)} className="h-10 w-full rounded-md border border-white/[0.08] bg-transparent px-3 text-sm text-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                                         <option value="monthly">Monthly</option>
                                         <option value="biweekly">Bi-weekly</option>
                                         <option value="weekly">Weekly</option>
@@ -243,7 +243,7 @@ export function OnboardingClient({ createIncome, createBill, createCategory }: O
                                 <div key={i} className="flex items-center gap-3">
                                     <Input value={cat.icon} onChange={(e) => updateCategory(i, "icon", e.target.value)} className="w-14 text-center" maxLength={2} />
                                     <Input value={cat.name} onChange={(e) => updateCategory(i, "name", e.target.value)} placeholder="Category name" className="flex-1" />
-                                    <input type="color" value={cat.color} onChange={(e) => updateCategory(i, "color", e.target.value)} className="w-8 h-8 rounded-lg bg-transparent border-0 cursor-pointer" />
+                                    <input type="color" value={cat.color} onChange={(e) => updateCategory(i, "color", e.target.value)} className="w-8 h-8 rounded-lg bg-transparent border-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" />
                                 </div>
                             ))}
                             <Button variant="ghost" size="sm" onClick={() => setCategories([...categories, { name: "", icon: "📌", color: "#6366f1" }])}>
