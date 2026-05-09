@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { startOfMonth, endOfMonth, subMonths } from "date-fns";
+import { formatCurrency } from "@/lib/utils";
 
 // ═════════════════════════════════════════════════════════════
 //  SPENDING PATTERN DETECTION ENGINE
@@ -63,7 +64,7 @@ export async function detectSpendingPatterns(): Promise<{ success: boolean; data
                     pattern: "recurring_merchant",
                     amount: avg,
                     confidence,
-                    suggestion: `You visit ${mg.description.split(" ")[0]} about ${Math.round(count / 3)} times/month. Budget ~${fmt(avg)}.`,
+                    suggestion: `You visit ${mg.description.split(" ")[0]} about ${Math.round(count / 3)} times/month. Budget ~${formatCurrency(avg)}.`,
                 });
             }
         }
@@ -160,7 +161,7 @@ export async function detectSpendingPatterns(): Promise<{ success: boolean; data
             if (ct.last_week > ct.avg_week * 1.5) {
                 patterns.push({
                     name: `${ct.category_name || "Unknown"} Surge`,
-                    description: `${fmt(ct.last_week)} last week vs ${fmt(ct.avg_week)} average`,
+                    description: `${formatCurrency(ct.last_week)} last week vs ${formatCurrency(ct.avg_week)} average`,
                     pattern: "category_surge",
                     amount: ct.last_week,
                     confidence: Math.min(1, (ct.last_week / ct.avg_week) * 0.5),
@@ -368,7 +369,3 @@ export async function rejectDuplicate(duplicateId: string) {
 // ═════════════════════════════════════════════════════════════
 //  UTILS
 // ═════════════════════════════════════════════════════════════
-
-function fmt(amount: number) {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
-}
