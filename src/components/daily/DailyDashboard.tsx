@@ -28,12 +28,14 @@ import { StreakCounter } from "@/components/daily/StreakCounter";
 import { PlaidLinker } from "@/components/plaid/PlaidLinker";
 import { Sparkles, Loader2, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 export function DailyDashboard({ initialAccounts, plaidConfigured = false }: { initialAccounts: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]; plaidConfigured?: boolean }) {
     const queryClient = useQueryClient();
     const [showAnalytics, setShowAnalytics] = useState(false);
+    const t = useTranslations("dailySpend");
 
     const { data: snapshotData, isLoading: snapshotLoading } = useQuery({
         queryKey: ["daily-snapshot"],
@@ -115,7 +117,7 @@ export function DailyDashboard({ initialAccounts, plaidConfigured = false }: { i
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
                 <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                <p className="text-muted-foreground animate-pulse">Calculating your daily allowance...</p>
+                <p className="text-muted-foreground animate-pulse">{t("loading")}</p>
             </div>
         );
     }
@@ -124,8 +126,8 @@ export function DailyDashboard({ initialAccounts, plaidConfigured = false }: { i
         <div className="space-y-6 pb-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-black tracking-tight text-gradient">Daily Spend</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Live budget for this pay period</p>
+                    <h2 className="text-3xl font-black tracking-tight text-gradient">{t("title")}</h2>
+                    <p className="text-sm text-muted-foreground mt-1">{t("subtitle")}</p>
                 </div>
             </div>
 
@@ -178,7 +180,7 @@ export function DailyDashboard({ initialAccounts, plaidConfigured = false }: { i
                 >
                     <div className="flex items-center gap-2">
                         <BarChart3 className="h-5 w-5 text-primary" />
-                        <span className="text-sm font-semibold text-foreground">Analytics &amp; Insights</span>
+                        <span className="text-sm font-semibold text-foreground">{t("analyticsAndInsights")}</span>
                     </div>
                     {showAnalytics ? (
                         <ChevronUp className="h-4 w-4 text-muted-foreground" />

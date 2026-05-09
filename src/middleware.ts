@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import createMiddleware from "next-intl/middleware";
 import { verifyToken } from "@/lib/auth";
+import { routing } from "@/i18n/routing";
 
 export const runtime = "nodejs";
 
 const PUBLIC_PATHS = ["/login", "/register", "/api/auth", "/api/cron", "/sw.js", "/manifest.json"];
 
+const intlMiddleware = createMiddleware(routing);
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // Allow public paths
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
 
   // Allow static assets and Next.js internals
   if (
@@ -22,6 +21,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Allow public paths (strip locale prefix if needed)
+  const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, "") || "/";
+  if (PUBLIC_PATHS.some((p) => pathWithoutLocale.startsWith(p))) {
+    return intlMiddleware(request);
+  }
+
+  // Auth check for protected routes
   const token = request.cookies.get("budget_token")?.value;
   if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -34,7 +40,7 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  return NextResponse.next();
+  return intlMiddleware(request);
 }
 
 export const config = {

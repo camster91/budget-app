@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { PiggyBank, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function RegisterPageClient() {
     const router = useRouter();
+    const t = useTranslations("register");
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -27,13 +29,13 @@ export default function RegisterPageClient() {
             });
             if (!res.ok) {
                 const data = await res.json();
-                setError(data.error || "Registration failed");
+                setError(data.error || t("registrationFailed"));
                 return;
             }
             router.push("/");
             router.refresh();
         } catch {
-            setError("Something went wrong. Please try again.");
+            setError(t("somethingWentWrong"));
         } finally {
             setLoading(false);
         }
@@ -54,8 +56,8 @@ export default function RegisterPageClient() {
                     <div className="p-3 rounded-2xl bg-primary/20 text-primary mb-4 shadow-[0_0_30px_rgba(99,102,241,0.3)]">
                         <PiggyBank className="h-8 w-8" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gradient tracking-tight">Budget App</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Create your account</p>
+                    <h1 className="text-3xl font-bold text-gradient tracking-tight">{t("title")}</h1>
+                    <p className="text-muted-foreground text-sm mt-1">{t("subtitle")}</p>
                 </div>
 
                 <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-8 shadow-2xl">
@@ -67,32 +69,32 @@ export default function RegisterPageClient() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Name</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("name")}</label>
                             <input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 autoComplete="name"
-                                placeholder="Your name"
+                                placeholder={t("namePlaceholder")}
                                 className="w-full px-4 py-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition"
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Email</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("email")}</label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 autoComplete="email"
-                                placeholder="you@example.com"
+                                placeholder={t("emailPlaceholder")}
                                 className="w-full px-4 py-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition"
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Password</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("password")}</label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
@@ -119,14 +121,14 @@ export default function RegisterPageClient() {
                             disabled={loading}
                             className="w-full py-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:opacity-90 transition disabled:opacity-50 mt-2"
                         >
-                            {loading ? "Creating account…" : "Create Account"}
+                            {loading ? t("creatingAccount") : t("createAccount")}
                         </button>
                     </form>
 
                     <p className="mt-6 text-center text-sm text-muted-foreground">
-                        Already have an account?{" "}
+                        {t("alreadyHaveAccount")}{" "}
                         <Link href="/login" className="text-primary hover:text-primary/80 font-bold transition-colors">
-                            Sign in
+                            {t("signIn")}
                         </Link>
                     </p>
                 </div>
