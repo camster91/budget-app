@@ -7,6 +7,16 @@ import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
   try {
+    // Respect the registration gate (same check as register/page.tsx)
+    const allowRegistration = process.env.ALLOW_REGISTRATION === "true";
+    const userCount = await prisma.user.count();
+    if (!allowRegistration && userCount > 0) {
+      return NextResponse.json(
+        { error: "Registration is closed on this instance" },
+        { status: 403 }
+      );
+    }
+
     const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
     if (!checkRateLimit(`register:${ip}`, 3, 60 * 60 * 1000)) { // 3 registrations per hour
       return NextResponse.json({ error: "Too many registration attempts" }, { status: 429 });
