@@ -66,7 +66,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
     const maxSpend = spending.reduce((m, c) => Math.max(m, c.amount), 0);
 
     return (
-        <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
+        <motion.div variants={container} initial="hidden" animate="show" className="space-y-4 sm:space-y-6 lg:space-y-8">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -80,7 +80,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
             </div>
 
             {/* Stat cards */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
                 {[
                     { title: "Net Worth", value: data.netWorth, trend: "+0%", icon: Wallet, color: "text-primary" },
                     { title: "Monthly Income", value: data.monthlyIncome, trend: data.incomeTrend, icon: ArrowUpRight, color: "text-emerald-500" },
@@ -99,7 +99,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                                 <stat.icon className={cn("h-4 w-4", stat.color)} />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold text-white mb-1 tracking-tight">
+                                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 tracking-tight break-all">
                                     {typeof stat.value === "number" ? formatCurrency(stat.value) : stat.value}
                                 </div>
                                 <p className={cn(
@@ -114,8 +114,8 @@ export function DashboardContent({ data }: DashboardContentProps) {
                 ))}
             </div>
 
-            {/* Charts row */}
-            <div className="grid gap-6 lg:grid-cols-7">
+            {/* Charts row - stack on mobile, side-by-side on desktop */}
+            <div className="grid gap-4 sm:gap-6 lg:grid-cols-7">
                 {/* Wealth growth chart */}
                 <motion.div variants={item} className="lg:col-span-4">
                     <Card className="h-full border-white/[0.08] bg-white/[0.02]">
@@ -202,7 +202,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
             </div>
 
             {/* Bottom row: budget health + recent activity */}
-            <div className="grid gap-6 lg:grid-cols-7">
+            <div className="grid gap-4 sm:gap-6 lg:grid-cols-7">
                 {/* Budget health */}
                 {budgets.length > 0 && (
                     <motion.div variants={item} className="lg:col-span-4">
