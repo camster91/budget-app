@@ -39,6 +39,7 @@ export async function detectSpendingPatterns(): Promise<{ success: boolean; data
                 AND "householdId" = ${user.householdId}
                 AND date >= ${subMonths(now, 3)}
                 AND isDuplicate = false
+                AND "isTransfer" = false
             )
             SELECT merchant AS description, COUNT(*) as count, AVG(amount) as avg, STDDEV(amount) as stddev
             FROM cleaned
@@ -75,6 +76,7 @@ export async function detectSpendingPatterns(): Promise<{ success: boolean; data
             FROM "Transaction"
             WHERE type = 'expense' AND "householdId" = ${user.householdId} AND date >= ${subMonths(now, 1)}
             AND isDuplicate = false
+            AND "isTransfer" = false
             GROUP BY hour
             ORDER BY total DESC
             LIMIT 3
@@ -107,6 +109,7 @@ export async function detectSpendingPatterns(): Promise<{ success: boolean; data
             FROM "Transaction"
             WHERE type = 'expense' AND "householdId" = ${user.householdId} AND date >= ${subMonths(now, 2)}
             AND isDuplicate = false
+            AND "isTransfer" = false
             GROUP BY is_weekend
         `;
 
@@ -140,7 +143,7 @@ export async function detectSpendingPatterns(): Promise<{ success: boolean; data
                     SUM(t.amount)::float AS weekly_total
                 FROM "Transaction" t
                 LEFT JOIN "Category" c ON t."categoryId" = c.id
-                WHERE t.type = 'expense' AND t."householdId" = ${user.householdId} AND t.isDuplicate = false
+                WHERE t.type = 'expense' AND t."householdId" = ${user.householdId} AND t.isDuplicate = false AND t."isTransfer" = false
                 GROUP BY c.name, DATE_TRUNC('week', t.date)
             )
             SELECT 
@@ -200,7 +203,7 @@ export async function getLearnedMerchantRules(): Promise<{ success: boolean; dat
                     c.name AS "categoryName"
                 FROM "Transaction" t
                 LEFT JOIN "Category" c ON t."categoryId" = c.id
-                WHERE type = 'expense' AND "categoryId" IS NOT NULL AND t.isDuplicate = false
+                WHERE type = 'expense' AND "categoryId" IS NOT NULL AND t.isDuplicate = false AND t."isTransfer" = false
                 AND t."householdId" = ${user.householdId}
             )
             SELECT merchant, "categoryId", "categoryName",
@@ -264,6 +267,7 @@ export async function getHourlyVelocity(): Promise<{ success: boolean; data?: Ho
             WHERE type = 'expense' AND date >= ${todayStart}
             AND "householdId" = ${user.householdId}
             AND isDuplicate = false
+            AND "isTransfer" = false
             GROUP BY hour
             ORDER BY hour
         `;
@@ -305,6 +309,7 @@ export async function getDuplicateReviewQueue(): Promise<{ success: boolean; dat
             SELECT id, description, amount, date, fingerprint, source
             FROM "Transaction"
             WHERE isDuplicate = true AND duplicateOfId IS NOT NULL
+            AND "isTransfer" = false
             AND "householdId" = ${user.householdId}
             AND date >= NOW() - INTERVAL '7 days'
             ORDER BY date DESC
