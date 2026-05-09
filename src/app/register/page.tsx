@@ -4,9 +4,11 @@ import RegisterPageClient from "./RegisterPageClient";
 export const dynamic = "force-dynamic";
 
 export default async function RegisterPage() {
-    // Single-user app: once an account exists, registration is closed
+    // Single-user app: registration is closed by default once an account exists.
+    // Set ALLOW_REGISTRATION=true in env to re-open it (e.g., for testing or shared use).
+    const allowRegistration = process.env.ALLOW_REGISTRATION === "true";
     const userCount = await prisma.user.count();
-    if (userCount > 0) {
+    if (!allowRegistration && userCount > 0) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background bg-grid relative overflow-hidden">
                 <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[50%] bg-primary/10 blur-[130px] rounded-full pointer-events-none" />
