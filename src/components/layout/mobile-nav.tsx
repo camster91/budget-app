@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
     LayoutDashboard,
     Receipt,
@@ -27,21 +28,22 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 
-const sidebarItems = [
-    { title: "Dashboard", href: "/", icon: LayoutDashboard },
-    { title: "Transactions", href: "/transactions", icon: Receipt },
-    { title: "Budgets", href: "/budgets", icon: PiggyBank },
-    { title: "Goals", href: "/goals", icon: Target },
-    { title: "Bills", href: "/bills", icon: FileText },
-    { title: "Accounts", href: "/accounts", icon: CreditCard },
-    { title: "Categories", href: "/categories", icon: Tag },
-    { title: "Settings", href: "/settings", icon: Settings },
-];
-
 export function MobileNav() {
     const pathname = usePathname();
     const router = useRouter();
     const [open, setOpen] = useState(false);
+    const t = useTranslations();
+
+    const sidebarItems = [
+        { title: t("nav.dashboard"), href: "/", icon: LayoutDashboard },
+        { title: t("nav.transactions"), href: "/transactions", icon: Receipt },
+        { title: t("nav.budgets"), href: "/budgets", icon: PiggyBank },
+        { title: t("nav.goals"), href: "/goals", icon: Target },
+        { title: t("nav.bills"), href: "/bills", icon: FileText },
+        { title: t("nav.accounts"), href: "/accounts", icon: CreditCard },
+        { title: t("nav.categories"), href: "/categories", icon: Tag },
+        { title: t("nav.settings"), href: "/settings", icon: Settings },
+    ];
 
     async function handleLogout() {
         await fetch("/api/auth/logout", { method: "POST" });
@@ -53,7 +55,7 @@ export function MobileNav() {
             <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground hover:text-white">
                     <Menu className="h-6 w-6" />
-                    <span className="sr-only">Toggle menu</span>
+                    <span className="sr-only">{t("app.toggleMenu")}</span>
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[400px] border-r border-white/[0.08] bg-black/95 backdrop-blur-xl p-0">
@@ -64,7 +66,7 @@ export function MobileNav() {
                                 <PiggyBank className="h-6 w-6" />
                             </div>
                             <span className="font-bold text-xl tracking-tight text-white">
-                                Budget App
+                                {t("app.name")}
                             </span>
                         </SheetTitle>
                     </SheetHeader>
@@ -110,7 +112,7 @@ export function MobileNav() {
                             onClick={handleLogout}
                         >
                             <LogOut className="h-4 w-4" />
-                            Sign out
+                            {t("app.signOut")}
                         </Button>
                     </div>
                 </div>

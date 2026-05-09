@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { OfflineSyncManager } from "@/components/OfflineSyncManager";
@@ -29,9 +31,12 @@ export const viewport: Viewport = {
     themeColor: "#09090b",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+    const locale = await getLocale();
+    const messages = await getMessages();
+
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html lang={locale} suppressHydrationWarning>
             <head>
                 <link rel="manifest" href="/manifest.json" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -40,17 +45,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <meta name="mobile-web-app-capable" content="yes" />
             </head>
             <body className={`${inter.className} min-h-screen bg-background text-foreground`}>
-                <QueryProvider>
-                    <ThemeProvider
-                        attribute="class"
-                        defaultTheme="system"
-                        enableSystem
-                        disableTransitionOnChange
-                    >
-                        <OfflineSyncManager />
-                        {children}
-                    </ThemeProvider>
-                </QueryProvider>
+                <NextIntlClientProvider messages={messages}>
+                    <QueryProvider>
+                        <ThemeProvider
+                            attribute="class"
+                            defaultTheme="system"
+                            enableSystem
+                            disableTransitionOnChange
+                        >
+                            <OfflineSyncManager />
+                            {children}
+                        </ThemeProvider>
+                    </QueryProvider>
+                </NextIntlClientProvider>
             </body>
         </html>
     );

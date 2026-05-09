@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowUpRight, ArrowDownRight, CreditCard, Wallet, TrendingUp, Calendar } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
@@ -59,6 +60,7 @@ const TOOLTIP_STYLE = {
 };
 
 export function DashboardContent({ data }: DashboardContentProps) {
+    const t = useTranslations("dashboard");
     const spending = data.spendingByCategory ?? [];
     const budgets = data.budgetHealth ?? [];
     const maxSpend = spending.reduce((m, c) => Math.max(m, c.amount), 0);
@@ -68,12 +70,12 @@ export function DashboardContent({ data }: DashboardContentProps) {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-gradient mb-1">Financial Pulse</h2>
-                    <p className="text-muted-foreground text-sm font-medium">Here&apos;s a summary of your wealth this month.</p>
+                    <h2 className="text-3xl font-bold tracking-tight text-gradient mb-1">{t("title")}</h2>
+                    <p className="text-muted-foreground text-sm font-medium">{t("subtitle")}</p>
                 </div>
                 <Button variant="outline" size="sm" className="gap-2">
                     <Calendar className="h-4 w-4" />
-                    This Month
+                    {t("thisMonth")}
                 </Button>
             </div>
 

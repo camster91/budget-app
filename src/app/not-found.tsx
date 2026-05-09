@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { PiggyBank } from "lucide-react";
 
-export default function NotFound() {
+export default async function NotFound() {
+    const t = await getTranslations("common");
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-background bg-grid relative overflow-hidden">
             <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[50%] bg-primary/10 blur-[130px] rounded-full pointer-events-none" />
@@ -12,15 +15,15 @@ export default function NotFound() {
                     <PiggyBank className="h-8 w-8" />
                 </div>
                 <div className="text-8xl font-black text-gradient mb-4 tracking-tight">404</div>
-                <h1 className="text-2xl font-bold text-white mb-2">Page not found</h1>
+                <h1 className="text-2xl font-bold text-white mb-2">{t("notFound")}</h1>
                 <p className="text-muted-foreground text-sm mb-8 max-w-xs">
-                    This page doesn&apos;t exist or may have been moved.
+                    {t("notFoundMessage")}
                 </p>
                 <Link
                     href="/"
                     className="px-6 py-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:opacity-90 transition"
                 >
-                    Back to Dashboard
+                    {t("goHome")}
                 </Link>
             </div>
         </div>
