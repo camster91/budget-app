@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { formatNumber } from "@/lib/utils";
 import { getAuthUser } from "@/lib/auth";
 
 async function aggregateByType(householdId: string, type: string, gte?: Date, lte?: Date) {
@@ -163,7 +164,7 @@ export async function getDashboardSummary() {
                 monthlyIncome,
                 monthlyExpenses,
                 savingsRate,
-                incomeTrend: (incomeTrend >= 0 ? "+" : "") + incomeTrend.toFixed(1) + "%",
+                incomeTrend: (incomeTrend >= 0 ? "+" : "") + formatNumber(incomeTrend, 1) + "%",
                 chartData,
                 transactions: recentTransactions,
                 spendingByCategory,

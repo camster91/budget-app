@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from "recharts";
 import { Calendar, TrendingUp, TrendingDown, Download, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency, formatNumber, cn } from "@/lib/utils";
 import { SmartCategorizationPanel } from "@/components/dashboard/SmartCategorizationPanel";
 
 interface WeeklyData {
@@ -145,7 +145,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRul
             />
             <StatCard
               label="Change"
-              value={`${data.change >= 0 ? "+" : ""}${data.change.toFixed(1)}%`}
+              value={`${data.change >= 0 ? "+" : ""}${formatNumber(data.change, 1)}%`}
               icon={data.change <= 0 ? TrendingDown : TrendingUp}
               className={trendColor}
             />

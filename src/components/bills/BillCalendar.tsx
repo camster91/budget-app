@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { formatNumber } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -185,7 +185,7 @@ export function BillCalendar({ bills, onMarkPaid, isPaidThisMonth }: BillCalenda
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="text-sm font-bold text-white">${bill.amount.toFixed(2)}</div>
+                                        <div className="text-sm font-bold text-white">${formatNumber(bill.amount)}</div>
                                         {!paid && onMarkPaid && (
                                             <Button
                                                 size="sm"

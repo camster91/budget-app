@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { subWeeks, startOfWeek, endOfWeek, format } from "date-fns";
+import { formatNumber } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
             // In a real app, this would use Resend, SendGrid, etc.
             console.log(`[EMAIL MOCK] To: ${user.email}`);
             console.log(`[EMAIL MOCK] Subject: Your Weekly Spending Summary (${format(start, "MMM d")} - ${format(end, "MMM d")})`);
-            console.log(`[EMAIL MOCK] Body: You spent a total of $${totalSpent.toFixed(2)} across ${transactions.length} transactions last week.`);
+            console.log(`[EMAIL MOCK] Body: You spent a total of $${formatNumber(totalSpent)} across ${transactions.length} transactions last week.`);
             
             emailsSent++;
         }

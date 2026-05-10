@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { startOfDay, endOfDay } from "date-fns";
+import { formatNumber } from "@/lib/utils";
 
 export interface PushMessage {
     title: string;
@@ -48,7 +49,7 @@ export async function triggerSpendingAlert(): Promise<PushMessage | null> {
         if (total > dailyAllowance * 0.8 && total <= dailyAllowance) {
             return {
                 title: "Budget App: Watch it",
-                body: `You've spent ${Math.round((total / dailyAllowance) * 100)}% of today's budget. ${(dailyAllowance - total).toFixed(0)} left.`,
+                body: `You've spent ${Math.round((total / dailyAllowance) * 100)}% of today's budget. ${formatNumber(dailyAllowance - total, 0)} left.`,
                 tag: "budget-warning",
                 requireInteraction: false,
             };
@@ -57,7 +58,7 @@ export async function triggerSpendingAlert(): Promise<PushMessage | null> {
         if (total > dailyAllowance) {
             return {
                 title: "Budget App: Over budget",
-                body: `You overspent by ${(total - dailyAllowance).toFixed(0)}. Tomorrow's allowance is now reduced.`,
+                body: `You overspent by ${formatNumber(total - dailyAllowance, 0)}. Tomorrow's allowance is now reduced.`,
                 tag: "budget-over",
                 requireInteraction: true,
                 actions: [
