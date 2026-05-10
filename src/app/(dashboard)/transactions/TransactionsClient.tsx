@@ -193,7 +193,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Category</label>
                                 <select
-                                    className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                                    className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     value={categoryFilter}
                                     onChange={(e) => handleCategoryChange(e.target.value)}
                                 >
@@ -206,7 +206,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Type</label>
                                 <select
-                                    className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                                    className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     value={typeFilter}
                                     onChange={(e) => handleTypeChange(e.target.value)}
                                 >
@@ -293,7 +293,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                                         </td>
                                                         <td className="py-3 pr-2">
                                                             <select
-                                                                className="w-full bg-white/[0.05] border border-white/[0.1] rounded-lg px-2 py-1 text-xs text-white focus:outline-none"
+                                                                className="w-full bg-white/[0.05] border border-white/[0.1] rounded-lg px-2 py-1 text-xs text-white focus-visible:outline-none"
                                                                 value={editForm.categoryId || ""}
                                                                 onChange={(e) => setEditForm((f) => ({ ...f, categoryId: e.target.value }))}
                                                             >

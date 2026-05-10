@@ -115,7 +115,7 @@ export function BillsClient({ bills: initialBills, categories, accounts, paidBil
         });
     }
 
-    const selectCls = "w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary";
+    const selectCls = "w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
     return (
         <div className="flex flex-col gap-8">
@@ -283,7 +283,7 @@ export function BillsClient({ bills: initialBills, categories, accounts, paidBil
                                                     <select
                                                         value={editState.categoryId}
                                                         onChange={(e) => setEditState({ ...editState, categoryId: e.target.value })}
-                                                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                                                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-2 py-1.5 text-xs text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                                     >
                                                         {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                                                     </select>
@@ -293,7 +293,7 @@ export function BillsClient({ bills: initialBills, categories, accounts, paidBil
                                                     <select
                                                         value={editState.accountId}
                                                         onChange={(e) => setEditState({ ...editState, accountId: e.target.value })}
-                                                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                                                        className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-2 py-1.5 text-xs text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                                     >
                                                         {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                                                     </select>
