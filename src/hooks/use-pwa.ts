@@ -2,12 +2,14 @@
 
 import { useEffect } from "react";
 
+const SW_PATH = "/sw.js";
+
 export function usePwaRegistration() {
     useEffect(() => {
         if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
         navigator.serviceWorker
-            .register("/sw.js")
+            .register(SW_PATH)
             .then((reg) => {
                 console.log("SW registered:", reg.scope);
                 reg.addEventListener("updatefound", () => {
@@ -19,7 +21,19 @@ export function usePwaRegistration() {
                     });
                 });
             })
-            .catch((err) => console.error("SW registration failed:", err));
+            .catch((err: unknown) => {
+                // SecurityError (code 18): SW registration fails when the page
+                // is behind a redirect (e.g. misconfigured deployment or domain
+                // routing). This is a deployment-level issue, not a code bug,
+                // so log at debug level to avoid polluting the console.
+                const isSecurityError =
+                    err instanceof DOMException && err.name === "SecurityError";
+                if (isSecurityError) {
+                    console.debug("SW registration skipped — page behind redirect:", SW_PATH);
+                } else {
+                    console.error("SW registration failed:", err);
+                }
+            });
 
         // Beforeinstallprompt for add-to-homescreen
         const handler = (e: Event) => {
