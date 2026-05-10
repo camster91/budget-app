@@ -85,7 +85,7 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
                         onSubmit={handleSubmit}
-                        className="glass-card rounded-2xl p-5 space-y-4"
+                        className="glass-card rounded-2xl p-4 sm:p-5 space-y-4"
                     >
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Quick Spend</h3>
@@ -101,7 +101,7 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
                         </div>
 
                         {/* Quick amounts */}
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
                             {quickAmounts.map((a) => (
                                 <button
                                     key={a}
@@ -119,7 +119,7 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
                             ))}
                         </div>
 
-                        <div className="grid grid-cols-[1fr_2fr] gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr] gap-3">
                             <div className="relative">
                                 <label htmlFor="quick-amount" className="sr-only">Amount</label>
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
