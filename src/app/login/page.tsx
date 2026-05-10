@@ -50,7 +50,7 @@ export default function LoginPage() {
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: "circOut" }}
-                className="relative w-full max-w-sm mx-4"
+                className="relative w-full max-w-sm mx-auto max-[374px]:mx-2 min-[375px]:mx-4"
             >
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-8">
@@ -61,14 +61,14 @@ export default function LoginPage() {
                     <p className="text-muted-foreground text-sm mt-1">{t("subtitle")}</p>
                 </div>
 
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-6 sm:p-8 shadow-2xl">
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-4 max-[374px]:p-3 min-[375px]:p-6 sm:p-8 shadow-2xl">
                     {error && (
                         <div className="mb-5 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
                             {error}
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-4 max-[374px]:space-y-3">
                         <div className="space-y-1.5">
                             <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("email")}</label>
                             <input
@@ -79,7 +79,7 @@ export default function LoginPage() {
                                 required
                                 autoComplete="email"
                                 placeholder={t("emailPlaceholder")}
-                                className="w-full px-4 py-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition"
+                                className="w-full px-3 max-[374px]:px-2.5 py-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition"
                             />
                         </div>
 
@@ -94,7 +94,7 @@ export default function LoginPage() {
                                     required
                                     autoComplete="current-password"
                                     placeholder="••••••••"
-                                    className="w-full px-4 py-3 pr-11 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition"
+                                    className="w-full px-3 max-[374px]:px-2.5 py-3 pr-11 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition"
                                 />
                                 <button
                                     type="button"
@@ -110,13 +110,13 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3.5 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:opacity-90 transition disabled:opacity-50 mt-2"
+                            className="w-full py-3.5 max-[374px]:py-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:opacity-90 transition disabled:opacity-50 mt-2"
                         >
                             {loading ? t("signingIn") : t("signIn")}
                         </button>
                     </form>
 
-                    <p className="mt-8 text-center text-sm text-muted-foreground px-2">
+                    <p className="mt-6 max-[374px]:mt-4 text-center text-sm text-muted-foreground px-2">
                         {t("noAccount")}{" "}
                         <Link href="/register" className="text-primary hover:text-primary/80 font-bold transition-colors">
                             {t("createOne")}
