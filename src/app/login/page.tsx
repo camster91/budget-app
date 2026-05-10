@@ -57,11 +57,11 @@ export default function LoginPage() {
                     <div className="p-3 rounded-2xl bg-primary/20 text-primary mb-4 shadow-[0_0_30px_rgba(99,102,241,0.3)]">
                         <PiggyBank className="h-8 w-8" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gradient tracking-tight">{t("title")}</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gradient tracking-tight">{t("title")}</h1>
                     <p className="text-muted-foreground text-sm mt-1">{t("subtitle")}</p>
                 </div>
 
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-8 shadow-2xl">
+                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-6 sm:p-8 shadow-2xl">
                     {error && (
                         <div className="mb-5 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
                             {error}
@@ -110,13 +110,13 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:opacity-90 transition disabled:opacity-50 mt-2"
+                            className="w-full py-3.5 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:opacity-90 transition disabled:opacity-50 mt-2"
                         >
                             {loading ? t("signingIn") : t("signIn")}
                         </button>
                     </form>
 
-                    <p className="mt-6 text-center text-sm text-muted-foreground">
+                    <p className="mt-8 text-center text-sm text-muted-foreground px-2">
                         {t("noAccount")}{" "}
                         <Link href="/register" className="text-primary hover:text-primary/80 font-bold transition-colors">
                             {t("createOne")}
