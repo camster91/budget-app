@@ -241,7 +241,7 @@ function EditCategoryForm({
                                 <select
                                     value={newRuleType}
                                     onChange={(e) => setNewRuleType(e.target.value as 'contains' | 'equals')}
-                                    className="w-32 bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                                    className="w-32 bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                 >
                                     <option value="contains">Contains</option>
                                     <option value="equals">Equals</option>
@@ -371,7 +371,7 @@ function CreateCategoryForm({
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Type</label>
-                            <select name="type" required className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary">
+                            <select name="type" required className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
                                 <option value="expense">Expense</option>
                                 <option value="income">Income</option>
                             </select>
@@ -388,7 +388,7 @@ function CreateCategoryForm({
                                 <select
                                     value={newRuleType}
                                     onChange={(e) => setNewRuleType(e.target.value as 'contains' | 'equals')}
-                                    className="w-32 bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                                    className="w-32 bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                 >
                                     <option value="contains">Contains</option>
                                     <option value="equals">Equals</option>
