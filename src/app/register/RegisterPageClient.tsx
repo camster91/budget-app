@@ -128,7 +128,7 @@ export default function RegisterPageClient() {
 
                     <p className="mt-6 text-center text-sm text-muted-foreground">
                         {t("alreadyHaveAccount")}{" "}
-                        <Link href="/login" className="text-primary hover:text-primary/80 font-bold transition-colors">
+                        <Link href="/login" className="text-primary hover:text-primary/80 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm">
                             {t("signIn")}
                         </Link>
                     </p>
