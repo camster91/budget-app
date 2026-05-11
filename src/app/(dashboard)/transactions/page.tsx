@@ -6,17 +6,18 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { TransactionsClient } from "./TransactionsClient";
 
-export default async function TransactionsPage() {
+export default async function TransactionsPage({ searchParams }: { searchParams: Promise<{ dateFrom?: string; dateTo?: string }> }) {
     const user = await getAuthUser();
     if (!user) redirect("/login");
 
+    const { dateFrom, dateTo } = await searchParams;
     const [{ data: transactions }, categories] = await Promise.all([
-        getTransactions(),
+        getTransactions(dateFrom, dateTo),
         prisma.category.findMany({
             where: { householdId: user.householdId },
             orderBy: { name: "asc" },
         }),
     ]);
 
-    return <TransactionsClient transactions={transactions || []} categories={categories} />;
+    return <TransactionsClient transactions={transactions || []} categories={categories} dateFrom={dateFrom} dateTo={dateTo} />;
 }

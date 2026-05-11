@@ -202,7 +202,7 @@ export function BudgetsClient({ budgets: initialBudgets, categories, period }: B
                             <PlusCircle className="h-10 w-10 text-muted-foreground group-hover:text-primary transition-colors mb-4" />
                             <span className="text-sm font-bold text-muted-foreground group-hover:text-white transition-colors">New Budget</span>
                         </button>
-                        {tileFormKey > 0 && (
+{tileFormKey > 0 && (
                             <BudgetForm key={tileFormKey} categories={categories} period={period} autoOpen />
                         )}
                     </div>

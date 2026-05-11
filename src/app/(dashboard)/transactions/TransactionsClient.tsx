@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { TransactionForm } from "@/components/transactions/TransactionForm";
 import { ImportModal } from "@/components/transactions/ImportModal";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { updateTransaction, deleteTransaction } from "@/app/_actions/transactions";
 
 const PAGE_SIZE = 25;
+
+type DatePreset = "this_month" | "last_30" | "last_90" | "this_year" | "all";
 
 interface Category {
     id: string;
@@ -31,16 +34,60 @@ interface Transaction {
 interface TransactionsClientProps {
     transactions: Transaction[];
     categories: Category[];
+    dateFrom?: string;
+    dateTo?: string;
 }
 
-export function TransactionsClient({ transactions: initialTransactions, categories }: TransactionsClientProps) {
+function getPresetRange(preset: DatePreset): { dateFrom: string; dateTo: string } | null {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const day = now.getDate();
+
+    switch (preset) {
+        case "this_month": {
+            const firstDay = new Date(year, month, 1).toISOString().slice(0, 10);
+            const lastDay = new Date(year, month + 1, 0).toISOString().slice(0, 10);
+            return { dateFrom: firstDay, dateTo: lastDay };
+        }
+        case "last_30": {
+            const from = new Date(now);
+            from.setDate(day - 30);
+            return { dateFrom: from.toISOString().slice(0, 10), dateTo: now.toISOString().slice(0, 10) };
+        }
+        case "last_90": {
+            const from = new Date(now);
+            from.setDate(day - 90);
+            return { dateFrom: from.toISOString().slice(0, 10), dateTo: now.toISOString().slice(0, 10) };
+        }
+        case "this_year": {
+            return { dateFrom: `${year}-01-01`, dateTo: now.toISOString().slice(0, 10) };
+        }
+        case "all":
+            return null;
+    }
+}
+
+function detectPreset(dateFrom?: string, dateTo?: string): DatePreset | "custom" {
+    if (!dateFrom && !dateTo) return "all";
+    const now = new Date();
+    const thisMonth = getPresetRange("this_month");
+    if (thisMonth && dateFrom === thisMonth.dateFrom && dateTo === thisMonth.dateTo) return "this_month";
+    const last30 = getPresetRange("last_30");
+    if (last30 && dateFrom === last30.dateFrom && dateTo === last30.dateTo) return "last_30";
+    const last90 = getPresetRange("last_90");
+    if (last90 && dateFrom === last90.dateFrom && dateTo === last90.dateTo) return "last_90";
+    if (dateFrom === `${now.getFullYear()}-01-01` && dateTo === now.toISOString().slice(0, 10)) return "this_year";
+    return "custom";
+}
+
+export function TransactionsClient({ transactions: initialTransactions, categories, dateFrom, dateTo }: TransactionsClientProps) {
+    const router = useRouter();
     const [transactions, setTransactions] = useState(initialTransactions);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("");
     const [typeFilter, setTypeFilter] = useState("");
-    const [dateFrom, setDateFrom] = useState("");
-    const [dateTo, setDateTo] = useState("");
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<Partial<Transaction>>({});
     const [page, setPage] = useState(1);
@@ -51,12 +98,9 @@ export function TransactionsClient({ transactions: initialTransactions, categori
             const matchesSearch = !search || t.description.toLowerCase().includes(search.toLowerCase());
             const matchesCategory = !categoryFilter || t.categoryId === categoryFilter;
             const matchesType = !typeFilter || t.type === typeFilter;
-            const tDate = new Date(t.date);
-            const matchesFrom = !dateFrom || tDate >= new Date(dateFrom);
-            const matchesTo = !dateTo || tDate <= new Date(dateTo + "T23:59:59");
-            return matchesSearch && matchesCategory && matchesType && matchesFrom && matchesTo;
+            return matchesSearch && matchesCategory && matchesType;
         });
-    }, [transactions, search, categoryFilter, typeFilter, dateFrom, dateTo]);
+    }, [transactions, search, categoryFilter, typeFilter]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
     const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -134,20 +178,28 @@ export function TransactionsClient({ transactions: initialTransactions, categori
         URL.revokeObjectURL(url);
     }
 
-    function resetFilters() {
-        setSearch("");
-        setCategoryFilter("");
-        setTypeFilter("");
-        setDateFrom("");
-        setDateTo("");
-        setPage(1);
+    function handlePresetChange(preset: DatePreset) {
+        const range = getPresetRange(preset);
+        if (range) {
+            router.push(`/transactions?dateFrom=${range.dateFrom}&dateTo=${range.dateTo}`);
+        } else {
+            router.push("/transactions");
+        }
     }
 
-    function handleSearchChange(v: string) { setSearch(v); setPage(1); }
-    function handleCategoryChange(v: string) { setCategoryFilter(v); setPage(1); }
-    function handleTypeChange(v: string) { setTypeFilter(v); setPage(1); }
-    function handleDateFromChange(v: string) { setDateFrom(v); setPage(1); }
-    function handleDateToChange(v: string) { setDateTo(v); setPage(1); }
+    function handleDateFromChange(v: string) {
+        if (v && dateTo) router.push(`/transactions?dateFrom=${v}&dateTo=${dateTo}`);
+        else if (v) router.push(`/transactions?dateFrom=${v}`);
+        else router.push("/transactions");
+    }
+
+    function handleDateToChange(v: string) {
+        if (dateFrom && v) router.push(`/transactions?dateFrom=${dateFrom}&dateTo=${v}`);
+        else if (v) router.push(`/transactions?dateTo=${v}`);
+        else router.push("/transactions");
+    }
+
+    const currentPreset = detectPreset(dateFrom, dateTo);
 
     return (
         <>
@@ -187,7 +239,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                     placeholder="Search..."
                                     className="pl-9 bg-white/[0.02]"
                                     value={search}
-                                    onChange={(e) => handleSearchChange(e.target.value)}
+                                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -195,7 +247,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                 <select
                                     className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     value={categoryFilter}
-                                    onChange={(e) => handleCategoryChange(e.target.value)}
+                                    onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
                                 >
                                     <option value="">All Categories</option>
                                     {categories.map((c) => (
@@ -208,7 +260,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                 <select
                                     className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                     value={typeFilter}
-                                    onChange={(e) => handleTypeChange(e.target.value)}
+                                    onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
                                 >
                                     <option value="">All Types</option>
                                     <option value="income">Income</option>
@@ -217,22 +269,36 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Date Range</label>
-                                <Input
-                                    type="date"
-                                    placeholder="From"
-                                    value={dateFrom}
-                                    onChange={(e) => handleDateFromChange(e.target.value)}
-                                    className="bg-white/[0.02] border-white/[0.08] text-sm"
-                                />
-                                <Input
-                                    type="date"
-                                    placeholder="To"
-                                    value={dateTo}
-                                    onChange={(e) => handleDateToChange(e.target.value)}
-                                    className="bg-white/[0.02] border-white/[0.08] text-sm"
-                                />
+                                <div className="flex flex-col gap-2">
+                                    <select
+                                        className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                        value={currentPreset}
+                                        onChange={(e) => handlePresetChange(e.target.value as DatePreset)}
+                                    >
+                                        <option value="this_month">This Month</option>
+                                        <option value="last_30">Last 30 Days</option>
+                                        <option value="last_90">Last 90 Days</option>
+                                        <option value="this_year">This Year</option>
+                                        <option value="all">All Time</option>
+                                        <option value="custom">Custom Range…</option>
+                                    </select>
+                                    <Input
+                                        type="date"
+                                        placeholder="From"
+                                        value={dateFrom || ""}
+                                        onChange={(e) => handleDateFromChange(e.target.value)}
+                                        className="bg-white/[0.02] border-white/[0.08] text-sm"
+                                    />
+                                    <Input
+                                        type="date"
+                                        placeholder="To"
+                                        value={dateTo || ""}
+                                        onChange={(e) => handleDateToChange(e.target.value)}
+                                        className="bg-white/[0.02] border-white/[0.08] text-sm"
+                                    />
+                                </div>
                             </div>
-                            <Button variant="secondary" className="w-full text-xs h-9" onClick={resetFilters}>
+                            <Button variant="secondary" className="w-full text-xs h-9" onClick={() => router.push("/transactions")}>
                                 Reset Filters
                             </Button>
                             <p className="text-[10px] text-center text-muted-foreground">

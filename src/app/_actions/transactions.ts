@@ -6,12 +6,19 @@ import { getAuthUser } from "@/lib/auth";
 import { isTransfer } from "@/lib/utils/transactionUtils";
 import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
 
-export async function getTransactions() {
+export async function getTransactions(dateFrom?: string, dateTo?: string) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
     try {
+        const where: Record<string, unknown> = { householdId: user.householdId };
+        if (dateFrom) {
+            where.date = { ...(where.date as object || {}), gte: new Date(dateFrom) };
+        }
+        if (dateTo) {
+            where.date = { ...(where.date as object || {}), lte: new Date(dateTo + "T23:59:59") };
+        }
         const transactions = await prisma.transaction.findMany({
-            where: { householdId: user.householdId },
+            where,
             orderBy: {
                 date: "desc",
             },
