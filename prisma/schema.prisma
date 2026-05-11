@@ -178,7 +178,8 @@ model Bill {
   accountId   String
   isAutoDeduct Boolean @default(false)
   isActive    Boolean  @default(true)
-  
+  paidAt      DateTime? // Last time bill was marked as paid
+
   transactions Transaction[]
 
   household   Household? @relation(fields: [householdId], references: [id])

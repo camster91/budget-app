@@ -13,7 +13,7 @@ export default async function BillsPage() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [bills, categories, accounts, paidThisMonth] = await Promise.all([
+    const [bills, categories, accounts, paidThisMonth, paymentHistory] = await Promise.all([
         prisma.bill.findMany({
             where: { householdId: user.householdId, isActive: true },
             include: { category: true, account: true },
@@ -36,6 +36,19 @@ export default async function BillsPage() {
             },
             select: { billId: true },
         }),
+        // Full payment history
+        prisma.transaction.findMany({
+            where: {
+                householdId: user.householdId,
+                billId: { not: null },
+            },
+            orderBy: { date: "desc" },
+            take: 50,
+            include: {
+                bill: { select: { name: true } },
+                account: { select: { name: true } },
+            },
+        }),
     ]);
 
     const paidBillIds = new Set(
@@ -49,6 +62,7 @@ export default async function BillsPage() {
                 categories={categories}
                 accounts={accounts}
                 paidBillIds={paidBillIds}
+                paymentHistory={paymentHistory}
             />
             <BillCalendarView
                 bills={bills}

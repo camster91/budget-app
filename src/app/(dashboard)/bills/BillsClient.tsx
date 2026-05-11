@@ -28,6 +28,14 @@ interface BillsClientProps {
     categories: Category[];
     accounts: Account[];
     paidBillIds?: Set<string>;
+    paymentHistory?: {
+        id: string;
+        amount: number;
+        date: Date;
+        description: string;
+        bill: { name: string } | null;
+        account: { name: string } | null;
+    }[];
 }
 
 function getNextDueDate(dueDay: number): Date {

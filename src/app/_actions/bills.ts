@@ -80,6 +80,11 @@ export async function markBillAsPaid(id: string) {
             }
         });
 
+        await prisma.bill.update({
+            where: { id },
+            data: { paidAt: new Date() },
+        });
+
         revalidatePath("/bills");
         revalidatePath("/daily");
         revalidatePath("/");
@@ -87,6 +92,29 @@ export async function markBillAsPaid(id: string) {
     } catch (error) {
         console.error("[markBillAsPaid]", error);
         return { success: false, error: "Failed to mark bill as paid" };
+    }
+}
+
+export async function getPaymentHistory() {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+    try {
+        const payments = await prisma.transaction.findMany({
+            where: {
+                householdId: user.householdId,
+                billId: { not: null },
+            },
+            orderBy: { date: "desc" },
+            take: 50,
+            include: {
+                bill: { select: { name: true, amount: true } },
+                category: { select: { name: true } },
+                account: { select: { name: true } },
+            },
+        });
+        return { success: true, data: payments };
+    } catch (error) {
+        return { success: false, error: "Failed to fetch payment history" };
     }
 }
 
