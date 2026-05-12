@@ -52,6 +52,8 @@ services:
       - POSTGRES_USER=budget_user
       # Override these with Coolify secrets or .env
       - POSTGRES_PASSWORD=budget_secure_password
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

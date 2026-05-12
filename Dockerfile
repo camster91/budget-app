@@ -53,8 +53,8 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create directory for Prisma (SQLite fallback or persistent volume)
-RUN mkdir -p /app/prisma && chown -R nextjs:nodejs /app
+# Create directories for Prisma and SQLite fallback
+RUN mkdir -p /app/prisma /app/data && chown -R nextjs:nodejs /app
 
 # Copy built application and dependencies
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
@@ -62,12 +62,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Copy package.json for npm scripts
+# Copy package.json for scripts
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-
-# Create writable directory for SQLite (if used) or volume mount
-RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
 
 USER nextjs
 
@@ -80,18 +77,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
 # Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
 
-# Run Prisma migrations + schema drift repair before starting server.
-# The fix_schema_drift migration uses ALTER TABLE ADD COLUMN IF NOT EXISTS
-# to handle columns that may be missing from production (causing 502 errors).
-# If prisma migrate deploy succeeds, great — the migration engine handles it.
-# If it partially fails, we still apply the raw SQL as a fallback.
-CMD ["sh", "-c", "\
-  echo '=== Running Prisma migrations...' && \
-  npx prisma migrate deploy; \
-  echo '=== Applying schema drift repair (safe re-run)...' && \
-  npx prisma db execute --file prisma/migrations/fix_schema_drift/migration.sql --schema prisma/schema.prisma 2>&1; \
-  echo '=== Generating Prisma client...' && \
-  npx prisma generate && \
-  echo '=== Starting server...' && \
-  node server.js\
-"]
+# Start the Next.js standalone server directly
+CMD ["node", "server.js"]
