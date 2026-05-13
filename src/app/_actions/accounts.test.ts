@@ -72,6 +72,11 @@ describe('Accounts Actions', () => {
 
     it('should handle database errors', async () => {
       const fd = new FormData();
+      fd.append('name', 'Checking');
+      fd.append('type', 'checking');
+      fd.append('institution', 'TD');
+      fd.append('balance', '1500.50');
+      fd.append('color', '#ff0000');
       (prisma.account.create as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockRejectedValue(new Error('DB Error'));
       const res = await createAccount(fd);
       expect(res.success).toBe(false);

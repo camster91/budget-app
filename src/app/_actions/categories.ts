@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
+import { createCategorySchema, updateCategorySchema, updateCategoryBudgetCapSchema, validateFormData } from "@/lib/validation";
 
 export async function getCategories() {
     const user = await getAuthUser();
@@ -21,14 +22,13 @@ export async function getCategories() {
 export async function createCategory(formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
-    try {
-        const name = formData.get("name") as string;
-        const icon = formData.get("icon") as string;
-        const color = formData.get("color") as string;
-        const type = formData.get("type") as string;
-        const rules = formData.get("rules") as string; // Expecting JSON string
 
-        // Check for duplicate name in this household
+    const validated = validateFormData(formData, createCategorySchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { name, icon, color, type, rules } = validated.data;
+
+    try {
         const existing = await prisma.category.findFirst({
             where: { name, householdId: user.householdId },
         });
@@ -57,13 +57,13 @@ export async function createCategory(formData: FormData) {
 export async function updateCategory(id: string, formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
-    try {
-        const name = formData.get("name") as string;
-        const icon = formData.get("icon") as string;
-        const color = formData.get("color") as string;
-        const rules = formData.get("rules") as string;
 
-        // Check for duplicate name in this household (excluding self)
+    const validated = validateFormData(formData, updateCategorySchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { name, icon, color, rules } = validated.data;
+
+    try {
         const existing = await prisma.category.findFirst({
             where: { 
                 name, 
@@ -95,13 +95,16 @@ export async function updateCategory(id: string, formData: FormData) {
 export async function updateCategoryBudgetCap(id: string, formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
-    try {
-        const dailyCapRaw = formData.get("dailyCap") as string;
-        const dailyCap = dailyCapRaw === "" || dailyCapRaw === null ? null : parseFloat(dailyCapRaw);
 
+    const validated = validateFormData(formData, updateCategoryBudgetCapSchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { dailyCap } = validated.data;
+
+    try {
         await prisma.category.update({
             where: { id, householdId: user.householdId },
-            data: { dailyCap },
+            data: { dailyCap: dailyCap ?? null },
         });
         revalidatePath("/settings");
         return { success: true };
