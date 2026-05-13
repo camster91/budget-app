@@ -8,7 +8,7 @@ import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
 import { createTransactionSchema, updateTransactionSchema, validateFormData } from "@/lib/validation";
 import { toCents } from "@/lib/utils";
 
-export async function getTransactions(dateFrom?: string, dateTo?: string) {
+export async function getTransactions(dateFrom?: string, dateTo?: string, page?: number, pageSize?: number) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
     try {
@@ -19,16 +19,22 @@ export async function getTransactions(dateFrom?: string, dateTo?: string) {
         if (dateTo) {
             where.date = { ...(where.date as object || {}), lte: new Date(dateTo + "T23:59:59") };
         }
-        const transactions = await prisma.transaction.findMany({
-            where,
-            orderBy: {
-                date: "desc",
-            },
-            include: {
-                category: true,
-            },
-        });
-        return { success: true, data: transactions };
+
+        const skip = page && pageSize ? (page - 1) * pageSize : undefined;
+        const take = pageSize ?? undefined;
+
+        const [transactions, totalCount] = await Promise.all([
+            prisma.transaction.findMany({
+                where,
+                orderBy: { date: "desc" },
+                include: { category: true },
+                skip,
+                take,
+            }),
+            prisma.transaction.count({ where }),
+        ]);
+
+        return { success: true, data: transactions, totalCount };
     } catch (error) {
         console.error("Failed to fetch transactions:", error);
         return { success: false, error: "Failed to fetch transactions" };

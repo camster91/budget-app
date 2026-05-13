@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { updateTransaction, deleteTransaction } from "@/app/_actions/transactions";
 
-const PAGE_SIZE = 25;
+// PAGE_SIZE is now passed as a prop from the server
 
 type DatePreset = "this_month" | "last_30" | "last_90" | "this_year" | "all";
 
@@ -33,9 +33,12 @@ interface Transaction {
 
 interface TransactionsClientProps {
     transactions: Transaction[];
+    totalCount: number;
     categories: Category[];
     dateFrom?: string;
     dateTo?: string;
+    currentPage: number;
+    pageSize: number;
 }
 
 function getPresetRange(preset: DatePreset): { dateFrom: string; dateTo: string } | null {
@@ -81,7 +84,7 @@ function detectPreset(dateFrom?: string, dateTo?: string): DatePreset | "custom"
     return "custom";
 }
 
-export function TransactionsClient({ transactions: initialTransactions, categories, dateFrom, dateTo }: TransactionsClientProps) {
+export function TransactionsClient({ transactions: initialTransactions, totalCount, categories, dateFrom, dateTo, currentPage: initialPage, pageSize: PAGE_SIZE }: TransactionsClientProps) {
     const router = useRouter();
     const [transactions, setTransactions] = useState(initialTransactions);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -90,7 +93,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
     const [typeFilter, setTypeFilter] = useState("");
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editForm, setEditForm] = useState<Partial<Transaction>>({});
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(initialPage);
     const [isPending, startTransition] = useTransition();
 
     const filtered = useMemo(() => {
@@ -102,7 +105,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
         });
     }, [transactions, search, categoryFilter, typeFilter]);
 
-    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
     const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
     function startEdit(t: Transaction) {
@@ -302,7 +305,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                 Reset Filters
                             </Button>
                             <p className="text-[10px] text-center text-muted-foreground">
-                                {filtered.length} of {transactions.length} transactions
+                                {totalCount} total transactions
                             </p>
                         </CardContent>
                     </Card>
@@ -312,8 +315,8 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                             <div>
                                 <CardTitle>History</CardTitle>
                                 <CardDescription>
-                                    {filtered.length > 0
-                                        ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)} of ${filtered.length}`
+                                    {totalCount > 0
+                                        ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, totalCount)} of ${totalCount}`
                                         : "No results"}
                                 </CardDescription>
                             </div>
