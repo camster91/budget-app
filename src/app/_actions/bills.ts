@@ -3,17 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
+import { createBillSchema, updateBillSchema, validateFormData } from "@/lib/validation";
 
 export async function createBill(formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
-    try {
-        const name = formData.get("name") as string;
-        const amount = parseFloat(formData.get("amount") as string);
-        const dueDay = parseInt(formData.get("dueDay") as string);
-        const categoryId = formData.get("categoryId") as string;
-        const accountId = formData.get("accountId") as string;
 
+    const validated = validateFormData(formData, createBillSchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { name, amount, dueDay, categoryId, accountId } = validated.data;
+
+    try {
         await prisma.bill.create({
             data: { name, amount, dueDay, categoryId, accountId, householdId: user.householdId },
         });
@@ -27,13 +28,13 @@ export async function createBill(formData: FormData) {
 export async function updateBill(id: string, formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
-    try {
-        const name = formData.get("name") as string;
-        const amount = parseFloat(formData.get("amount") as string);
-        const dueDay = parseInt(formData.get("dueDay") as string);
-        const categoryId = formData.get("categoryId") as string;
-        const accountId = formData.get("accountId") as string;
 
+    const validated = validateFormData(formData, updateBillSchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { name, amount, dueDay, categoryId, accountId } = validated.data;
+
+    try {
         await prisma.bill.update({
             where: { id, householdId: user.householdId },
             data: { name, amount, dueDay, categoryId, accountId },

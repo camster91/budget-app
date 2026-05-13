@@ -3,17 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
+import { createAccountSchema, validateFormData } from "@/lib/validation";
 
 export async function createAccount(formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
-    try {
-        const name = formData.get("name") as string;
-        const type = formData.get("type") as string;
-        const institution = formData.get("institution") as string;
-        const balance = parseFloat(formData.get("balance") as string || "0");
-        const color = formData.get("color") as string;
 
+    const validated = validateFormData(formData, createAccountSchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { name, type, institution, balance, color } = validated.data;
+
+    try {
         await prisma.account.create({
             data: { 
                 name, 
