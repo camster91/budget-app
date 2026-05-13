@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { createCategorySchema, updateCategorySchema, updateCategoryBudgetCapSchema, validateFormData } from "@/lib/validation";
+import { toCents } from "@/lib/utils";
 
 export async function getCategories() {
     const user = await getAuthUser();
@@ -104,7 +105,7 @@ export async function updateCategoryBudgetCap(id: string, formData: FormData) {
     try {
         await prisma.category.update({
             where: { id, householdId: user.householdId },
-            data: { dailyCap: dailyCap ?? null },
+            data: { dailyCap: dailyCap != null ? toCents(dailyCap) : null },
         });
         revalidatePath("/settings");
         return { success: true };

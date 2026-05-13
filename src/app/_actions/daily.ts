@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
+import { toCents } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import { formatCurrency } from "@/lib/utils";
 import {
@@ -353,7 +354,7 @@ export async function addQuickSpend(formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
     try {
-        const amount = parseFloat(formData.get("amount") as string);
+        const amount = toCents(parseFloat(formData.get("amount") as string));
         const description = (formData.get("description") as string) || "Quick spend";
         const categoryId = formData.get("categoryId") as string;
 

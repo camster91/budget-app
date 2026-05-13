@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { createAccountSchema, validateFormData } from "@/lib/validation";
+import { toCents } from "@/lib/utils";
 
 export async function createAccount(formData: FormData) {
     const user = await getAuthUser();
@@ -20,7 +21,7 @@ export async function createAccount(formData: FormData) {
                 name, 
                 type, 
                 institution: institution || null, 
-                balance, 
+                balance: toCents(balance), 
                 color: color || null,
                 householdId: user.householdId
             },
@@ -39,7 +40,7 @@ export async function updateAccountBalance(id: string, balance: number) {
     try {
         await prisma.account.update({ 
             where: { id, householdId: user.householdId }, 
-            data: { balance } 
+            data: { balance: toCents(balance) } 
         });
         revalidatePath("/accounts");
         revalidatePath("/");

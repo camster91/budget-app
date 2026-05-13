@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { fromCents } from "@/lib/utils";
 import { getAuthUser } from "@/lib/auth";
 import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 import { formatDecimal } from "@/lib/locale";
@@ -32,7 +33,7 @@ export async function exportTransactionsToCSV(month?: string) {
             `"${t.description.replace(/"/g, '""')}"`,
             t.category?.name || "Uncategorized",
             t.account?.name || "",
-            formatDecimal(t.amount),
+            formatDecimal(fromCents(t.amount)),
             t.isDiscretionary ? "discretionary" : "fixed",
             t.source || "manual",
         ]);

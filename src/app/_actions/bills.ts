@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { createBillSchema, updateBillSchema, validateFormData } from "@/lib/validation";
+import { toCents } from "@/lib/utils";
 
 export async function createBill(formData: FormData) {
     const user = await getAuthUser();
@@ -16,7 +17,7 @@ export async function createBill(formData: FormData) {
 
     try {
         await prisma.bill.create({
-            data: { name, amount, dueDay, categoryId, accountId, householdId: user.householdId },
+            data: { name, amount: toCents(amount), dueDay, categoryId, accountId, householdId: user.householdId },
         });
         revalidatePath("/bills");
         return { success: true };
@@ -37,7 +38,7 @@ export async function updateBill(id: string, formData: FormData) {
     try {
         await prisma.bill.update({
             where: { id, householdId: user.householdId },
-            data: { name, amount, dueDay, categoryId, accountId },
+            data: { name, amount: toCents(amount), dueDay, categoryId, accountId },
         });
         revalidatePath("/bills");
         return { success: true };

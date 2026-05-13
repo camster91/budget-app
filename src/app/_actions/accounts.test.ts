@@ -62,7 +62,7 @@ describe('Accounts Actions', () => {
           name: 'Checking',
           type: 'checking',
           institution: 'TD',
-          balance: 1500.50,
+          balance: 150050,
           color: '#ff0000',
           householdId: 'hh-1',
         },
@@ -98,7 +98,7 @@ describe('Accounts Actions', () => {
       expect(res.success).toBe(true);
       expect(prisma.account.update).toHaveBeenCalledWith({
         where: { id: 'acc-1', householdId: 'hh-1' },
-        data: { balance: 2000 },
+        data: { balance: 200000 },
       });
       expect(revalidatePath).toHaveBeenCalledWith('/accounts');
       expect(revalidatePath).toHaveBeenCalledWith('/');
