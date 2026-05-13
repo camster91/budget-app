@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { createGoalSchema, updateGoalSchema, validateFormData } from "@/lib/validation";
+import { toCents } from "@/lib/utils";
 
 export async function createGoal(formData: FormData) {
     const user = await getAuthUser();
@@ -18,8 +19,8 @@ export async function createGoal(formData: FormData) {
         await prisma.goal.create({
             data: { 
                 name, 
-                targetAmount, 
-                currentAmount, 
+                targetAmount: toCents(targetAmount), 
+                currentAmount: toCents(currentAmount), 
                 categoryId,
                 targetDate: targetDate ?? null,
                 householdId: user.householdId,
@@ -46,8 +47,8 @@ export async function updateGoal(id: string, formData: FormData) {
             where: { id, householdId: user.householdId },
             data: {
                 name,
-                targetAmount,
-                currentAmount,
+                targetAmount: toCents(targetAmount),
+                currentAmount: toCents(currentAmount),
                 categoryId: categoryId ?? null,
                 targetDate: targetDate ?? null,
             },

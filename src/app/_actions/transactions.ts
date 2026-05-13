@@ -6,6 +6,7 @@ import { getAuthUser } from "@/lib/auth";
 import { isTransfer } from "@/lib/utils/transactionUtils";
 import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
 import { createTransactionSchema, updateTransactionSchema, validateFormData } from "@/lib/validation";
+import { toCents } from "@/lib/utils";
 
 export async function getTransactions(dateFrom?: string, dateTo?: string) {
     const user = await getAuthUser();
@@ -68,7 +69,7 @@ export async function createTransaction(formData: FormData) {
 
         await prisma.transaction.create({
             data: {
-                amount,
+                amount: toCents(amount),
                 description,
                 date,
                 type,
@@ -102,7 +103,7 @@ export async function updateTransaction(id: string, formData: FormData) {
         await prisma.transaction.update({
             where: { id, householdId: user.householdId },
             data: {
-                amount,
+                amount: toCents(amount),
                 description,
                 date,
                 type,

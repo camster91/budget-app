@@ -8,9 +8,19 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, locale?: string, currency?: string) {
+export function formatCurrency(cents: number, locale?: string, currency?: string) {
     return new Intl.NumberFormat(locale, {
         style: "currency",
         currency: currency || DEFAULT_CURRENCY,
-    }).format(amount);
+    }).format(cents / 100);
+}
+
+/** Convert dollars (user input) to integer cents (database storage) */
+export function toCents(dollars: number): number {
+    return Math.round(dollars * 100);
+}
+
+/** Convert integer cents (database storage) to dollars (for display/math) */
+export function fromCents(cents: number): number {
+    return cents / 100;
 }

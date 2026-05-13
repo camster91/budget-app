@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
+import { toCents } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 
 export async function getIncomes() {
@@ -23,7 +24,8 @@ export async function createIncome(formData: FormData) {
     if (!user) return { success: false, error: "Unauthorized" };
     try {
         const name = (formData.get("name") as string) || "Income";
-        const amount = parseFloat(formData.get("amount") as string);
+        const amountRaw = parseFloat(formData.get("amount") as string);
+        const amount = toCents(amountRaw);
         const frequency = formData.get("frequency") as string;
         const startDate = new Date(formData.get("startDate") as string);
         const dayOfMonth = parseInt(formData.get("dayOfMonth") as string) || null;
@@ -57,7 +59,8 @@ export async function updateIncome(id: string, formData: FormData) {
     if (!user) return { success: false, error: "Unauthorized" };
     try {
         const name = (formData.get("name") as string) || "Income";
-        const amount = parseFloat(formData.get("amount") as string);
+        const amountRaw = parseFloat(formData.get("amount") as string);
+        const amount = toCents(amountRaw);
         const frequency = formData.get("frequency") as string;
         const startDate = new Date(formData.get("startDate") as string);
         const dayOfMonth = parseInt(formData.get("dayOfMonth") as string) || null;

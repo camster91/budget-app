@@ -47,7 +47,7 @@ model User {
 
 model Transaction {
   id          String   @id @default(uuid())
-  amount      Float
+  amount      Int
   description String
   date        DateTime
   type        String   @default("expense") // "income" or "expense"
@@ -97,7 +97,7 @@ model Category {
   type      String   @default("expense") // "income" or "expense"
   
   // Budget cap for daily spending tracker
-  dailyCap  Float?   // Max dollars per day in this category (null = no limit)
+  dailyCap  Int?   // Max cents per day in this category (null = no limit)
   
   // For nested categories
   parentId  String?
@@ -124,7 +124,7 @@ model Category {
 
 model Budget {
   id         String   @id @default(uuid())
-  amount     Float
+  amount     Int
   period     String   // e.g., "2023-10"
   
   category   Category @relation(fields: [categoryId], references: [id])
@@ -144,7 +144,7 @@ model Account {
   name        String
   type        String   // checking, savings, credit, investment, cash
   institution String?  // Tangerine, RBC, TD, etc.
-  balance     Float    @default(0)
+  balance     Int    @default(0)
   color       String?  // Hex color for UI
   isDefault   Boolean  @default(false) // Default account for transactions
 
@@ -169,7 +169,7 @@ model Account {
 model Bill {
   id          String   @id @default(uuid())
   name        String
-  amount      Float
+  amount      Int
   dueDay      Int      // Day of month (1-31)
   frequency   String   @default("monthly") // monthly, weekly, biweekly
   category    Category @relation(fields: [categoryId], references: [id])
@@ -194,8 +194,8 @@ model Bill {
 model Goal {
   id          String   @id @default(uuid())
   name        String
-  targetAmount Float
-  currentAmount Float @default(0)
+  targetAmount Int
+  currentAmount Int @default(0)
   targetDate  DateTime?
   category    Category? @relation(fields: [categoryId], references: [id])
   categoryId  String?
@@ -213,7 +213,7 @@ model Goal {
 model Income {
   id          String   @id @default(uuid())
   name        String   @default("Primary Income")
-  amount      Float
+  amount      Int
   frequency   String   @default("monthly") // monthly, biweekly, weekly
   startDate   DateTime @db.Date
   dayOfMonth  Int?     // For monthly: day of month (1-31)
@@ -233,7 +233,7 @@ model ScreenshotReceipt {
   status       String   @default("pending") // pending, processed, rejected
   
   // Parsed data
-  rawAmount    Float?   // What the user might edit
+  rawAmount    Int?   // What the user might edit (cents)
   rawMerchant  String?
   rawDate      DateTime?
   rawItems     String?  // JSON array of line items
@@ -253,7 +253,7 @@ model ScreenshotReceipt {
 model SpendingPattern {
   id            String   @id @default(uuid())
   categoryId    String
-  avgAmount     Float
+  avgAmount     Int
   frequency     String   // daily, weekly, monthly
   dayOfWeek     Int?     // 0-6 for weekly
   dayOfMonth    Int?     // for monthly
@@ -272,10 +272,10 @@ model DailyPeriod {
   id              String   @id @default(uuid())
   periodStart     DateTime
   periodEnd       DateTime
-  totalIncome     Float
-  billsTotal      Float
-  dailyAllowance  Float
-  accumulatedSurplus Float @default(0)
+  totalIncome     Int
+  billsTotal      Int
+  dailyAllowance  Int
+  accumulatedSurplus Int @default(0)
 
   household   Household? @relation(fields: [householdId], references: [id])
   householdId String?

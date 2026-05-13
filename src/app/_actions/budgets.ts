@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { createBudgetSchema, validateFormData } from "@/lib/validation";
+import { toCents } from "@/lib/utils";
 
 export async function getBudgets(period?: string) {
     const user = await getAuthUser();
@@ -73,8 +74,8 @@ export async function createBudget(formData: FormData) {
 
         await prisma.budget.upsert({
             where: { categoryId_period: { categoryId: resolvedCategoryId!, period } },
-            update: { amount },
-            create: { amount, period, categoryId: resolvedCategoryId!, householdId: user.householdId },
+            update: { amount: toCents(amount) },
+            create: { amount: toCents(amount), period, categoryId: resolvedCategoryId!, householdId: user.householdId },
         });
 
         revalidatePath("/budgets");

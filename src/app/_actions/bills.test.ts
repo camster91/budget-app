@@ -49,7 +49,7 @@ describe('Bills Actions', () => {
       expect(prisma.bill.create).toHaveBeenCalledWith({
         data: {
           name: 'Rent',
-          amount: 1500,
+          amount: 150000,
           dueDay: 1,
           categoryId: '550e8400-e29b-41d4-a716-446655440000',
           accountId: '660e8400-e29b-41d4-a716-446655440001',

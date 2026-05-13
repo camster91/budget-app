@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isTransfer } from "@/lib/utils/transactionUtils";
 import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
 import { getAuthUser } from "@/lib/auth";
+import { toCents } from "@/lib/utils";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CSVRow = Record<string, any>;
@@ -69,7 +70,8 @@ export async function importCSVTransactions(data: CSVRow[], options: ImportOptio
             try {
                 // Map CSV headers to database fields
                 const description = row['Description'] || row['description'] || '';
-                const amount = parseFloat(String(row['Amount'] || row['amount'] || '0'));
+                const amountRaw = parseFloat(String(row['Amount'] || row['amount'] || '0'));
+                const amount = toCents(amountRaw);
                 const dateStr = row['Date'] || row['date'] || new Date().toISOString();
 
                 if (!description || isNaN(amount)) {
