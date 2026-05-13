@@ -5,7 +5,7 @@ import { routing } from "@/i18n/routing";
 
 export const runtime = "nodejs";
 
-const PUBLIC_PATHS = ["/login", "/register", "/api/auth", "/api/cron", "/sw.js", "/manifest.json"];
+const PUBLIC_PATHS = ["/login", "/register", "/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/cron", "/sw.js", "/manifest.json"];
 
 const intlMiddleware = createMiddleware(routing);
 
