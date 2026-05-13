@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
+import { createBudgetSchema, validateFormData } from "@/lib/validation";
 
 export async function getBudgets(period?: string) {
     const user = await getAuthUser();
@@ -48,16 +49,13 @@ export async function getBudgets(period?: string) {
 export async function createBudget(formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
+
+    const validated = validateFormData(formData, createBudgetSchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { amount, categoryId, category: categoryName, period } = validated.data;
+
     try {
-        const amount = parseFloat(formData.get("amount") as string);
-        const categoryId = formData.get("categoryId") as string;
-        const categoryName = formData.get("category") as string;
-        const period = (formData.get("period") as string) || new Date().toISOString().slice(0, 7);
-
-        if (!amount || (!categoryId && !categoryName)) {
-            return { success: false, error: "Missing required fields" };
-        }
-
         let resolvedCategoryId = categoryId;
         if (!resolvedCategoryId && categoryName) {
             const existing = await prisma.category.findFirst({
@@ -74,9 +72,9 @@ export async function createBudget(formData: FormData) {
         }
 
         await prisma.budget.upsert({
-            where: { categoryId_period: { categoryId: resolvedCategoryId, period } },
+            where: { categoryId_period: { categoryId: resolvedCategoryId!, period } },
             update: { amount },
-            create: { amount, period, categoryId: resolvedCategoryId, householdId: user.householdId },
+            create: { amount, period, categoryId: resolvedCategoryId!, householdId: user.householdId },
         });
 
         revalidatePath("/budgets");

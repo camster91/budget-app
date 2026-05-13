@@ -3,24 +3,25 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
+import { createGoalSchema, updateGoalSchema, validateFormData } from "@/lib/validation";
 
 export async function createGoal(formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
-    try {
-        const name = formData.get("name") as string;
-        const targetAmount = parseFloat(formData.get("targetAmount") as string);
-        const currentAmount = parseFloat(formData.get("currentAmount") as string || "0");
-        const categoryId = formData.get("categoryId") as string;
-        const targetDateStr = formData.get("targetDate") as string;
 
+    const validated = validateFormData(formData, createGoalSchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { name, targetAmount, currentAmount, categoryId, targetDate } = validated.data;
+
+    try {
         await prisma.goal.create({
             data: { 
                 name, 
                 targetAmount, 
                 currentAmount, 
                 categoryId,
-                targetDate: targetDateStr ? new Date(targetDateStr) : null,
+                targetDate: targetDate ?? null,
                 householdId: user.householdId,
             },
         });
@@ -34,21 +35,21 @@ export async function createGoal(formData: FormData) {
 export async function updateGoal(id: string, formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
-    try {
-        const name = formData.get("name") as string;
-        const targetAmount = parseFloat(formData.get("targetAmount") as string);
-        const currentAmount = parseFloat(formData.get("currentAmount") as string);
-        const categoryId = (formData.get("categoryId") as string) || null;
-        const targetDateStr = formData.get("targetDate") as string;
 
+    const validated = validateFormData(formData, updateGoalSchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { name, targetAmount, currentAmount, categoryId, targetDate } = validated.data;
+
+    try {
         await prisma.goal.update({
             where: { id, householdId: user.householdId },
             data: {
                 name,
                 targetAmount,
                 currentAmount,
-                categoryId,
-                targetDate: targetDateStr ? new Date(targetDateStr) : null,
+                categoryId: categoryId ?? null,
+                targetDate: targetDate ?? null,
             },
         });
         revalidatePath("/goals");

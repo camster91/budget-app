@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { isTransfer } from "@/lib/utils/transactionUtils";
 import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
+import { createTransactionSchema, updateTransactionSchema, validateFormData } from "@/lib/validation";
 
 export async function getTransactions(dateFrom?: string, dateTo?: string) {
     const user = await getAuthUser();
@@ -36,37 +37,32 @@ export async function getTransactions(dateFrom?: string, dateTo?: string) {
 export async function createTransaction(formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
+
+    const validated = validateFormData(formData, createTransactionSchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { amount, description, date, type, isDiscretionary, categoryId, categoryName } = validated.data;
+
     try {
-        const amount = parseFloat(formData.get("amount") as string);
-        const description = formData.get("description") as string;
-        const date = new Date(formData.get("date") as string);
-        const type = formData.get("type") as string;
-        const isDiscretionary = (formData.get("isDiscretionary") as string) !== "false";
-        const categoryName = formData.get("category") as string;
-
-        if (!amount || !description || !date || !type) {
-            return { success: false, error: "Missing required fields" };
-        }
-
-        let categoryId = formData.get("categoryId") as string;
+        let resolvedCategoryId = categoryId;
 
         // Auto-categorization
-        if (!categoryId) {
-            const categories = await prisma.category.findMany({ where: { householdId: user.householdId }});
-            categoryId = categorizeTransaction(description, categories) || "";
+        if (!resolvedCategoryId) {
+            const categories = await prisma.category.findMany({ where: { householdId: user.householdId } });
+            resolvedCategoryId = categorizeTransaction(description, categories) || "";
         }
 
-        if (!categoryId && categoryName) {
+        if (!resolvedCategoryId && categoryName) {
             const existing = await prisma.category.findFirst({
                 where: { name: categoryName, householdId: user.householdId }
             });
             if (existing) {
-                categoryId = existing.id;
+                resolvedCategoryId = existing.id;
             } else {
                 const category = await prisma.category.create({
                     data: { name: categoryName, type, householdId: user.householdId },
                 });
-                categoryId = category.id;
+                resolvedCategoryId = category.id;
             }
         }
 
@@ -76,7 +72,7 @@ export async function createTransaction(formData: FormData) {
                 description,
                 date,
                 type,
-                categoryId: categoryId || null,
+                categoryId: resolvedCategoryId || null,
                 isTransfer: isTransfer(description),
                 isDiscretionary: type === "income" ? false : isDiscretionary,
                 householdId: user.householdId,
@@ -96,16 +92,13 @@ export async function createTransaction(formData: FormData) {
 export async function updateTransaction(id: string, formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
-    try {
-        const amount = parseFloat(formData.get("amount") as string);
-        const description = formData.get("description") as string;
-        const date = new Date(formData.get("date") as string);
-        const type = formData.get("type") as string;
-        const categoryId = formData.get("categoryId") as string;
-        const isDiscretionary = formData.get("isDiscretionary") !== null
-            ? (formData.get("isDiscretionary") as string) !== "false"
-            : undefined;
 
+    const validated = validateFormData(formData, updateTransactionSchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { amount, description, date, type, categoryId, isDiscretionary } = validated.data;
+
+    try {
         await prisma.transaction.update({
             where: { id, householdId: user.householdId },
             data: {
