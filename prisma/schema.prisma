@@ -37,8 +37,8 @@ model User {
   email       String     @unique
   password    String
   name        String?
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -79,8 +79,8 @@ model Transaction {
   category    Category? @relation(fields: [categoryId], references: [id])
   categoryId  String?
 
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -112,8 +112,8 @@ model Category {
   bills        Bill[]
   goals        Goal[]
 
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -130,8 +130,8 @@ model Budget {
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
 
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -157,8 +157,8 @@ model Account {
   transactions Transaction[]
   bills        Bill[]
 
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -182,8 +182,8 @@ model Bill {
 
   transactions Transaction[]
 
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -200,8 +200,8 @@ model Goal {
   category    Category? @relation(fields: [categoryId], references: [id])
   categoryId  String?
 
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -219,8 +219,8 @@ model Income {
   dayOfMonth  Int?     // For monthly: day of month (1-31)
   isActive    Boolean  @default(true)
 
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -242,8 +242,8 @@ model ScreenshotReceipt {
   // Linked on approval
   transactionId String?
 
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
   
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -260,8 +260,8 @@ model SpendingPattern {
   confidence    Float    @default(0.5)
   lastSeen      DateTime
 
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -277,8 +277,8 @@ model DailyPeriod {
   dailyAllowance  Int
   accumulatedSurplus Int @default(0)
 
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -290,8 +290,8 @@ model NoSpendEntry {
   date      DateTime
   createdAt DateTime @default(now())
 
-  household   Household? @relation(fields: [householdId], references: [id])
-  householdId String?
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
 
   @@unique([householdId, date])
   @@index([householdId])
