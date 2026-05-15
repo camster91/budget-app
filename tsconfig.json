@@ -38,5 +38,5 @@
     "dist/types/**/*.ts",
     "dist/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "android", "ios", "dist"]
+  "exclude": ["node_modules", "android", "ios", "dist", "scripts"]
 }
