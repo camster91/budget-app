@@ -13,6 +13,8 @@ const PUBLIC_PATHS = [
     "/api/cron",
     "/sw.js",
     "/manifest.json",
+    "/screenshot-wide.png",
+    "/screenshot-narrow.png",
 ];
 
 const PUBLIC_PREFIXES = [
