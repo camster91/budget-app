@@ -24,6 +24,7 @@ async function seed() {
             email: "demo@budgetapp.local",
             password: "$2a$10$hashedpasswordplaceholder",
             name: "Demo User",
+            household: { create: { name: "Demo Household" } },
         },
     });
     console.log("👤 User created:", user.email);
