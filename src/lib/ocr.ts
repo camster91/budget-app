@@ -3,6 +3,9 @@
 // Client-side OCR using Tesseract.js
 // Uses dynamic import so the heavy wasm doesn't block initial load
 
+import { fetchWithTimeout } from "@/lib/fetch";
+import { logger } from "@/lib/logger";
+
 export interface OcrResult {
     rawText: string;
     confidence: number;
@@ -28,13 +31,13 @@ export async function parseReceiptImage(imageFile: File): Promise<OcrResult> {
 
     // Offload messy text parsing to our AI endpoint
     try {
-        const response = await fetch("/api/ocr", {
+        const response = await fetchWithTimeout("/api/ocr", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({ rawText }),
-        });
+        }, 15000);
 
         if (response.ok) {
             const { data } = await response.json();
@@ -43,10 +46,10 @@ export async function parseReceiptImage(imageFile: File): Promise<OcrResult> {
             date = data.date;
             items = data.items;
         } else {
-            console.warn("AI OCR parse failed, returning raw text only");
+            logger.warn("AI OCR parse failed, returning raw text only");
         }
     } catch (e) {
-        console.error("AI Parse request failed:", e);
+        logger.error("AI Parse request failed", { error: String(e) });
     }
 
     return {

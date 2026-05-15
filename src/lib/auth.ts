@@ -1,8 +1,10 @@
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
 
 const TOKEN_COOKIE = "budget_token";
+const CSRF_COOKIE = "csrf_token";
 const TOKEN_EXPIRY = "7d";
 
 export interface JwtPayload {
@@ -61,7 +63,7 @@ export function setTokenCookie(token: string) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 24 * 7,
   };
 }
 
@@ -75,4 +77,34 @@ export function clearTokenCookie() {
     path: "/",
     maxAge: 0,
   };
+}
+
+/** Generate a CSRF token and return both token and cookie options */
+export function generateCsrfToken() {
+  const token = crypto.randomBytes(32).toString("hex");
+  return {
+    token,
+    cookie: {
+      name: CSRF_COOKIE,
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax" as const,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    },
+  };
+}
+
+/** Validate CSRF token from cookie against header */
+export async function validateCsrfToken(request: Request): Promise<boolean> {
+  const cookieStore = await cookies();
+  const cookieToken = cookieStore.get(CSRF_COOKIE)?.value;
+  const headerToken = request.headers.get("x-csrf-token");
+  if (!cookieToken || !headerToken) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(cookieToken), Buffer.from(headerToken));
+  } catch {
+    return false;
+  }
 }

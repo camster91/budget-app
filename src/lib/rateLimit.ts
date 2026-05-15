@@ -1,18 +1,18 @@
-export const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
+import redis from "./redis";
 
-export function checkRateLimit(ip: string, limit: number, windowMs: number): boolean {
-    const now = Date.now();
-    const current = rateLimitMap.get(ip);
-
-    if (!current || now > current.expiresAt) {
-        rateLimitMap.set(ip, { count: 1, expiresAt: now + windowMs });
+export async function checkRateLimit(
+    key: string,
+    limit: number,
+    windowSeconds: number
+): Promise<boolean> {
+    try {
+        const count = await redis.incr(key);
+        if (count === 1) {
+            await redis.expire(key, windowSeconds);
+        }
+        return count <= limit;
+    } catch {
+        //如果 Redis 挂了就不限制（降级为放行）
         return true;
     }
-
-    if (current.count >= limit) {
-        return false;
-    }
-
-    current.count += 1;
-    return true;
 }
