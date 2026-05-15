@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDailySnapshot, getDataHealth, batchCleanupTransactions, addQuickSpend, deleteTransactionAndRevalidate } from "@/app/_actions/daily";
 import { getCategories } from "@/app/_actions/categories";
-import { toggleNoSpendMode, isNoSpendActive } from "@/app/_actions/nospend";
+import { toggleNoSpendMode } from "@/app/_actions/nospend";
 import * as actions from "@/app/_actions/receipts";
 import * as patternActions from "@/app/_actions/patterns";
 import { createLinkToken, exchangePublicToken } from "@/app/_actions/plaid-link";
@@ -26,16 +26,12 @@ import { SpendingScore } from "@/components/daily/SpendingScore";
 import { PushNotifier } from "@/components/daily/PushNotifier";
 import { StreakCounter } from "@/components/daily/StreakCounter";
 import { PlaidLinker } from "@/components/plaid/PlaidLinker";
-import { Sparkles, Loader2, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 
-export function DailyDashboard({ initialAccounts, plaidConfigured = false }: { initialAccounts: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[]; plaidConfigured?: boolean }) {
+export function DailyDashboard({ initialAccounts }: { initialAccounts: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[] }) {
     const queryClient = useQueryClient();
-    const [showAnalytics, setShowAnalytics] = useState(false);
-    const t = useTranslations("dailySpend");
 
     const { data: snapshotData, isLoading: snapshotLoading } = useQuery({
         queryKey: ["daily-snapshot"],
@@ -95,13 +91,6 @@ export function DailyDashboard({ initialAccounts, plaidConfigured = false }: { i
         },
     });
 
-    const { data: noSpendActive } = useQuery({
-        queryKey: ["no-spend-active"],
-        queryFn: async () => {
-            return await isNoSpendActive();
-        },
-    });
-
     const defaultSnapshot = {
         remainingToday: 0, dailyAllowance: 0, todaysAvailable: 0, spentToday: 0, accumulatedSurplus: 0,
         pace: { percent: 100, label: "Loading...", color: "text-muted-foreground", emoji: "⏳" },
@@ -117,7 +106,7 @@ export function DailyDashboard({ initialAccounts, plaidConfigured = false }: { i
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
                 <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                <p className="text-muted-foreground animate-pulse">{t("loading")}</p>
+                <p className="text-muted-foreground animate-pulse">Calculating your daily allowance...</p>
             </div>
         );
     }
@@ -126,8 +115,8 @@ export function DailyDashboard({ initialAccounts, plaidConfigured = false }: { i
         <div className="space-y-6 pb-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-black tracking-tight text-gradient">{t("title")}</h2>
-                    <p className="text-sm text-muted-foreground mt-1">{t("subtitle")}</p>
+                    <h2 className="text-3xl font-black tracking-tight text-gradient">Daily Spend</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Live budget for this pay period</p>
                 </div>
             </div>
 
@@ -171,134 +160,109 @@ export function DailyDashboard({ initialAccounts, plaidConfigured = false }: { i
                 />
             </div>
 
-            {/* Collapsible Analytics & Insights */}
-            <div className="glass-card rounded-2xl p-4">
-                <button
-                    onClick={() => setShowAnalytics(!showAnalytics)}
-                    className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
-                    aria-expanded={showAnalytics}
-                >
-                    <div className="flex items-center gap-2">
-                        <BarChart3 className="h-5 w-5 text-primary" />
-                        <span className="text-sm font-semibold text-foreground">{t("analyticsAndInsights")}</span>
-                    </div>
-                    {showAnalytics ? (
-                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    )}
-                </button>
-                {showAnalytics && (
-                    <div className="mt-4 space-y-6">
-                        <div className="grid gap-6 md:grid-cols-3">
-                            <VelocityGraph data={velocity || []} />
-                            <SpendingPaceGauge
-                                pacePercent={s.pace.percent}
-                                label={s.pace.label}
-                                color={s.pace.color}
-                                emoji={s.pace.emoji}
-                                accumulatedSurplus={s.accumulatedSurplus}
-                                dailyAllowance={s.dailyAllowance}
-                                projectedMessage={s.projection.message}
-                                daysRemaining={s.period.daysRemaining}
-                            />
-                            <BillCountdown bills={s.upcomingBills} total={s.upcomingBillsTotal} />
-                        </div>
+            <div className="grid gap-6 md:grid-cols-3">
+                <VelocityGraph data={velocity || []} />
+                <SpendingPaceGauge
+                    pacePercent={s.pace.percent}
+                    label={s.pace.label}
+                    color={s.pace.color}
+                    emoji={s.pace.emoji}
+                    accumulatedSurplus={s.accumulatedSurplus}
+                    dailyAllowance={s.dailyAllowance}
+                    projectedMessage={s.projection.message}
+                    daysRemaining={s.period.daysRemaining}
+                />
+                <BillCountdown bills={s.upcomingBills} total={s.upcomingBillsTotal} />
+            </div>
 
-                        <div className="grid gap-6 md:grid-cols-2">
-                            <StreakCounter streak={s.streak} bestStreak={s.bestStreak} />
-                            <SpendingScore score={s.spendingScore} label={s.scoreLabel} />
-                        </div>
+            <div className="grid gap-6 md:grid-cols-2">
+                <StreakCounter streak={s.streak} bestStreak={s.bestStreak} />
+                <SpendingScore score={s.spendingScore} label={s.scoreLabel} />
+            </div>
 
-                        <div className="grid gap-6 md:grid-cols-2">
-                            <ReceiptUploader
-                                pendingReceipts={pendingReceipts || []}
-                                onApprove={async (id, overrides) => {
-                                    const res = await actions.approveReceipt(id, overrides);
-                                    queryClient.invalidateQueries({ queryKey: ["pending-receipts"] });
-                                    queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
-                                    return res;
-                                }}
-                                onReject={async (id) => {
-                                    const res = await actions.rejectReceipt(id);
-                                    queryClient.invalidateQueries({ queryKey: ["pending-receipts"] });
-                                    return res;
-                                }}
-                                onParsed={async (parsed) => {
-                                    await actions.saveReceiptParse({
-                                        imageUrl: "/receipts/ocr.jpg",
-                                        rawText: parsed.rawText,
-                                        parsed: {
-                                            total: parsed.total,
-                                            merchant: parsed.merchant,
-                                            date: parsed.date,
-                                            items: [],
-                                            confidence: parsed.confidence,
-                                            rawText: parsed.rawText,
-                                        },
-                                    });
-                                    queryClient.invalidateQueries({ queryKey: ["pending-receipts"] });
-                                }}
-                            />
-                            <CategoryPieToday data={s.categoryBreakdownToday} />
-                        </div>
+            <div className="grid gap-6 md:grid-cols-2">
+                <ReceiptUploader
+                    pendingReceipts={pendingReceipts || []}
+                    onApprove={async (id, overrides) => {
+                        const res = await actions.approveReceipt(id, overrides);
+                        queryClient.invalidateQueries({ queryKey: ["pending-receipts"] });
+                        queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
+                        return res;
+                    }}
+                    onReject={async (id) => {
+                        const res = await actions.rejectReceipt(id);
+                        queryClient.invalidateQueries({ queryKey: ["pending-receipts"] });
+                        return res;
+                    }}
+                    onParsed={async (parsed) => {
+                        await actions.saveReceiptParse({
+                            imageUrl: "/receipts/ocr.jpg",
+                            rawText: parsed.rawText,
+                            parsed: {
+                                total: parsed.total,
+                                merchant: parsed.merchant,
+                                date: parsed.date,
+                                items: [],
+                                confidence: parsed.confidence,
+                                rawText: parsed.rawText,
+                            },
+                        });
+                        queryClient.invalidateQueries({ queryKey: ["pending-receipts"] });
+                    }}
+                />
+                <CategoryPieToday data={s.categoryBreakdownToday} />
+            </div>
 
-                        {duplicates && duplicates.length > 0 && (
-                            <DedupeReview
-                                duplicates={duplicates}
-                                onKeepAndMerge={async (id, otherId) => {
-                                    const res = await patternActions.keepAndMergeDuplicate(id, otherId);
-                                    queryClient.invalidateQueries({ queryKey: ["duplicate-queue"] });
-                                    queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
-                                    return res;
-                                }}
-                                onRejectDuplicate={async (id) => {
-                                    const res = await patternActions.rejectDuplicate(id);
-                                    queryClient.invalidateQueries({ queryKey: ["duplicate-queue"] });
-                                    return res;
-                                }}
-                            />
-                        )}
+            {duplicates && duplicates.length > 0 && (
+                <DedupeReview
+                    duplicates={duplicates}
+                    onKeepAndMerge={async (id, otherId) => {
+                        const res = await patternActions.keepAndMergeDuplicate(id, otherId);
+                        queryClient.invalidateQueries({ queryKey: ["duplicate-queue"] });
+                        queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
+                        return res;
+                    }}
+                    onRejectDuplicate={async (id) => {
+                        const res = await patternActions.rejectDuplicate(id);
+                        queryClient.invalidateQueries({ queryKey: ["duplicate-queue"] });
+                        return res;
+                    }}
+                />
+            )}
 
-                        <PatternInsights patterns={patterns || []} />
+            <PatternInsights patterns={patterns || []} />
 
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                            <NoSpendToggle isActive={noSpendActive ?? false} onToggle={async (active) => {
-                                const fd = new FormData();
-                                fd.append("isActive", active ? "true" : "false");
-                                await toggleNoSpendMode(fd);
-                                queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
-                            }} />
-                            {plaidConfigured && (
-                            <PlaidLinker
-                                accounts={initialAccounts}
-                                createLinkToken={createLinkToken}
-                                exchangeToken={exchangePublicToken}
-                                syncTransactions={async (id) => {
-                                    const res = await syncPlaidTransactions(id);
-                                    queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
-                                    return res;
-                                }}
-                            />
-                            )}
-                            {health && (
-                                <DataHealthWidget 
-                                    metrics={health} 
-                                    onCleanup={async () => {
-                                        const res = await batchCleanupTransactions();
-                                        queryClient.invalidateQueries({ queryKey: ["data-health"] });
-                                        queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
-                                        return res;
-                                    }} 
-                                />
-                            )}
-                        </div>
-
-                        {s.smartInsights.length > 0 && <SmartInsights insights={s.smartInsights} />}
-                    </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <NoSpendToggle isActive={false} onToggle={async (active) => {
+                    const fd = new FormData();
+                    fd.append("isActive", active ? "true" : "false");
+                    await toggleNoSpendMode(fd);
+                    queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
+                }} />
+                <PlaidLinker
+                    accounts={initialAccounts}
+                    createLinkToken={createLinkToken}
+                    exchangeToken={exchangePublicToken}
+                    syncTransactions={async (id) => {
+                        const res = await syncPlaidTransactions(id);
+                        queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
+                        return res;
+                    }}
+                />
+                {health && (
+                    <DataHealthWidget 
+                        metrics={health} 
+                        onCleanup={async () => {
+                            const res = await batchCleanupTransactions();
+                            queryClient.invalidateQueries({ queryKey: ["data-health"] });
+                            queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
+                            return res;
+                        }} 
+                    />
                 )}
             </div>
 
+            {s.smartInsights.length > 0 && <SmartInsights insights={s.smartInsights} />}
             <PushNotifier />
         </div>
     );

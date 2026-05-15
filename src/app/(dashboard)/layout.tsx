@@ -3,7 +3,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { MobileNav } from "@/components/layout/mobile-nav";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { useEffect, useState } from "react";
 import { usePwaRegistration } from "@/hooks/use-pwa";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -51,9 +51,8 @@ export default function DashboardLayout({
             </div>
 
             <div className="flex flex-1 flex-col overflow-hidden z-10">
-                <header className="flex h-20 items-center justify-between px-4 md:px-8 bg-transparent border-b border-border">
+                <header className="flex h-16 md:h-20 items-center justify-between px-4 md:px-8 bg-transparent border-b border-border">
                     <div className="flex items-center gap-4">
-                        <MobileNav />
                         <div>
                             <h1 className="text-xl font-bold text-foreground capitalize tracking-tight">
                                 {pageTitle}
@@ -71,7 +70,7 @@ export default function DashboardLayout({
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 text-foreground">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 pb-24 md:pb-8 text-foreground">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={pathname}
@@ -85,6 +84,8 @@ export default function DashboardLayout({
                         </motion.div>
                     </AnimatePresence>
                 </main>
+
+                <BottomNav />
             </div>
         </div>
     );

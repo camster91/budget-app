@@ -78,3 +78,27 @@ textarea:focus-visible {
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
 }
+
+/* Mobile app utilities */
+@utility safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+@utility safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Hide scrollbar in webkit but keep functionality */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Prevent horizontal overscroll bounce on mobile */
+html, body {
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: auto;
+}
+
+/* Input zoom fix on iOS Safari */
+input, select, textarea {
+  font-size: 16px;
+}
