@@ -13,7 +13,6 @@ export async function GET(request: Request) {
 
     try {
         const users = await prisma.user.findMany({
-            where: { householdId: { not: null } },
             include: { household: true },
         });
 
