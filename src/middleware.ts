@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import createMiddleware from "next-intl/middleware";
 import { verifyToken } from "@/lib/auth";
-import { routing } from "@/i18n/routing";
 
 export const runtime = "nodejs";
 
@@ -11,18 +9,16 @@ const PUBLIC_PATHS = [
     "/api/auth/login",
     "/api/auth/register",
     "/api/auth/logout",
-    "/api/auth/me",      // GET — read-only profile
-    "/api/cron",         // guarded by CRON_SECRET in route handlers
+    "/api/auth/me",
+    "/api/cron",
     "/sw.js",
     "/manifest.json",
 ];
 
 const PUBLIC_PREFIXES = [
-    "/api/cron/",        // cron sub-routes
+    "/api/cron/",
     "/api/health",
 ];
-
-const intlMiddleware = createMiddleware(routing);
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
