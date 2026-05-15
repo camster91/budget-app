@@ -27,7 +27,7 @@ const intlMiddleware = createMiddleware(routing);
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow static assets and Next.js internals
+  // Allow static assets and API routes
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
@@ -36,15 +36,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow public paths (strip locale prefix if needed)
-  const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, "") || "/";
-  if (PUBLIC_PATHS.some((p) => pathWithoutLocale.startsWith(p))) {
-    return intlMiddleware(request);
+  // Public pages: no auth required
+  if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
+    return NextResponse.next();
   }
 
-  // Allow public prefixes (health checks, cron)
-  if (PUBLIC_PREFIXES.some((p) => pathWithoutLocale.startsWith(p))) {
-    return intlMiddleware(request);
+  // Public prefixes
+  if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next();
   }
 
   // Auth check for protected routes
@@ -60,7 +59,7 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  return intlMiddleware(request);
+  return NextResponse.next();
 }
 
 export const config = {
