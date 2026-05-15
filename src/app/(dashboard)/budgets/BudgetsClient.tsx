@@ -75,11 +75,13 @@ export function BudgetsClient({ budgets: initialBudgets, categories, period }: B
                 </div>
                 <div className="flex items-center gap-4">
                     {budgets.length > 0 && (
-                        <div className="text-right hidden md:block">
+                        <div className="text-right hidden md:block space-y-1">
+                            <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Total Budgeted</div>
+                            <div className="text-xl font-bold text-white">{formatCurrency(totalBudgeted)}</div>
                             <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
                                 {totalSpent > totalBudgeted ? "Over budget" : "Remaining"}
                             </div>
-                            <div className={cn("text-xl font-bold", totalSpent > totalBudgeted ? "text-red-400" : "text-white")}>
+                            <div className={cn("text-sm font-bold", totalSpent > totalBudgeted ? "text-red-400" : "text-emerald-400")}>
                                 {formatCurrency(Math.abs(totalBudgeted - totalSpent))}
                             </div>
                         </div>

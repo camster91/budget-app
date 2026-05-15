@@ -71,8 +71,10 @@ USER nextjs
 EXPOSE 3000
 
 # Health check using Next.js response
+# NOTE: Use 127.0.0.1 (IPv4) because Alpine resolves localhost to ::1 (IPv6)
+# and Next.js listens only on 0.0.0.0:3000.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD wget -qO- http://localhost:3000/api/health || exit 1
+    CMD wget -qO- http://127.0.0.1:3000/api/health || exit 1
 
 # Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]

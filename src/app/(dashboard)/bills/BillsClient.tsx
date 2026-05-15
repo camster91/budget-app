@@ -133,9 +133,16 @@ export function BillsClient({ bills: initialBills, categories, accounts, paidBil
                     <p className="text-muted-foreground text-sm">Track your recurring payments and upcoming due dates.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="text-right hidden md:block">
+                    <div className="text-right hidden md:block space-y-1 mr-2">
                         <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Monthly Total</div>
                         <div className="text-xl font-bold text-white">{formatCurrency(totalMonthly)}</div>
+                        <div className="text-xs font-medium">
+                            <span className="text-emerald-400">{paidBillIds.size} paid</span>
+                            <span className="text-muted-foreground"> · </span>
+                            <span className={bills.length - paidBillIds.size > 0 ? "text-rose-400" : "text-emerald-400"}>
+                                {bills.length - paidBillIds.size} remaining
+                            </span>
+                        </div>
                     </div>
                     <Button
                         onClick={() => setShowForm(true)}
