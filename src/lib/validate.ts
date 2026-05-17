@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 
-export function zodErrorResponse(error: any) {
+export function zodErrorResponse(error: unknown) {
+  const message = error instanceof Error ? error.message : "Invalid input";
+  const details =
+    error && typeof error === "object" && "errors" in error
+      ? (error as Record<string, unknown>).errors
+      : message;
   return NextResponse.json(
-    { error: "Invalid input", details: error.errors || error.message },
+    { error: "Invalid input", details },
     { status: 400 }
   );
 }

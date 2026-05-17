@@ -28,5 +28,11 @@ export const logger = {
     debug: (msg: string, extra?: Record<string, unknown>) => log("debug", msg, extra),
     info: (msg: string, extra?: Record<string, unknown>) => log("info", msg, extra),
     warn: (msg: string, extra?: Record<string, unknown>) => log("warn", msg, extra),
-    error: (msg: string, extra?: Record<string, unknown>) => log("error", msg, extra),
+    error: (msg: string, extra?: Record<string, unknown> | unknown) => {
+        const normalized: Record<string, unknown> =
+            extra && typeof extra === "object" && !Array.isArray(extra)
+                ? (extra as Record<string, unknown>)
+                : { raw: extra };
+        log("error", msg, normalized);
+    },
 };
