@@ -15,14 +15,7 @@ jobs:
     steps:
       - name: Trigger Coolify Deploy
         run: |
-          HTTP_CODE=$(curl --request POST \\
-            "${{ env.COOLIFY_URL }}/api/v1/applications/${{ env.APP_UUID }}/restart" \\
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \\
-            -H "Content-Type: application/json" \\
-            -k \\
-            -s \\
-            -o /dev/null \\
-            -w "%{http_code}")
+          HTTP_CODE=$(curl --request POST "${{ env.COOLIFY_URL }}/api/v1/applications/${{ env.APP_UUID }}/restart" -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" -H "Content-Type: application/json" -k -s -o /dev/null -w "%{http_code}")
 
           echo "HTTP status: $HTTP_CODE"
           echo "Deployment triggered successfully!"
