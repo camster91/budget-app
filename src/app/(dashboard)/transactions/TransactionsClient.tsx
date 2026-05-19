@@ -9,6 +9,7 @@ import { Receipt, Search, Filter, Download, Upload, Pencil, Trash2, Check, X, Ch
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { updateTransaction, deleteTransaction } from "@/app/_actions/transactions";
+import { useTranslations } from "@/lib/useTranslations";
 
 const PAGE_SIZE = 25;
 
@@ -33,6 +34,7 @@ interface TransactionsClientProps {
 }
 
 export function TransactionsClient({ transactions: initialTransactions, categories }: TransactionsClientProps) {
+    const t = useTranslations();
     const [transactions, setTransactions] = useState(initialTransactions);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [search, setSearch] = useState("");
@@ -150,13 +152,13 @@ export function TransactionsClient({ transactions: initialTransactions, categori
             <div className="flex flex-col gap-8">
 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-1">Transactions</h2>
-                        <p className="text-muted-foreground text-xs sm:text-sm">Review and manage your financial history.</p>
+                        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-1">{t.transactions.title}</h2>
+                        <p className="text-muted-foreground text-xs sm:text-sm">{t.transactions.subtitle}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                         <Button variant="outline" size="sm" className="gap-2" onClick={exportCSV}>
                             <Download className="h-4 w-4" />
-                            Export
+                            {t.common.export}
                         </Button>
                         <Button
                             variant="outline"
@@ -165,7 +167,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                             onClick={() => setIsImportModalOpen(true)}
                         >
                             <Upload className="h-4 w-4" />
-                            Import
+                            {t.common.import}
                         </Button>
                         <TransactionForm categories={categories} />
                     </div>
@@ -174,65 +176,65 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                     <Card className="col-span-1">
                         <CardHeader>
-                            <CardTitle className="text-sm">Filters</CardTitle>
+                            <CardTitle className="text-sm">{t.transactions.filters}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Search..."
+                                    placeholder={t.common.search}
                                     className="pl-9 bg-white/[0.02]"
                                     value={search}
                                     onChange={(e) => handleSearchChange(e.target.value)}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Category</label>
+                                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">{t.common.category}</label>
                                 <select
                                     className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary"
                                     value={categoryFilter}
                                     onChange={(e) => handleCategoryChange(e.target.value)}
                                 >
-                                    <option value="">All Categories</option>
+                                    <option value="">{t.transactions.allCategories}</option>
                                     {categories.map((c) => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Type</label>
+                                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">{t.common.type}</label>
                                 <select
                                     className="w-full bg-white/[0.02] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary"
                                     value={typeFilter}
                                     onChange={(e) => handleTypeChange(e.target.value)}
                                 >
-                                    <option value="">All Types</option>
-                                    <option value="income">Income</option>
-                                    <option value="expense">Expense</option>
+                                <option value="">{t.transactions.allTypes}</option>
+                                    <option value="income">{t.common.income}</option>
+                                    <option value="expense">{t.common.expense}</option>
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Date Range</label>
-                                <Input
-                                    type="date"
-                                    placeholder="From"
-                                    value={dateFrom}
-                                    onChange={(e) => handleDateFromChange(e.target.value)}
-                                    className="bg-white/[0.02] border-white/[0.08] text-sm"
-                                />
-                                <Input
-                                    type="date"
-                                    placeholder="To"
-                                    value={dateTo}
-                                    onChange={(e) => handleDateToChange(e.target.value)}
-                                    className="bg-white/[0.02] border-white/[0.08] text-sm"
-                                />
+                                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">{t.transactions.dateRange}</label>
+                                 <Input
+                                     type="date"
+                                     placeholder={t.placeholders.from}
+                                     value={dateFrom}
+                                     onChange={(e) => handleDateFromChange(e.target.value)}
+                                     className="bg-white/[0.02] border-white/[0.08] text-sm"
+                                 />
+                                 <Input
+                                     type="date"
+                                     placeholder={t.placeholders.to}
+                                     value={dateTo}
+                                     onChange={(e) => handleDateToChange(e.target.value)}
+                                     className="bg-white/[0.02] border-white/[0.08] text-sm"
+                                 />
                             </div>
                             <Button variant="secondary" className="w-full text-xs h-9" onClick={resetFilters}>
-                                Reset Filters
+                                {t.transactions.resetFilters}
                             </Button>
                             <p className="text-[10px] text-center text-muted-foreground">
-                                {filtered.length} of {transactions.length} transactions
+                                {filtered.length} {t.transactions.ofCount} {transactions.length} {t.transactions.transactionsFiltered}
                             </p>
                         </CardContent>
                     </Card>
@@ -240,11 +242,11 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                     <Card className="md:col-span-3">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>History</CardTitle>
+                                <CardTitle>{t.transactions.history}</CardTitle>
                                 <CardDescription>
                                     {filtered.length > 0
-                                        ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)} of ${filtered.length}`
-                                        : "No results"}
+                                        ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)} ${t.transactions.of} ${filtered.length}`
+                                        : t.common.noResults}
                                 </CardDescription>
                             </div>
                             <Button variant="ghost" size="icon">
@@ -257,11 +259,11 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                     <div className="h-12 w-12 rounded-2xl glass flex items-center justify-center mb-4">
                                         <Receipt className="h-6 w-6 text-muted-foreground" />
                                     </div>
-                                    <p className="text-white font-medium">No transactions found</p>
+                                    <p className="text-white font-medium">{t.transactions.noTransactionsFound}</p>
                                     <p className="text-sm text-muted-foreground">
                                         {search || categoryFilter || typeFilter
-                                            ? "Try adjusting your filters."
-                                            : "Add one to start tracking your finances."}
+                                            ? t.transactions.tryAdjustingFilters
+                                            : t.transactions.addOneToStart}
                                     </p>
                                 </div>
                             ) : (
@@ -269,11 +271,11 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                     <table className="w-full">
                                         <thead>
                                             <tr className="text-left text-[10px] uppercase text-muted-foreground tracking-[0.2em] border-b border-white/[0.05]">
-                                                <th className="pb-4 font-bold">Transaction</th>
-                                                <th className="pb-4 font-bold">Category</th>
-                                                <th className="pb-4 font-bold">Date</th>
-                                                <th className="pb-4 font-bold text-right">Amount</th>
-                                                <th className="pb-4 font-bold text-right">Actions</th>
+                                                <th className="pb-4 font-bold">{t.transactions.transaction}</th>
+                                                <th className="pb-4 font-bold">{t.common.category}</th>
+                                                <th className="pb-4 font-bold">{t.common.date}</th>
+                                                <th className="pb-4 font-bold text-right">{t.common.amount}</th>
+                                                <th className="pb-4 font-bold text-right">{t.common.actions}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-white/[0.05]">
@@ -293,7 +295,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                                                 value={editForm.categoryId || ""}
                                                                 onChange={(e) => setEditForm((f) => ({ ...f, categoryId: e.target.value }))}
                                                             >
-                                                                <option value="">Uncategorized</option>
+                                                                <option value="">{t.transactions.uncategorized}</option>
                                                                 {categories.map((c) => (
                                                                     <option key={c.id} value={c.id}>{c.name}</option>
                                                                 ))}
@@ -343,7 +345,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                                         <td className="py-4 font-medium text-white">{t.description}</td>
                                                         <td className="py-4">
                                                             <span className="inline-flex items-center rounded-lg bg-white/[0.05] border border-white/[0.1] px-2 py-1 text-xs font-medium text-muted-foreground">
-                                                                {t.category?.name || "Uncategorized"}
+                                                                {t.transactions.uncategorized}
                                                             </span>
                                                         </td>
                                                         <td className="py-4 text-sm text-muted-foreground">
@@ -386,7 +388,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                     {totalPages > 1 && (
                                         <div className="flex items-center justify-between pt-4 border-t border-white/[0.05]">
                                             <p className="text-xs text-muted-foreground">
-                                                Page {page} of {totalPages}
+                                                {t.transactions.page} {page} {t.transactions.of} {totalPages}
                                             </p>
                                             <div className="flex items-center gap-1">
                                                 <Button

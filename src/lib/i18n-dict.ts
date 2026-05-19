@@ -435,6 +435,8 @@ export const dict = {
     egMonthlyLimit: "500.00",
     egSelectCategory: "Select category…",
     yourName: "Your name",
+    from: "From",
+    to: "To",
   },
 } as const;
 

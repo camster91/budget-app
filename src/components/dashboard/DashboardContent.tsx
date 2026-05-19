@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ArrowUpRight, ArrowDownRight, CreditCard, Wallet, TrendingUp, Calendar } from "lucide-react";
 import { formatCurrency, cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { useTranslations } from "@/lib/useTranslations";
 import {
     Area, AreaChart, ResponsiveContainer, Tooltip,
     XAxis, YAxis,
@@ -59,6 +60,7 @@ const TOOLTIP_STYLE = {
 };
 
 export function DashboardContent({ data }: DashboardContentProps) {
+    const t = useTranslations();
     const spending = data.spendingByCategory ?? [];
     const budgets = data.budgetHealth ?? [];
     const maxSpend = spending.reduce((m, c) => Math.max(m, c.amount), 0);
@@ -68,22 +70,22 @@ export function DashboardContent({ data }: DashboardContentProps) {
 {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient mb-1">Financial Pulse</h2>
-                    <p className="text-muted-foreground text-xs sm:text-sm font-medium">Here&apos;s a summary of your wealth this month.</p>
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient mb-1">{t.dashboard.title}</h2>
+                    <p className="text-muted-foreground text-xs sm:text-sm font-medium">{t.dashboard.subtitle}</p>
                 </div>
                 <Button variant="outline" size="sm" className="gap-2 self-start sm:self-auto">
                     <Calendar className="h-4 w-4" />
-                    This Month
+                    {t.dashboard.thisMonth}
                 </Button>
             </div>
 
             {/* Stat cards */}
             <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                    { title: "Net Worth", value: data.netWorth, trend: "+0%", icon: Wallet, color: "text-primary" },
-                    { title: "Monthly Income", value: data.monthlyIncome, trend: data.incomeTrend, icon: ArrowUpRight, color: "text-emerald-500" },
-                    { title: "Monthly Spending", value: data.monthlyExpenses, trend: "0%", icon: ArrowDownRight, color: "text-rose-500" },
-                    { title: "Savings Rate", value: Math.round(data.savingsRate) + "%", trend: "0%", icon: TrendingUp, color: "text-primary" },
+                    { title: t.dashboard.netWorth, value: data.netWorth, trend: "+0%", icon: Wallet, color: "text-primary" },
+                    { title: t.dashboard.monthlyIncome, value: data.monthlyIncome, trend: data.incomeTrend, icon: ArrowUpRight, color: "text-emerald-500" },
+                    { title: t.dashboard.monthlySpending, value: data.monthlyExpenses, trend: "0%", icon: ArrowDownRight, color: "text-rose-500" },
+                    { title: t.dashboard.savingsRate, value: Math.round(data.savingsRate) + "%", trend: "0%", icon: TrendingUp, color: "text-primary" },
                 ].map((stat, i) => (
                     <motion.div key={i} variants={item}>
                         <Card className="relative overflow-hidden group border-white/[0.08] bg-white/[0.02]">
@@ -104,7 +106,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                                     "text-xs font-medium flex items-center gap-1",
                                     (stat.trend.startsWith("+") || parseFloat(stat.trend) > 0) ? "text-emerald-500" : "text-rose-500"
                                 )}>
-                                    {stat.trend} <span className="text-muted-foreground font-normal">vs last month</span>
+                                    {stat.trend} <span className="text-muted-foreground font-normal">{t.dashboard.vsLastMonth}</span>
                                 </p>
                             </CardContent>
                         </Card>
@@ -118,13 +120,13 @@ export function DashboardContent({ data }: DashboardContentProps) {
                 <motion.div variants={item} className="lg:col-span-4">
                     <Card className="h-full border-white/[0.08] bg-white/[0.02]">
                         <CardHeader>
-                            <CardTitle>Cashflow</CardTitle>
-                            <CardDescription>Monthly net over the last 6 months.</CardDescription>
+                            <CardTitle>{t.dashboard.cashflow}</CardTitle>
+                            <CardDescription>{t.dashboard.cashflowDesc}</CardDescription>
                         </CardHeader>
                         <CardContent className="h-[280px] w-full">
                             {data.chartData.length === 0 ? (
                                 <div className="h-full flex items-center justify-center opacity-30">
-                                    <p className="text-sm font-medium">No historical data yet</p>
+                                    <p className="text-sm font-medium">{t.dashboard.noHistoricalData}</p>
                                 </div>
                             ) : (
                                 <ResponsiveContainer width="100%" height="100%">
@@ -158,12 +160,12 @@ export function DashboardContent({ data }: DashboardContentProps) {
                     <Card className="h-full border-white/[0.08] bg-white/[0.02]">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Top Spending</CardTitle>
-                                <CardDescription>By category this month.</CardDescription>
+                                <CardTitle>{t.dashboard.topSpending}</CardTitle>
+                                <CardDescription>{t.dashboard.topSpendingDesc}</CardDescription>
                             </div>
                             {spending.length > 0 && (
                                 <Link href="/transactions" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.05]">
-                                    Details
+                                    {t.common.details}
                                 </Link>
                             )}
                         </CardHeader>
@@ -171,7 +173,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                             {spending.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-10 text-center opacity-40">
                                     <CreditCard className="h-10 w-10 mb-2" />
-                                    <p className="text-sm font-medium">No expenses this month</p>
+                                    <p className="text-sm font-medium">{t.dashboard.noExpenses}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-3">
@@ -207,11 +209,11 @@ export function DashboardContent({ data }: DashboardContentProps) {
                         <Card className="border-white/[0.08] bg-white/[0.02]">
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <div>
-                                    <CardTitle>Budget Health</CardTitle>
-                                    <CardDescription>This month&apos;s budget progress.</CardDescription>
+                                    <CardTitle>{t.dashboard.budgetHealth}</CardTitle>
+                                    <CardDescription>{t.dashboard.budgetHealthDesc}</CardDescription>
                                 </div>
                                 <Link href="/budgets" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.05]">
-                                    Manage
+                                    {t.common.manage}
                                 </Link>
                             </CardHeader>
                             <CardContent className="space-y-4">
@@ -244,11 +246,11 @@ export function DashboardContent({ data }: DashboardContentProps) {
                     <Card className="border-white/[0.08] bg-white/[0.02]">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
-                                <CardTitle>Recent Activity</CardTitle>
-                                <CardDescription>Your latest transactions.</CardDescription>
+                                <CardTitle>{t.dashboard.recentActivity}</CardTitle>
+                                <CardDescription>{t.dashboard.recentActivityDesc}</CardDescription>
                             </div>
                             <Link href="/transactions" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.05]">
-                                View All
+                                {t.common.viewAll}
                             </Link>
                         </CardHeader>
                         <CardContent>
@@ -256,7 +258,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                                 {data.transactions.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-10 text-center opacity-50">
                                         <CreditCard className="h-10 w-10 mb-2" />
-                                        <p className="text-sm font-medium">No recent activity</p>
+                                        <p className="text-sm font-medium">{t.dashboard.noRecentActivity}</p>
                                     </div>
                                 ) : (
                                     data.transactions.map((t) => (
