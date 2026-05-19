@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { formatCurrency, cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus, Wallet, Calendar } from "lucide-react";
+import { useTranslations } from "@/lib/useTranslations";
 
 interface DailyAllowanceHeroProps {
     remainingToday: number;
@@ -23,6 +24,8 @@ export function DailyAllowanceHero({
     pace,
     periodDaysRemaining,
 }: DailyAllowanceHeroProps) {
+    const t = useTranslations();
+    const daily = t.daily;
     const isNegative = remainingToday < 0;
     const isSurplus = accumulatedSurplus > 0;
     const spentPercent = todaysAvailable > 0 ? Math.min(100, (spentToday / todaysAvailable) * 100) : 0;
@@ -49,12 +52,12 @@ export function DailyAllowanceHero({
                         <div className="flex items-center gap-2">
                             <Wallet className={cn("h-5 w-5", pace.color)} />
                             <span className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                                Today&apos;s Budget
+                                {daily.todaysBudget || "Today's Budget"}
                             </span>
                         </div>
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Calendar className="h-3.5 w-3.5" />
-                            {periodDaysRemaining} days until payday
+                            {periodDaysRemaining} {daily.daysLeft || "days"} until payday
                         </div>
                     </div>
 
@@ -75,7 +78,7 @@ export function DailyAllowanceHero({
                             "text-sm font-bold px-2 py-0.5 rounded-full",
                             isNegative ? "text-rose-300 bg-rose-500/20" : "text-emerald-300 bg-emerald-500/20"
                         )}>
-                            {isNegative ? "over" : "left"}
+                            {isNegative ? daily.over || "over" : daily.left || "left"}
                         </span>
                     </div>
 
@@ -89,7 +92,7 @@ export function DailyAllowanceHero({
                         {/* Today's spending bar */}
                         <div>
                             <div className="flex justify-between text-xs mb-1">
-                                <span className="text-muted-foreground">Today&apos;s spend</span>
+                                <span className="text-muted-foreground">{daily.todaysSpend || "Today's spend"}</span>
                                 <span className="text-white/70 font-medium">
                                     {formatCurrency(spentToday)} of {formatCurrency(todaysAvailable)}
                                 </span>
@@ -110,20 +113,20 @@ export function DailyAllowanceHero({
                         {/* Stats row */}
                         <div className="grid grid-cols-3 gap-3 pt-2">
                             <StatBox
-                                label="Daily rate"
+                                label={daily.dailyRate || "Daily rate"}
                                 value={dailyAllowance}
                                 icon={Minus}
                                 className="text-white/70"
                             />
                             <StatBox
-                                label="Rolled over"
+                                label={daily.rolledOver || "Rolled over"}
                                 value={accumulatedSurplus}
                                 icon={accumulatedSurplus >= 0 ? TrendingUp : TrendingDown}
                                 positive={accumulatedSurplus > 0}
                                 negative={accumulatedSurplus < 0}
                             />
                             <StatBox
-                                label="Spent today"
+                                label={daily.spentToday || "Spent today"}
                                 value={spentToday}
                                 icon={TrendingDown}
                                 className="text-white/70"

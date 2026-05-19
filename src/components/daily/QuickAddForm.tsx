@@ -119,7 +119,7 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
                             ))}
                         </div>
 
-                        <div className="grid grid-cols-[1fr_2fr] gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr] gap-3">
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                                 <Input

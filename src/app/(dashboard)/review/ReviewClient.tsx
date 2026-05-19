@@ -7,6 +7,7 @@ import { Calendar, TrendingUp, TrendingDown, Download, Sparkles } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { formatCurrency, cn } from "@/lib/utils";
 import { SmartCategorizationPanel } from "@/components/dashboard/SmartCategorizationPanel";
+import { useTranslations } from "@/lib/useTranslations";
 
 interface WeeklyData {
   weekRange: string;
@@ -40,6 +41,8 @@ interface ReviewClientProps {
 }
 
 export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRules = [], suggestedBills = [], categories = [], accounts = [] }: ReviewClientProps) {
+  const t = useTranslations();
+  const review = t.review || {};
   const [view, setView] = useState<"weekly" | "monthly" | "smart">("weekly");
   const [selectedMonth, setSelectedMonth] = useState(months[0] ?? null);
   const [monthlyLoading, setMonthlyLoading] = useState(false);
@@ -69,8 +72,8 @@ export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRul
     <div className="space-y-8 pb-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-black tracking-tight text-gradient">Review</h2>
-          <p className="text-sm text-muted-foreground mt-1">Weekly and monthly spending reviews</p>
+          <h2 className="text-3xl font-black tracking-tight text-gradient">{review.title || "Review"}</h2>
+          <p className="text-sm text-muted-foreground mt-1">{review.subtitle || "Weekly and monthly spending reviews"}</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -80,7 +83,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRul
               view === "weekly" ? "bg-white/[0.05] text-white" : "text-muted-foreground hover:text-white/70"
             )}
           >
-            Weekly
+            {t.review.weekly || "Weekly"}
           </button>
           <button
             onClick={() => setView("monthly")}
@@ -89,7 +92,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRul
               view === "monthly" ? "bg-white/[0.05] text-white" : "text-muted-foreground hover:text-white/70"
             )}
           >
-            Monthly
+            {t.review.monthly || "Monthly"}
           </button>
           <button
             onClick={() => setView("smart")}
@@ -99,7 +102,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRul
             )}
           >
             <Sparkles className="h-3.5 w-3.5" />
-            Smart
+            {review.smart || "Smart"}
           </button>
         </div>
       </div>
@@ -133,18 +136,18 @@ export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRul
       )}
 
       {!data ? (
-        <div className="text-center py-20 text-muted-foreground">No data yet</div>
+        <div className="text-center py-20 text-muted-foreground">{review.noDataYet || "No data yet"}</div>
       ) : (
         <>
           <div className="grid gap-6 md:grid-cols-4">
             <StatCard
-              label="Total Spent"
+              label={review.totalSpent || "Total Spent"}
               value={formatCurrency(data.total)}
               icon={data.total > 0 ? TrendingDown : TrendingUp}
               className="text-white"
             />
             <StatCard
-              label="Change"
+              label={review.change || "Change"}
               value={`${data.change >= 0 ? "+" : ""}${data.change.toFixed(1)}%`}
               icon={data.change <= 0 ? TrendingDown : TrendingUp}
               className={trendColor}
@@ -156,7 +159,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRul
               className="text-white"
             />
             <StatCard
-              label="Avg/Day"
+              label={review.avgDay || "Avg/Day"}
               value={formatCurrency(data?.averagePerDay || 0)}
               icon={TrendingUp}
               className="text-white"
@@ -165,7 +168,7 @@ export function ReviewClient({ initialWeekly, initialMonthly, months, learnedRul
 
           <div className="glass-card rounded-2xl p-5">
             <h3 className="text-sm font-bold uppercase tracking-wider text-white/90 mb-4">
-              {view === "weekly" ? "Spending by Day" : "Spending by Week"}
+              {view === "weekly" ? (review.spendingByDay || "Spending by Day") : (review.spendingByWeek || "Spending by Week")}
             </h3>
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">

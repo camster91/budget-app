@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck, ShieldAlert } from "lucide-react";
+import { useTranslations } from "@/lib/useTranslations";
 
 interface NoSpendToggleProps {
     isActive: boolean;
@@ -10,6 +11,7 @@ interface NoSpendToggleProps {
 }
 
 export function NoSpendToggle({ isActive, onToggle }: NoSpendToggleProps) {
+    const t = useTranslations();
     const [locked, setLocked] = useState(isActive);
 
     function toggle() {
@@ -35,12 +37,12 @@ export function NoSpendToggle({ isActive, onToggle }: NoSpendToggleProps) {
                     </div>
                     <div>
                         <h3 className="text-sm font-bold text-white/90">
-                            {locked ? "No-Spend Mode ON" : "No-Spend Mode"}
+                            {locked ? t.daily.noSpendModeOn : t.daily.noSpendMode}
                         </h3>
                         <p className="text-xs text-muted-foreground">
                             {locked
-                                ? "All discretionary spending is BLOCKED"
-                                : "Toggle to block all non-essential spending"}
+                                ? t.daily.allDiscretionaryBlocked
+                                : t.daily.toggleToBlock}
                         </p>
                     </div>
                 </div>
@@ -67,7 +69,7 @@ export function NoSpendToggle({ isActive, onToggle }: NoSpendToggleProps) {
                         className="mt-3 pt-3 border-t border-white/[0.06]"
                     >
                         <p className="text-xs text-rose-300/80">
-                            🔒 Quick Spend is disabled. Only bills and income can be logged.
+                            🔒 {t.daily.quickSpendDisabled}
                         </p>
                     </motion.div>
                 )}

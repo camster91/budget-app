@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import RegisterPageClient from "./RegisterPageClient";
+import { dict } from "@/lib/i18n-dict";
 
 export const dynamic = "force-dynamic";
 
@@ -21,15 +22,15 @@ export default async function RegisterPage() {
                         <h1 className="text-3xl font-bold text-gradient tracking-tight">Budget App</h1>
                     </div>
                     <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-8 shadow-2xl">
-                        <h2 className="text-xl font-bold text-white mb-2">Registration Closed</h2>
+                        <h2 className="text-xl font-bold text-white mb-2">{dict.auth.registrationClosed}</h2>
                         <p className="text-muted-foreground text-sm mb-6">
-                            An account already exists on this instance. Please sign in with your existing credentials.
+                            {dict.auth.registrationClosedMsg}
                         </p>
                         <a
                             href="/login"
                             className="inline-block w-full py-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:opacity-90 transition"
                         >
-                            Go to Sign In
+                            {dict.auth.goToSignIn}
                         </a>
                     </div>
                 </div>

@@ -148,12 +148,12 @@ export function TransactionsClient({ transactions: initialTransactions, categori
     return (
         <>
             <div className="flex flex-col gap-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <h2 className="text-3xl font-bold tracking-tight text-white mb-1">Transactions</h2>
-                        <p className="text-muted-foreground text-sm">Review and manage your financial history.</p>
+                        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-1">Transactions</h2>
+                        <p className="text-muted-foreground text-xs sm:text-sm">Review and manage your financial history.</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
                         <Button variant="outline" size="sm" className="gap-2" onClick={exportCSV}>
                             <Download className="h-4 w-4" />
                             Export
@@ -171,7 +171,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                     </div>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-4">
+                <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                     <Card className="col-span-1">
                         <CardHeader>
                             <CardTitle className="text-sm">Filters</CardTitle>
@@ -265,7 +265,7 @@ export function TransactionsClient({ transactions: initialTransactions, categori
                                     </p>
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto">
+                                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
                                     <table className="w-full">
                                         <thead>
                                             <tr className="text-left text-[10px] uppercase text-muted-foreground tracking-[0.2em] border-b border-white/[0.05]">

@@ -65,20 +65,20 @@ export function DashboardContent({ data }: DashboardContentProps) {
 
     return (
         <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
-            {/* Header */}
-            <div className="flex items-center justify-between">
+{/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-gradient mb-1">Financial Pulse</h2>
-                    <p className="text-muted-foreground text-sm font-medium">Here&apos;s a summary of your wealth this month.</p>
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient mb-1">Financial Pulse</h2>
+                    <p className="text-muted-foreground text-xs sm:text-sm font-medium">Here&apos;s a summary of your wealth this month.</p>
                 </div>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="outline" size="sm" className="gap-2 self-start sm:self-auto">
                     <Calendar className="h-4 w-4" />
                     This Month
                 </Button>
             </div>
 
             {/* Stat cards */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                     { title: "Net Worth", value: data.netWorth, trend: "+0%", icon: Wallet, color: "text-primary" },
                     { title: "Monthly Income", value: data.monthlyIncome, trend: data.incomeTrend, icon: ArrowUpRight, color: "text-emerald-500" },
@@ -97,7 +97,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                                 <stat.icon className={cn("h-4 w-4", stat.color)} />
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold text-white mb-1 tracking-tight">
+                                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 tracking-tight">
                                     {typeof stat.value === "number" ? formatCurrency(stat.value) : stat.value}
                                 </div>
                                 <p className={cn(
@@ -112,8 +112,8 @@ export function DashboardContent({ data }: DashboardContentProps) {
                 ))}
             </div>
 
-            {/* Charts row */}
-            <div className="grid gap-6 lg:grid-cols-7">
+{/* Charts row */}
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-7">
                 {/* Wealth growth chart */}
                 <motion.div variants={item} className="lg:col-span-4">
                     <Card className="h-full border-white/[0.08] bg-white/[0.02]">

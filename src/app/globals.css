@@ -59,3 +59,28 @@ body {
     linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
 }
+
+/* Mobile improvements: <375px breakpoint */
+@media (max-width: 374px) {
+  /* Ensure minimum touch targets on all interactive elements */
+  button,
+  a,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Icon-only buttons need explicit sizing */
+  .touch-target-icon {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  /* Prevent text truncation on very small screens */
+  .truncate {
+    max-width: 120px;
+  }
+}

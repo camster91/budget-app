@@ -5,8 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PiggyBank, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTranslations } from "@/lib/useTranslations";
 
 export default function RegisterPageClient() {
+    const t = useTranslations();
+    const auth = t.auth;
+    const placeholders = t.placeholders;
     const router = useRouter();
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -54,8 +58,8 @@ export default function RegisterPageClient() {
                     <div className="p-3 rounded-2xl bg-primary/20 text-primary mb-4 shadow-[0_0_30px_rgba(99,102,241,0.3)]">
                         <PiggyBank className="h-8 w-8" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gradient tracking-tight">Budget App</h1>
-                    <p className="text-muted-foreground text-sm mt-1">Create your account</p>
+<h1 className="text-3xl font-bold text-gradient tracking-tight">{auth.registerTitle || auth.signInTitle}</h1>
+                    <p className="text-muted-foreground text-sm mt-1">{auth.createAccountSubtitle || "Create your account"}</p>
                 </div>
 
                 <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-sm p-8 shadow-2xl">
@@ -67,13 +71,13 @@ export default function RegisterPageClient() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Name</label>
+<label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{auth.name || "Name"}</label>
                             <input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 autoComplete="name"
-                                placeholder="Your name"
+                                placeholder={placeholders.yourName || "Your name"}
                                 className="w-full px-4 py-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition"
                             />
                         </div>
@@ -119,14 +123,14 @@ export default function RegisterPageClient() {
                             disabled={loading}
                             className="w-full py-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:opacity-90 transition disabled:opacity-50 mt-2"
                         >
-                            {loading ? "Creating account…" : "Create Account"}
+                            {loading ? auth.creatingAccount || auth.signingIn || "Creating account..." : auth.createAccountBtn || "Create Account"}
                         </button>
                     </form>
 
-                    <p className="mt-6 text-center text-sm text-muted-foreground">
-                        Already have an account?{" "}
+<p className="mt-6 text-center text-sm text-muted-foreground">
+                        {auth.alreadyHaveAccount || "Already have an account?"}{" "}
                         <Link href="/login" className="text-primary hover:text-primary/80 font-bold transition-colors">
-                            Sign in
+                            {auth.signIn || "Sign in"}
                         </Link>
                     </p>
                 </div>
