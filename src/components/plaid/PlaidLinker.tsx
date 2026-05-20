@@ -31,11 +31,19 @@ export function PlaidLinker({ accounts, createLinkToken, exchangeToken, syncTran
                 return;
             }
 
-            // Dynamically load Plaid Link
-            const { default: PlaidLink } = await import("react-plaid-link");
+            // Dynamically load Plaid CDN script if not already loaded
+            if (!(window as any).Plaid) {
+                await new Promise<void>((resolve, reject) => {
+                    const script = document.createElement("script");
+                    script.src = "https://cdn.plaid.com/link/v2/stable/link-initialize.js";
+                    script.onload = () => resolve();
+                    script.onerror = () => reject(new Error("Failed to load Plaid SDK"));
+                    document.head.appendChild(script);
+                });
+            }
 
-            // Open Plaid Link
-            const handler = (PlaidLink as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).create({
+            // Open Plaid Link using native window object
+            const handler = (window as any).Plaid.create({
                 token: res.data.linkToken,
                 onSuccess: async (publicToken: string) => {
                     const result = await exchangeToken(publicToken);
@@ -48,9 +56,6 @@ export function PlaidLinker({ accounts, createLinkToken, exchangeToken, syncTran
                     setIsLinking(false);
                 },
                 onExit: () => setIsLinking(false),
-                onLoad: () => {
-                    handler.open();
-                },
             });
             handler.open();
         } catch {

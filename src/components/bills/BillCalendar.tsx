@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -131,7 +131,7 @@ export function BillCalendar({ bills, onMarkPaid, isPaidThisMonth }: BillCalenda
                                                                 ? "bg-emerald-500/10 text-emerald-400/60 line-through"
                                                                 : "bg-primary/20 text-primary border border-primary/20 hover:bg-primary/30",
                                                         )}
-                                                        title={`${bill.name} — $${bill.amount}`}
+                                                        title={`${bill.name} — ${formatCurrency(bill.amount)}`}
                                                     >
                                                         {bill.name}
                                                     </div>

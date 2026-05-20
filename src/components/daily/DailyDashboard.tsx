@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDailySnapshot, getDataHealth, batchCleanupTransactions, addQuickSpend, deleteTransactionAndRevalidate } from "@/app/_actions/daily";
 import { getCategories } from "@/app/_actions/categories";
@@ -26,12 +27,15 @@ import { SpendingScore } from "@/components/daily/SpendingScore";
 import { PushNotifier } from "@/components/daily/PushNotifier";
 import { StreakCounter } from "@/components/daily/StreakCounter";
 import { PlaidLinker } from "@/components/plaid/PlaidLinker";
-import { Sparkles, Loader2 } from "lucide-react";
+import { DeduplicationReviewDialog } from "./DeduplicationReviewDialog";
+import { SurplusSweepPrompt } from "./SurplusSweepPrompt";
+import { Sparkles, Loader2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export function DailyDashboard({ initialAccounts }: { initialAccounts: any /* eslint-disable-line @typescript-eslint/no-explicit-any */[] }) {
     const queryClient = useQueryClient();
+    const [isDedupeOpen, setIsDedupeOpen] = useState(false);
 
     const { data: snapshotData, isLoading: snapshotLoading } = useQuery({
         queryKey: ["daily-snapshot"],
@@ -93,6 +97,7 @@ export function DailyDashboard({ initialAccounts }: { initialAccounts: any /* es
 
     const defaultSnapshot = {
         remainingToday: 0, dailyAllowance: 0, todaysAvailable: 0, spentToday: 0, accumulatedSurplus: 0,
+        vaultLockedSurplus: 0, vaultReleasedSurplus: 0,
         pace: { percent: 100, label: "Loading...", color: "text-muted-foreground", emoji: "⏳" },
         period: { daysRemaining: 0, daysTotal: 30, daysElapsed: 0 },
         totalIncome: 0, incomeSources: [], upcomingBillsTotal: 0,
@@ -126,9 +131,13 @@ export function DailyDashboard({ initialAccounts }: { initialAccounts: any /* es
                 todaysAvailable={s.todaysAvailable}
                 spentToday={s.spentToday}
                 accumulatedSurplus={s.accumulatedSurplus}
+                vaultLockedSurplus={s.vaultLockedSurplus}
+                vaultReleasedSurplus={s.vaultReleasedSurplus}
                 pace={s.pace}
                 periodDaysRemaining={s.period.daysRemaining}
             />
+
+            <SurplusSweepPrompt />
 
             <div className="grid gap-6 md:grid-cols-[1fr_1.2fr]">
                 <div className="space-y-4">
@@ -139,6 +148,8 @@ export function DailyDashboard({ initialAccounts }: { initialAccounts: any /* es
                             return res;
                         }} 
                         categories={categories || []} 
+                        dailyAllowance={s.dailyAllowance}
+                        daysRemaining={s.period.daysRemaining}
                     />
                     <PeriodSnapshot
                         totalIncome={s.totalIncome}
@@ -214,21 +225,35 @@ export function DailyDashboard({ initialAccounts }: { initialAccounts: any /* es
             </div>
 
             {duplicates && duplicates.length > 0 && (
-                <DedupeReview
-                    duplicates={duplicates}
-                    onKeepAndMerge={async (id, otherId) => {
-                        const res = await patternActions.keepAndMergeDuplicate(id, otherId);
-                        queryClient.invalidateQueries({ queryKey: ["duplicate-queue"] });
-                        queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
-                        return res;
-                    }}
-                    onRejectDuplicate={async (id) => {
-                        const res = await patternActions.rejectDuplicate(id);
-                        queryClient.invalidateQueries({ queryKey: ["duplicate-queue"] });
-                        return res;
-                    }}
-                />
+                <div className="glass-card p-4 rounded-2xl border-l-2 border-l-amber-500 flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="flex items-center gap-3">
+                        <AlertTriangle className="h-5 w-5 text-amber-400 animate-pulse" />
+                        <div>
+                            <h4 className="text-sm font-bold text-white">Review Duplicates</h4>
+                            <p className="text-xs text-zinc-400">
+                                We detected {duplicates.length} duplicate transaction sets.
+                            </p>
+                        </div>
+                    </div>
+                    <Button
+                        size="sm"
+                        onClick={() => setIsDedupeOpen(true)}
+                        className="bg-amber-500 hover:bg-amber-400 text-black font-bold h-8 px-4"
+                    >
+                        Review
+                    </Button>
+                </div>
             )}
+
+            <DeduplicationReviewDialog
+                open={isDedupeOpen}
+                onOpenChange={setIsDedupeOpen}
+                onRefresh={() => {
+                    queryClient.invalidateQueries({ queryKey: ["duplicate-queue"] });
+                    queryClient.invalidateQueries({ queryKey: ["daily-snapshot"] });
+                    queryClient.invalidateQueries({ queryKey: ["data-health"] });
+                }}
+            />
 
             <PatternInsights patterns={patterns || []} />
 

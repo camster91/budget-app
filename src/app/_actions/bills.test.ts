@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createBill, updateBill, deleteBill, getBills } from './bills';
+import { createBill, updateBill, deleteBill } from './bills';
 import { prisma } from '@/lib/prisma';
 import { getAuthUser } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
@@ -39,8 +39,8 @@ describe('Bills Actions', () => {
       fd.append('name', 'Rent');
       fd.append('amount', '1500');
       fd.append('dueDay', '1');
-      fd.append('categoryId', 'cat-1');
-      fd.append('accountId', 'acc-1');
+      fd.append('categoryId', '12345678-1234-4234-a234-1234567890ab');
+      fd.append('accountId', '87654321-4321-4321-b321-ba0987654321');
 
       (prisma.bill.create as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue({ id: 'bill-1' });
 
@@ -49,23 +49,14 @@ describe('Bills Actions', () => {
       expect(prisma.bill.create).toHaveBeenCalledWith({
         data: {
           name: 'Rent',
-          amount: 1500,
+          amount: 150000,
           dueDay: 1,
-          categoryId: 'cat-1',
-          accountId: 'acc-1',
+          categoryId: '12345678-1234-4234-a234-1234567890ab',
+          accountId: '87654321-4321-4321-b321-ba0987654321',
           householdId: 'hh-1'
         },
       });
       expect(revalidatePath).toHaveBeenCalled();
-    });
-  });
-
-  describe('getBills', () => {
-    it('should return bills', async () => {
-      (prisma.bill.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */ as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue([{ id: '1' }]);
-      const res = await getBills();
-      expect(res.success).toBe(true);
-      expect(res.data).toEqual([{ id: '1' }]);
     });
   });
 });

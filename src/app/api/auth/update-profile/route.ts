@@ -1,4 +1,4 @@
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { safeEmail, safeString, safeNumber, safeDate, zodErrorResponse } from "@/lib/validate";
@@ -23,14 +23,28 @@ export async function POST(request: Request) {
 
         const updateData: { name?: string; email?: string; password?: string } = {};
 
-        if (name !== undefined) updateData.name = name;
+        if (name !== undefined) {
+            if (name !== "") {
+                const parsed = safeString(name, 100);
+                if (!parsed) {
+                    return NextResponse.json({ error: "Invalid name format" }, { status: 400 });
+                }
+                updateData.name = parsed;
+            } else {
+                updateData.name = "";
+            }
+        }
 
         if (email && email !== user.email) {
-            const existing = await prisma.user.findUnique({ where: { email } });
+            const parsed = safeEmail(email);
+            if (!parsed) {
+                return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+            }
+            const existing = await prisma.user.findUnique({ where: { email: parsed } });
             if (existing) {
                 return NextResponse.json({ error: "Email already in use" }, { status: 400 });
             }
-            updateData.email = email;
+            updateData.email = parsed;
         }
 
         if (newPassword) {

@@ -5,6 +5,7 @@ import { getAuthUser } from "@/lib/auth";
 import { startOfDay, endOfDay, differenceInDays, isBefore } from "date-fns";
 import { getNextPayDate, getPeriodStart, isBillDueInPeriod } from "@/lib/dateUtils";
 import { formatDecimal } from "@/lib/locale";
+import { formatCurrency } from "@/lib/utils";
 
 export interface PushMessage {
     title: string;
@@ -129,7 +130,7 @@ export async function triggerBillReminder(): Promise<PushMessage | null> {
         if (soon.length > 0) {
             return {
                 title: `Budget App: Bill due soon`,
-                body: `${soon.map((b) => `${b.name} ($${b.amount})`).join(", ")}`,
+                body: `${soon.map((b) => `${b.name} (${formatCurrency(b.amount)})`).join(", ")}`,
                 tag: "bill-reminder",
                 url: "/daily",
             };

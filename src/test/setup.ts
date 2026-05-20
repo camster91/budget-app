@@ -43,5 +43,19 @@ vi.mock('@/lib/prisma', () => ({
       findMany: vi.fn(),
       create: vi.fn(),
     },
+    goal: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    wishlistItem: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
   },
 }));

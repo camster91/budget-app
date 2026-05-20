@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { toCents } from "@/lib/utils";
 
 export interface ParsedReceipt {
     total?: number;
@@ -25,7 +26,7 @@ export async function saveReceiptParse(input: {
             data: {
                 imageUrl: input.imageUrl,
                 rawMerchant: input.parsed.merchant ?? null,
-                rawAmount: input.parsed.total ?? null,
+                rawAmount: input.parsed.total ? toCents(input.parsed.total) : null,
                 rawDate: input.parsed.date ? new Date(input.parsed.date) : null,
                 rawItems: input.parsed.items.length > 0 ? JSON.stringify(input.parsed.items) : null,
                 confidence: input.parsed.confidence,
@@ -97,7 +98,7 @@ export async function approveReceipt(receiptId: string, overrides?: {
         });
         if (!receipt) return { success: false, error: "Receipt not found" };
 
-        const amount = overrides?.amount ?? receipt.rawAmount ?? 0;
+        const amount = overrides?.amount !== undefined ? toCents(overrides.amount) : (receipt.rawAmount ?? 0);
         const description = overrides?.merchant ?? receipt.rawMerchant ?? "Receipt";
         const date = overrides?.date ?? receipt.rawDate ?? new Date();
 

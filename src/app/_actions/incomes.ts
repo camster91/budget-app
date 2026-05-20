@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { toCents } from "@/lib/utils";
+import { createIncomeSchema, updateIncomeSchema, validateFormData } from "@/lib/validation";
 import { revalidatePath } from "next/cache";
 
 export async function getIncomes() {
@@ -22,22 +23,17 @@ export async function getIncomes() {
 export async function createIncome(formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
+
+    const validated = validateFormData(formData, createIncomeSchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { name, amount, frequency, startDate, dayOfMonth } = validated.data;
+
     try {
-        const name = (formData.get("name") as string) || "Income";
-        const amountRaw = parseFloat(formData.get("amount") as string);
-        const amount = toCents(amountRaw);
-        const frequency = formData.get("frequency") as string;
-        const startDate = new Date(formData.get("startDate") as string);
-        const dayOfMonth = parseInt(formData.get("dayOfMonth") as string) || null;
-
-        if (!amount || !startDate || !frequency) {
-            return { success: false, error: "Amount, frequency and start date required" };
-        }
-
         const income = await prisma.income.create({
             data: { 
                 name, 
-                amount, 
+                amount: toCents(amount), 
                 frequency, 
                 startDate, 
                 dayOfMonth: dayOfMonth || null,
@@ -57,18 +53,23 @@ export async function createIncome(formData: FormData) {
 export async function updateIncome(id: string, formData: FormData) {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
-    try {
-        const name = (formData.get("name") as string) || "Income";
-        const amountRaw = parseFloat(formData.get("amount") as string);
-        const amount = toCents(amountRaw);
-        const frequency = formData.get("frequency") as string;
-        const startDate = new Date(formData.get("startDate") as string);
-        const dayOfMonth = parseInt(formData.get("dayOfMonth") as string) || null;
-        const isActive = formData.get("isActive") === "true";
 
+    const validated = validateFormData(formData, updateIncomeSchema);
+    if (!validated.success) return { success: false, error: validated.error };
+
+    const { name, amount, frequency, startDate, dayOfMonth, isActive } = validated.data;
+
+    try {
         const income = await prisma.income.update({
             where: { id, householdId: user.householdId },
-            data: { name, amount, frequency, startDate, dayOfMonth: dayOfMonth || null, isActive },
+            data: { 
+                name, 
+                amount: toCents(amount), 
+                frequency, 
+                startDate, 
+                dayOfMonth: dayOfMonth || null, 
+                isActive: isActive ?? true 
+            },
         });
 
         revalidatePath("/daily");

@@ -13,12 +13,14 @@ import {
     PiggyBank,
     Target,
     Settings,
+    Heart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
     { label: "Home", href: "/", icon: LayoutDashboard },
     { label: "Spend", href: "/daily", icon: Receipt },
+    { label: "Wishlist", href: "/wishlist", icon: Heart },
     { label: "Budget", href: "/budgets", icon: PiggyBank },
     { label: "Goals", href: "/goals", icon: Target },
     { label: "More", href: "/settings", icon: Settings },

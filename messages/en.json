@@ -15,7 +15,8 @@
     "bills": "Bills",
     "accounts": "Accounts",
     "categories": "Categories",
-    "settings": "Settings"
+    "settings": "Settings",
+    "wishlist": "Wishlist"
   },
   "login": {
     "title": "Budget App",

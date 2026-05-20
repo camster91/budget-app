@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
+    const ip = request.headers.get("x-real-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
     const allowed = await checkRateLimit(`register:${ip}`, 3, 60 * 60);
     if (!allowed) {
       logger.warn("Rate limit exceeded", { path: "/api/auth/register", ip });

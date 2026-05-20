@@ -85,12 +85,10 @@ describe('isOcrSupported', () => {
     });
 
     it('should return false if window is undefined', () => {
-        // @ts-expect-error: mocking global window object
         const originalWindow = global.window;
         // @ts-expect-error: mocking global window object
         delete global.window;
         expect(isOcrSupported()).toBe(false);
-        // @ts-expect-error: mocking global window object
         global.window = originalWindow;
     });
 });

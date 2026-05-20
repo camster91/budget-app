@@ -14,7 +14,8 @@ describe('categorizeTransaction', () => {
             icon: '🛒',
             color: '#000',
             type: 'expense',
-            userId: 'user-1',
+            householdId: 'household-1',
+            parentId: null,
             dailyCap: null,
             createdAt: new Date(),
             updatedAt: new Date()
@@ -29,7 +30,8 @@ describe('categorizeTransaction', () => {
             icon: '⛽',
             color: '#fff',
             type: 'expense',
-            userId: 'user-1',
+            householdId: 'household-1',
+            parentId: null,
             dailyCap: null,
             createdAt: new Date(),
             updatedAt: new Date()

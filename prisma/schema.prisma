@@ -27,6 +27,7 @@ model Household {
   spendingPatterns   SpendingPattern[]
   dailyPeriods       DailyPeriod[]
   noSpendEntries     NoSpendEntry[]
+  wishlistItems      WishlistItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -294,5 +295,22 @@ model NoSpendEntry {
   householdId String
 
   @@unique([householdId, date])
+  @@index([householdId])
+}
+
+model WishlistItem {
+  id          String   @id @default(uuid())
+  name        String
+  price       Int      // in cents
+  link        String?
+  priority    String   @default("medium") // low, medium, high
+  purchased   Boolean  @default(false)
+  
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@index([householdId])
 }

@@ -130,7 +130,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                         </CardHeader>
                         <CardContent className="h-[280px] w-full">
                             {data.chartData.length === 0 ? (
-                                <div className="h-full flex items-center justify-center opacity-30">
+                                <div className="h-full flex items-center justify-center opacity-70">
                                     <p className="text-sm font-medium">No historical data yet</p>
                                 </div>
                             ) : (
@@ -176,7 +176,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                         </CardHeader>
                         <CardContent>
                             {spending.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-10 text-center opacity-40">
+                                <div className="flex flex-col items-center justify-center py-10 text-center opacity-70">
                                     <CreditCard className="h-10 w-10 mb-2" />
                                     <p className="text-sm font-medium">No expenses this month</p>
                                 </div>
@@ -261,7 +261,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
                         <CardContent>
                             <div className="space-y-4">
                                 {data.transactions.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-10 text-center opacity-50">
+                                    <div className="flex flex-col items-center justify-center py-10 text-center opacity-75">
                                         <CreditCard className="h-10 w-10 mb-2" />
                                         <p className="text-sm font-medium">No recent activity</p>
                                     </div>

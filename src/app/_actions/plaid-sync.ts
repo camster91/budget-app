@@ -7,6 +7,7 @@ import { decrypt } from "@/lib/encryption";
 import { revalidatePath } from "next/cache";
 import { RemovedTransaction, Transaction as PlaidTransaction } from "plaid";
 import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
+import { toCents } from "@/lib/utils";
 
 export async function syncPlaidTransactions(accountId: string) {
     const user = await getAuthUser();
@@ -86,7 +87,7 @@ export async function syncPlaidTransactions(accountId: string) {
 
             await prisma.transaction.create({
                 data: {
-                    amount: absAmount,
+                    amount: toCents(absAmount),
                     description,
                     date,
                     type,
@@ -112,7 +113,7 @@ export async function syncPlaidTransactions(accountId: string) {
             await prisma.transaction.updateMany({
                 where: { statementId: pt.transaction_id, householdId: user.householdId },
                 data: {
-                    amount: absAmount,
+                    amount: toCents(absAmount),
                     description,
                     date: new Date(pt.date),
                     type,

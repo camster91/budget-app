@@ -10,7 +10,7 @@ import { logger } from "@/lib/logger";
 export async function POST(request: Request) {
   let email: string, password: string;
   try {
-    const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
+    const ip = request.headers.get("x-real-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
     const allowed = await checkRateLimit(`login:${ip}`, 5, 60);
     if (!allowed) {
       logger.warn("Rate limit exceeded", { path: "/api/auth/login", ip });

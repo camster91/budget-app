@@ -19,9 +19,11 @@ interface Category {
 interface QuickAddFormProps {
     onAdd: (formData: FormData) => Promise<any /* eslint-disable-line @typescript-eslint/no-explicit-any */>;
     categories?: Category[];
+    dailyAllowance?: number;
+    daysRemaining?: number;
 }
 
-export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
+export function QuickAddForm({ onAdd, categories = [], dailyAllowance = 0, daysRemaining = 0 }: QuickAddFormProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [amount, setAmount] = useState("");
     const [description, setDescription] = useState("");
@@ -38,6 +40,12 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
     const isAutoSelected = !categoryId && !!suggestedId;
 
     const selectedCategory = categories.find((c) => c.id === activeCategoryId);
+
+    const parsedAmount = parseFloat(amount) || 0;
+    const centsAmount = Math.round(parsedAmount * 100);
+    const hasConsequence = centsAmount > 0 && daysRemaining && daysRemaining > 1 && dailyAllowance > 0;
+    const dailyDrop = hasConsequence ? Math.round(centsAmount / daysRemaining) : 0;
+    const newAllowance = Math.max(0, dailyAllowance - dailyDrop);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -164,7 +172,7 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
                                             style={categoryId === cat.id ? { backgroundColor: cat.color + "33" } : undefined}
                                         >
                                             {cat.dailyCap && (
-                                                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-400 ring-1 ring-background" title={`Cap: $${cat.dailyCap}/day`} />
+                                                <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-400 ring-1 ring-background" title={`Cap: ${formatCurrency(cat.dailyCap)}/day`} />
                                             )}
                                             {categoryId === cat.id && isAutoSelected && (
                                                 <Sparkles className="h-3 w-3 animate-pulse text-primary" />
@@ -181,6 +189,26 @@ export function QuickAddForm({ onAdd, categories = [] }: QuickAddFormProps) {
                                     </p>
                                 )}
                             </div>
+                        )}
+
+                        {hasConsequence && dailyDrop > 0 && (
+                            <motion.div 
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                className="p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10 space-y-1 text-xs"
+                            >
+                                <div className="flex items-center gap-1.5 text-indigo-400 font-semibold">
+                                    <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+                                    <span>Daily Allowance Projection</span>
+                                </div>
+                                <p className="text-zinc-300 leading-relaxed">
+                                    This spend reduces your daily budget by{" "}
+                                    <span className="text-indigo-300 font-bold">{formatCurrency(dailyDrop)}/day</span>{" "}
+                                    (from {formatCurrency(dailyAllowance)} to{" "}
+                                    <span className="text-white font-bold">{formatCurrency(newAllowance)}</span>) for the remaining{" "}
+                                    <span className="text-indigo-300 font-semibold">{daysRemaining} days</span>.
+                                </p>
+                            </motion.div>
                         )}
 
                         <div className="flex gap-2">

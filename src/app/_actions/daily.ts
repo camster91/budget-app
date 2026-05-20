@@ -30,6 +30,9 @@ export interface DailySnapshot {
     spentToday: number;
     remainingToday: number;
     accumulatedSurplus: number;
+    vaultLockedSurplus?: number;
+    vaultReleasedSurplus?: number;
+    avgDailySpend?: number;
     pace: { percent: number; label: string; color: string; emoji: string };
     period: {
         start: Date;
@@ -144,7 +147,11 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
         const expectedSpentSoFar = dailyAllowance * daysElapsed;
         const accumulatedSurplus = expectedSpentSoFar - totalSpentSoFar;
 
-        const todaysAvailable = dailyAllowance + accumulatedSurplus;
+        // 80/20 Discretionary Surplus Vault Lock
+        const vaultLockedSurplus = accumulatedSurplus > 0 ? Math.round(accumulatedSurplus * 0.8) : 0;
+        const vaultReleasedSurplus = accumulatedSurplus - vaultLockedSurplus;
+
+        const todaysAvailable = dailyAllowance + vaultReleasedSurplus;
         const remainingToday = todaysAvailable - spentToday;
 
         // Pace calculation
@@ -164,7 +171,7 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
             paceColor = "text-emerald-400";
             paceEmoji = "🌱";
         } else if (accumulatedSurplus > 0) {
-            paceLabel = `+$${formatCurrency(accumulatedSurplus)} rolled over`;
+            paceLabel = `+${formatCurrency(accumulatedSurplus)} rolled over`;
             paceColor = "text-emerald-400";
             paceEmoji = "✨";
         }
@@ -240,6 +247,9 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
                 spentToday,
                 remainingToday,
                 accumulatedSurplus,
+                vaultLockedSurplus,
+                vaultReleasedSurplus,
+                avgDailySpend,
                 pace: { percent: Math.round(pacePercent), label: paceLabel, color: paceColor, emoji: paceEmoji },
                 period: {
                     start: periodStart,
@@ -431,6 +441,9 @@ export async function findAndMergeDuplicates() {
         let merged = 0;
 
         for (const tx of recent) {
+            if (tx.duplicateOfId === "bypassed") {
+                continue;
+            }
             const normalized = tx.description.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
             const key = `${tx.amount}-${normalized}-${tx.date.toISOString().slice(0, 10)}`;
             
@@ -658,3 +671,53 @@ function computeSpendingScore(input: ScoreInput): { score: number; label: string
 
     return { score: Math.round(score), label };
 }
+
+export async function getDuplicateTransactions() {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+    try {
+        const duplicates = await prisma.transaction.findMany({
+            where: { isDuplicate: true, householdId: user.householdId },
+            include: { category: true },
+        });
+
+        const parentIds = duplicates.map(d => d.duplicateOfId).filter((id): id is string => id !== null);
+        const parents = await prisma.transaction.findMany({
+            where: { id: { in: parentIds }, householdId: user.householdId },
+            include: { category: true },
+        });
+
+        const parentMap = new Map(parents.map(p => [p.id, p]));
+
+        const data = duplicates.map(d => ({
+            ...d,
+            duplicateOf: d.duplicateOfId ? parentMap.get(d.duplicateOfId) || null : null,
+        }));
+
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: "Failed to load duplicates" };
+    }
+}
+
+export async function resolveDuplicate(id: string, action: "keep" | "delete") {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+    try {
+        if (action === "delete") {
+            await prisma.transaction.delete({
+                where: { id, householdId: user.householdId },
+            });
+        } else if (action === "keep") {
+            await prisma.transaction.update({
+                where: { id, householdId: user.householdId },
+                data: { isDuplicate: false, duplicateOfId: "bypassed" },
+            });
+        }
+        revalidatePath("/daily");
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Failed to resolve duplicate" };
+    }
+}
+

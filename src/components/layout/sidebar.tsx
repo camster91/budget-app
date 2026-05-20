@@ -15,6 +15,7 @@ import {
     Tag,
     Flame,
     BarChart3,
+    Heart,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -36,6 +37,7 @@ export function Sidebar() {
         { title: t("nav.bills"), href: "/bills", icon: FileText },
         { title: t("nav.accounts"), href: "/accounts", icon: CreditCard },
         { title: t("nav.categories"), href: "/categories", icon: Tag },
+        { title: t("nav.wishlist"), href: "/wishlist", icon: Heart },
         { title: t("nav.settings"), href: "/settings", icon: Settings },
     ];
 
