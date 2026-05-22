@@ -41,20 +41,25 @@ export function DeduplicationReviewDialog({ open, onOpenChange, onRefresh }: Ded
     const [loading, setLoading] = useState(false);
     const [isPending, startTransition] = useTransition();
 
-    const fetchDuplicates = async () => {
-        setLoading(true);
-        const res = await getDuplicateTransactions();
-        if (res.success && res.data) {
-            // Assert type because date comes as string or Date from server action
-            setDuplicates(res.data as unknown as DuplicateItem[]);
-        }
-        setLoading(false);
-    };
-
     useEffect(() => {
-        if (open) {
-            fetchDuplicates();
-        }
+        if (!open) return;
+
+        let cancelled = false;
+
+        const fetchDuplicates = async () => {
+            setLoading(true);
+            try {
+                const res = await getDuplicateTransactions();
+                if (!cancelled && res.success && res.data) {
+                    setDuplicates(res.data as unknown as DuplicateItem[]);
+                }
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        };
+
+        fetchDuplicates();
+        return () => { cancelled = true; };
     }, [open]);
 
     const handleResolve = async (id: string, action: "keep" | "delete") => {

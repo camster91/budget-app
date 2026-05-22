@@ -35,7 +35,7 @@ export function StreakCounter({ streak, bestStreak = 0 }: StreakCounterProps) {
             decay: number;
         }
 
-        let particles: Particle[] = [];
+        const particles: Particle[] = [];
         const colors = ["#fb923c", "#f97316", "#ea580c", "#c2410c", "#fde047", "#eab308"];
 
         // Start explosion at the horizontal center, near the top Flame icon

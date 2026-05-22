@@ -52,7 +52,7 @@ export function WishlistClient({ items, goals, metrics }: WishlistClientProps) {
     const [selectedItem, setSelectedItem] = useState<WishlistItem | null>(null);
     const [useEmergency, setUseEmergency] = useState(false);
     const [emergencyGoalId, setEmergencyGoalId] = useState("");
-    const [now, setNow] = useState(Date.now());
+    const [now, setNow] = useState<number>(() => Date.now());
 
     // Update 'now' every minute to keep cooling off timers fresh
     useEffect(() => {

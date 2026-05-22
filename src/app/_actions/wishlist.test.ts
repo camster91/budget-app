@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getWishlistData, createWishlistItem, purchaseWishlistItem } from "./wishlist";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";

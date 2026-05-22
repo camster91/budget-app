@@ -51,7 +51,26 @@ export function SurplusSweepPrompt() {
     };
 
     useEffect(() => {
+        let cancelled = false;
+
+        const fetchRolloverStatus = async () => {
+            const res = await getPaydayRolloverStatus();
+            if (cancelled) return;
+            if (res.success && res.hasRollover && res.surplusAmount && res.goals && res.goals.length > 0) {
+                setStatus({
+                    hasRollover: res.hasRollover,
+                    surplusAmount: res.surplusAmount,
+                    goals: res.goals as unknown as Goal[],
+                });
+                setSelectedGoalId(res.goals[0].id);
+                setSweepAmountStr((res.surplusAmount / 100).toFixed(2));
+            } else {
+                setStatus(null);
+            }
+        };
+
         fetchRolloverStatus();
+        return () => { cancelled = true; };
     }, []);
 
     if (!status || !status.hasRollover || status.surplusAmount <= 0) return null;

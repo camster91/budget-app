@@ -13,7 +13,21 @@ interface PlaidLinkerProps {
     accounts: (Account & { plaidItemId?: string | null; plaidLastSynced?: Date | null })[];
     createLinkToken: () => Promise<{ success: boolean; data?: { linkToken?: string }; error?: string }>;
     exchangeToken: (publicToken: string) => Promise<{ success: boolean; error?: string }>;
-    syncTransactions?: (accountId: string) => Promise<{ success: boolean; data?: any /* eslint-disable-line @typescript-eslint/no-explicit-any */; error?: string }>;
+    syncTransactions?: (accountId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+}
+
+interface PlaidHandler {
+    open: () => void;
+}
+
+interface WindowWithPlaid {
+    Plaid?: {
+        create: (config: {
+            token: string;
+            onSuccess: (publicToken: string) => void;
+            onExit: () => void;
+        }) => PlaidHandler;
+    };
 }
 
 export function PlaidLinker({ accounts, createLinkToken, exchangeToken, syncTransactions }: PlaidLinkerProps) {
@@ -32,7 +46,7 @@ export function PlaidLinker({ accounts, createLinkToken, exchangeToken, syncTran
             }
 
             // Dynamically load Plaid CDN script if not already loaded
-            if (!(window as any).Plaid) {
+            if (!(window as unknown as Record<string, unknown>).Plaid) {
                 await new Promise<void>((resolve, reject) => {
                     const script = document.createElement("script");
                     script.src = "https://cdn.plaid.com/link/v2/stable/link-initialize.js";
@@ -43,7 +57,15 @@ export function PlaidLinker({ accounts, createLinkToken, exchangeToken, syncTran
             }
 
             // Open Plaid Link using native window object
-            const handler = (window as any).Plaid.create({
+            const plaidWindow = window as unknown as WindowWithPlaid;
+            const plaid = plaidWindow.Plaid;
+            if (!plaid) {
+                toast.error("Plaid SDK failed to initialize");
+                setIsLinking(false);
+                return;
+            }
+
+            const handler = plaid.create({
                 token: res.data.linkToken,
                 onSuccess: async (publicToken: string) => {
                     const result = await exchangeToken(publicToken);
@@ -57,7 +79,7 @@ export function PlaidLinker({ accounts, createLinkToken, exchangeToken, syncTran
                 },
                 onExit: () => setIsLinking(false),
             });
-            handler.open();
+            handler?.open();
         } catch {
             toast.error("An unexpected error occurred");
             setIsLinking(false);
@@ -71,7 +93,9 @@ export function PlaidLinker({ accounts, createLinkToken, exchangeToken, syncTran
         try {
             const res = await syncTransactions(accountId);
             if (res.success && res.data) {
-                toast.success(`Synced ${res.data.added} new transactions`);
+                const data = res.data as Record<string, unknown>;
+                const added = typeof data.added === 'number' ? data.added : 0;
+                toast.success(`Synced ${added} new transactions`);
             } else {
                 toast.error(res.error || "Failed to sync transactions");
             }

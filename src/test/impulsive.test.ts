@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { purchaseWishlistItem } from '@/app/_actions/wishlist';
 import { addQuickSpend } from '@/app/_actions/daily';
 import { prisma } from '@/lib/prisma';

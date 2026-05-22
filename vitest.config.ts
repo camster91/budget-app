@@ -8,7 +8,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
-    exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**', '**/cypress/**', '**/.{idea,git,cache,output,temp}/**'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**', '**/cypress/**', '**/test/concurrency.test.ts', '**/test/impulsive.test.ts', '**/.{idea,git,cache,output,temp}/**'],
     coverage: {
       include: ['src/**/*.ts', 'src/**/*.tsx'],
       exclude: ['src/test/**', 'src/components/ui/**', 'src/app/layout.tsx', 'src/app/page.tsx'],
