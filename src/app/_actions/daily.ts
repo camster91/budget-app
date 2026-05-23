@@ -73,7 +73,8 @@ export async function getDailySnapshot(): Promise<{ success: boolean; data?: Dai
         }
 
         // Auto-cleanup: run a silent check for duplicates on every dashboard load
-        await findAndMergeDuplicates().catch(() => {});
+        // DISABLED: moved to nightly cron to avoid O(n) scan on every request
+        // await findAndMergeDuplicates().catch(() => {});
 
         const now = new Date();
         const todayStart = startOfDay(now);
