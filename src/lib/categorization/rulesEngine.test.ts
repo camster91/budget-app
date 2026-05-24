@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { categorizeTransaction } from './rulesEngine';
-import type { Category } from '@prisma/client';
+import { categorizeTransaction, Rule } from './rulesEngine';
+import { Category } from '@prisma/client';
 
 describe('categorizeTransaction', () => {
     const mockCategories: Category[] = [
@@ -14,11 +14,11 @@ describe('categorizeTransaction', () => {
             icon: '🛒',
             color: '#000',
             type: 'expense',
-            dailyCap: null,
+            householdId: 'household-1',
             parentId: null,
+            dailyCap: null,
             createdAt: new Date(),
-            updatedAt: new Date(),
-            householdId: 'hh-1'
+            updatedAt: new Date()
         },
         {
             id: 'cat-2',
@@ -30,11 +30,11 @@ describe('categorizeTransaction', () => {
             icon: '⛽',
             color: '#fff',
             type: 'expense',
-            dailyCap: null,
+            householdId: 'household-1',
             parentId: null,
+            dailyCap: null,
             createdAt: new Date(),
-            updatedAt: new Date(),
-            householdId: 'hh-1'
+            updatedAt: new Date()
         }
     ];
 

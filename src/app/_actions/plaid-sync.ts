@@ -7,7 +7,7 @@ import { decrypt } from "@/lib/encryption";
 import { revalidatePath } from "next/cache";
 import { RemovedTransaction, Transaction as PlaidTransaction } from "plaid";
 import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
-import { isTransfer } from "@/lib/utils/transactionUtils";
+import { toCents } from "@/lib/utils";
 
 export async function syncPlaidTransactions(accountId: string) {
     const user = await getAuthUser();
@@ -55,8 +55,7 @@ export async function syncPlaidTransactions(accountId: string) {
             const absAmount = Math.abs(amount);
             const date = new Date(pt.date);
             const description = pt.merchant_name || pt.name;
-            const isTransferTransaction = isTransfer(description);
-
+            
             // Dedupe check
             const normalizedDesc = description.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
             const fingerprint = `${absAmount}-${normalizedDesc}-${pt.date}`;
@@ -88,7 +87,7 @@ export async function syncPlaidTransactions(accountId: string) {
 
             await prisma.transaction.create({
                 data: {
-                    amount: absAmount,
+                    amount: toCents(absAmount),
                     description,
                     date,
                     type,
@@ -97,8 +96,7 @@ export async function syncPlaidTransactions(accountId: string) {
                     source: "plaid",
                     accountId: account.id,
                     categoryId,
-                    isDiscretionary: type === "expense" ? !isTransferTransaction : false,
-                    isTransfer: isTransferTransaction,
+                    isDiscretionary: type === "expense",
                     reconciled: true,
                     householdId: user.householdId,
                 }
@@ -115,7 +113,7 @@ export async function syncPlaidTransactions(accountId: string) {
             await prisma.transaction.updateMany({
                 where: { statementId: pt.transaction_id, householdId: user.householdId },
                 data: {
-                    amount: absAmount,
+                    amount: toCents(absAmount),
                     description,
                     date: new Date(pt.date),
                     type,

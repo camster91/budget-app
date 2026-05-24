@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import createMiddleware from "next-intl/middleware";
 import { verifyToken } from "@/lib/auth";
-import { routing } from "@/i18n/routing";
 
 export const runtime = "nodejs";
 
@@ -11,42 +9,58 @@ const PUBLIC_PATHS = [
     "/api/auth/login",
     "/api/auth/register",
     "/api/auth/logout",
-    "/api/auth/me",      // GET — read-only profile
-    "/api/cron",         // guarded by CRON_SECRET in route handlers
+    "/api/auth/me",
+    "/api/cron",
     "/sw.js",
     "/manifest.json",
+    "/screenshot-wide.png",
+    "/screenshot-narrow.png",
 ];
 
 const PUBLIC_PREFIXES = [
-    "/api/cron/",        // cron sub-routes
+    "/api/cron/",
     "/api/health",
 ];
-
-const intlMiddleware = createMiddleware(routing);
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow static assets and API routes
+  // Security headers for all responses
+  const response = NextResponse.next();
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+
+  const plaidEnabled = !!process.env.PLAID_CLIENT_ID;
+  response.headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+      "style-src 'self' 'unsafe-inline'; " +
+      "img-src 'self' data: blob:; " +
+      "connect-src 'self'" + (plaidEnabled ? " https://link.plaid.com https://sandbox.plaid.com https://production.plaid.com" : "") + "; " +
+      "font-src 'self'; " +
+      "frame-ancestors 'none'; " +
+      "base-uri 'self';"
+  );
+
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
     pathname.startsWith("/api")
   ) {
-    return NextResponse.next();
+    return response;
   }
 
-  // Public pages: no auth required
   if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
-    return NextResponse.next();
+    return response;
   }
 
-  // Public prefixes
   if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
+    return response;
   }
 
-  // Auth check for protected routes
   const token = request.cookies.get("budget_token")?.value;
   if (!token) {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -54,12 +68,12 @@ export function middleware(request: NextRequest) {
 
   const payload = verifyToken(token);
   if (!payload) {
-    const response = NextResponse.redirect(new URL("/login", request.url));
-    response.cookies.delete("budget_token");
-    return response;
+    const logoutResponse = NextResponse.redirect(new URL("/login", request.url));
+    logoutResponse.cookies.delete("budget_token");
+    return logoutResponse;
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

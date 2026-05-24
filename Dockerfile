@@ -61,6 +61,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/messages ./messages
+COPY --from=builder --chown=nextjs:nodejs /app/src/i18n ./src/i18n
 
 # Copy package.json for scripts
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json

@@ -1,18 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { subWeeks, startOfWeek, endOfWeek, format } from "date-fns";
-import { formatDecimal } from "@/lib/locale";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-    // Basic auth check for cron jobs
     const authHeader = request.headers.get("authorization");
     const CRON_SECRET = process.env.CRON_SECRET;
-    if (!CRON_SECRET) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+    if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -47,7 +42,7 @@ export async function GET(request: Request) {
             // In a real app, this would use Resend, SendGrid, etc.
             console.log(`[EMAIL MOCK] To: ${user.email}`);
             console.log(`[EMAIL MOCK] Subject: Your Weekly Spending Summary (${format(start, "MMM d")} - ${format(end, "MMM d")})`);
-            console.log(`[EMAIL MOCK] Body: You spent a total of $${formatDecimal(totalSpent)} across ${transactions.length} transactions last week.`);
+            console.log(`[EMAIL MOCK] Body: You spent a total of $${(totalSpent / 100).toFixed(2)} across ${transactions.length} transactions last week.`);
             
             emailsSent++;
         }

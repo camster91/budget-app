@@ -357,7 +357,7 @@ export async function rejectDuplicate(duplicateId: string) {
     try {
         await prisma.transaction.update({
             where: { id: duplicateId, householdId: user.householdId },
-            data: { isDuplicate: false, duplicateOfId: null },
+            data: { isDuplicate: false, duplicateOfId: "bypassed" },
         });
         revalidatePath("/daily");
         return { success: true };

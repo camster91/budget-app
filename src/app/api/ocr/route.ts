@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { safeEmail, safeString, safeNumber, safeDate, zodErrorResponse } from "@/lib/validate";
+import { logger } from "@/lib/logger";
 import { getAuthUser } from "@/lib/auth";
 import { GoogleGenAI, Type } from "@google/genai";
 
@@ -13,7 +15,12 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     try {
-        const { rawText } = await request.json();
+        let  rawText ;
+  try {
+    ({  rawText  } = await request.json());
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
         if (!rawText || typeof rawText !== "string") {
             return NextResponse.json({ error: "No text provided" }, { status: 400 });
         }
@@ -66,7 +73,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true, data });
     } catch (error) {
-        console.error("AI Parse Error:", error);
+        logger.error("AI Parse Error:", error);
         return NextResponse.json({ success: false, error: "Failed to parse receipt" }, { status: 500 });
     }
 }

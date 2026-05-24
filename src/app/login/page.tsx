@@ -79,7 +79,7 @@ export default function LoginPage() {
                                 required
                                 autoComplete="email"
                                 placeholder={t("emailPlaceholder")}
-                                className="w-full px-3 max-[374px]:px-2.5 py-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                className="w-full px-3 max-[374px]:px-2.5 py-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             />
                         </div>
 
@@ -94,7 +94,7 @@ export default function LoginPage() {
                                     required
                                     autoComplete="current-password"
                                     placeholder="••••••••"
-                                    className="w-full px-3 max-[374px]:px-2.5 py-3 pr-11 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    className="w-full px-3 max-[374px]:px-2.5 py-3 pr-11 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                 />
                                 <button
                                     type="button"

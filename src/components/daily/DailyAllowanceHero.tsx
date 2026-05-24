@@ -10,6 +10,8 @@ interface DailyAllowanceHeroProps {
     todaysAvailable: number;
     spentToday: number;
     accumulatedSurplus: number;
+    vaultLockedSurplus?: number;
+    vaultReleasedSurplus?: number;
     pace: { percent: number; label: string; color: string; emoji: string };
     periodDaysRemaining: number;
 }
@@ -20,6 +22,8 @@ export function DailyAllowanceHero({
     todaysAvailable,
     spentToday,
     accumulatedSurplus,
+    vaultLockedSurplus,
+    vaultReleasedSurplus,
     pace,
     periodDaysRemaining,
 }: DailyAllowanceHeroProps) {
@@ -129,6 +133,17 @@ export function DailyAllowanceHero({
                                 className="text-white/70"
                             />
                         </div>
+                        
+                        {vaultLockedSurplus && vaultLockedSurplus > 0 ? (
+                            <div className="mt-4 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.05] flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
+                                    🔒 Discretionary Surplus Vault (80% Protected)
+                                </span>
+                                <span className="font-bold text-emerald-400">
+                                    {formatCurrency(vaultLockedSurplus)}
+                                </span>
+                            </div>
+                        ) : null}
                     </div>
                 </div>
             </div>

@@ -85,6 +85,23 @@ export const updateCategoryBudgetCapSchema = z.object({
     dailyCap: z.coerce.number().min(0, "Daily cap cannot be negative").nullable().optional(),
 });
 
+export const createIncomeSchema = z.object({
+    name: z.string().min(1, "Name is required").max(100, "Name too long"),
+    amount: z.coerce.number().positive("Amount must be greater than 0"),
+    frequency: z.enum(["monthly", "biweekly", "weekly"]),
+    startDate: z.coerce.date(),
+    dayOfMonth: z.coerce.number().int().min(1).max(31).nullable().optional(),
+});
+
+export const updateIncomeSchema = z.object({
+    name: z.string().min(1, "Name is required").max(100, "Name too long"),
+    amount: z.coerce.number().positive("Amount must be greater than 0"),
+    frequency: z.enum(["monthly", "biweekly", "weekly"]),
+    startDate: z.coerce.date(),
+    dayOfMonth: z.coerce.number().int().min(1).max(31).nullable().optional(),
+    isActive: z.coerce.boolean().optional(),
+});
+
 /** Parse FormData into a plain object for Zod validation */
 export function parseFormData(formData: FormData): Record<string, unknown> {
     const obj: Record<string, unknown> = {};
@@ -108,3 +125,10 @@ export function validateFormData<T extends z.ZodTypeAny>(
     }
     return { success: true, data: result.data };
 }
+
+export const createWishlistItemSchema = z.object({
+    name: z.string().min(1, "Name is required").max(100, "Name too long"),
+    price: z.coerce.number().positive("Price must be greater than 0"),
+    link: z.string().url("Invalid product link URL").or(z.literal("")).optional(),
+    priority: z.enum(["low", "medium", "high"]).default("medium"),
+});

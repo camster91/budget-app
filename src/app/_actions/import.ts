@@ -35,10 +35,8 @@ function detectType(row: CSVRow, amount: number): "income" | "expense" {
         if (lower === 'income' || lower === 'credit' || lower === 'deposit') return 'income';
         if (lower === 'expense' || lower === 'debit' || lower === 'withdrawal') return 'expense';
     }
-    // Fallback: negative amounts are expenses, positive are income
-    // Some banks export expenses as positive numbers — use amount < 0 only as last resort
-    // When amount is positive and no explicit type column, default to expense to be safe
-    return amount < 0 ? 'expense' : 'income';
+    // Fallback: default to expense to be safe when no explicit type is found
+    return 'expense';
 }
 
 /**
@@ -62,8 +60,10 @@ export async function importCSVTransactions(data: CSVRow[], options: ImportOptio
         let skippedCount = 0;
         const errors: { row: number; error: string }[] = [];
 
-        // Fetch categories for auto-categorization
-        const categories = options.autoCategorize ? await prisma.category.findMany() : [];
+        // Fetch categories for auto-categorization (filtered by household for tenancy safety)
+        const categories = options.autoCategorize 
+            ? await prisma.category.findMany({ where: { householdId: user.householdId } }) 
+            : [];
 
         for (const [index, row] of data.entries()) {
             const csvRowNumber = index + 1; // 1-based for user-facing messages

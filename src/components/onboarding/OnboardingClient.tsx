@@ -9,11 +9,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface OnboardingClientProps {
-    createIncome: (formData: FormData) => Promise<{ success: boolean }>;
-    createBill: (formData: FormData) => Promise<{ success: boolean }>;
-    createCategory: (formData: FormData) => Promise<{ success: boolean }>;
+    createIncome: (formData: FormData) => Promise<{ success: boolean; error?: string }>;
+    createBill: (formData: FormData) => Promise<{ success: boolean; error?: string }>;
+    createCategory: (formData: FormData) => Promise<{ success: boolean; error?: string }>;
 }
 
 const STEPS = [
@@ -23,6 +24,43 @@ const STEPS = [
     { id: "categories", title: "Categories", icon: Tag },
     { id: "done", title: "All Set", icon: Check },
 ];
+
+function EmojiPicker({ value, onChange }: { value: string; onChange: (emoji: string) => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const EMOJIS = ["🛒", "☕", "⛽", "🍔", "🛍️", "🏠", "🚗", "✈️", "🍿", "🎮", "💊", "💈", "👕", "💵", "📈", "🍕", "🍺", "🎟️", "🧸", "💼", "💻", "🔌", "🎁", "🐾", "📚", "⚽", "🎵"];
+
+    return (
+        <div className="relative">
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-12 h-10 text-xl flex items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] transition-all"
+            >
+                {value}
+            </button>
+            {isOpen && (
+                <>
+                    <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+                    <div className="absolute left-0 mt-2 z-20 grid grid-cols-6 gap-1 p-2 rounded-xl border border-zinc-800 bg-zinc-950 shadow-xl max-w-[240px]">
+                        {EMOJIS.map((e) => (
+                            <button
+                                key={e}
+                                type="button"
+                                onClick={() => {
+                                    onChange(e);
+                                    setIsOpen(false);
+                                }}
+                                className="w-8 h-8 text-lg flex items-center justify-center rounded hover:bg-white/[0.08] transition-colors"
+                            >
+                                {e}
+                            </button>
+                        ))}
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
 
 export function OnboardingClient({ createIncome, createBill, createCategory }: OnboardingClientProps) {
     const router = useRouter();
@@ -55,8 +93,12 @@ export function OnboardingClient({ createIncome, createBill, createCategory }: O
             fd.append("amount", incomeAmount);
             fd.append("frequency", incomeFrequency);
             fd.append("startDate", incomeDate);
-            await createIncome(fd);
+            const res = await createIncome(fd);
             setIsSubmitting(false);
+            if (!res.success) {
+                toast.error(res.error || "Failed to create income");
+                return;
+            }
         }
 
         if (step === 2) {
@@ -70,7 +112,12 @@ export function OnboardingClient({ createIncome, createBill, createCategory }: O
                 fd.append("frequency", "monthly");
                 fd.append("categoryId", "");
                 fd.append("accountId", "");
-                await createBill(fd);
+                const res = await createBill(fd);
+                if (!res.success) {
+                    toast.error(`Failed to create bill "${bill.name}": ${res.error || "unknown error"}`);
+                    setIsSubmitting(false);
+                    return;
+                }
             }
             setIsSubmitting(false);
         }
@@ -84,7 +131,12 @@ export function OnboardingClient({ createIncome, createBill, createCategory }: O
                 fd.append("icon", cat.icon);
                 fd.append("color", cat.color);
                 fd.append("type", "expense");
-                await createCategory(fd);
+                const res = await createCategory(fd);
+                if (!res.success) {
+                    toast.error(`Failed to create category "${cat.name}": ${res.error || "unknown error"}`);
+                    setIsSubmitting(false);
+                    return;
+                }
             }
             setIsSubmitting(false);
         }
@@ -241,7 +293,7 @@ export function OnboardingClient({ createIncome, createBill, createCategory }: O
                             <p className="text-sm text-muted-foreground">Pre-filled suggestions. Edit or add your own.</p>
                             {categories.map((cat, i) => (
                                 <div key={i} className="flex items-center gap-3">
-                                    <Input value={cat.icon} onChange={(e) => updateCategory(i, "icon", e.target.value)} className="w-14 text-center" maxLength={2} />
+                                    <EmojiPicker value={cat.icon} onChange={(emoji) => updateCategory(i, "icon", emoji)} />
                                     <Input value={cat.name} onChange={(e) => updateCategory(i, "name", e.target.value)} placeholder="Category name" className="flex-1" />
                                     <input type="color" value={cat.color} onChange={(e) => updateCategory(i, "color", e.target.value)} className="w-8 h-8 rounded-lg bg-transparent border-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" />
                                 </div>

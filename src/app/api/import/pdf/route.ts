@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { safeEmail, safeString, safeNumber, safeDate, zodErrorResponse } from "@/lib/validate";
+import { logger } from "@/lib/logger";
 import { getAuthUser } from "@/lib/auth";
 import { parseStatement } from "@/lib/parsers";
 
@@ -38,7 +40,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true, transactions });
     } catch (error) {
-        console.error("PDF Parse Error:", error);
+        logger.error("PDF Parse Error:", error);
         return NextResponse.json({ success: false, error: "Failed to parse PDF" }, { status: 500 });
     }
 }

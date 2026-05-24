@@ -1,13 +1,14 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import { safeEmail, safeString, safeNumber, safeDate, zodErrorResponse } from "@/lib/validate";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, signToken, setTokenCookie } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   try {
-    // Respect the registration gate (same check as register/page.tsx)
     const allowRegistration = process.env.ALLOW_REGISTRATION === "true";
     const userCount = await prisma.user.count();
     if (!allowRegistration && userCount > 0) {
@@ -17,12 +18,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
-    if (!checkRateLimit(`register:${ip}`, 3, 60 * 60 * 1000)) { // 3 registrations per hour
+    const ip = request.headers.get("x-real-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const allowed = await checkRateLimit(`register:${ip}`, 3, 60 * 60);
+    if (!allowed) {
+      logger.warn("Rate limit exceeded", { path: "/api/auth/register", ip });
       return NextResponse.json({ error: "Too many registration attempts" }, { status: 429 });
     }
 
-    const { email, password, name } = await request.json();
+    let  email, password, name ;
+  try {
+    ({  email, password, name  } = await request.json());
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
 
     if (!email || !password) {
       return NextResponse.json(

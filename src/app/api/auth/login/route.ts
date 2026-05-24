@@ -1,15 +1,19 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import { safeEmail, safeString, safeNumber, safeDate, zodErrorResponse } from "@/lib/validate";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword, signToken, setTokenCookie } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   let email: string, password: string;
   try {
-    const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
-    if (!checkRateLimit(`login:${ip}`, 5, 60 * 1000)) {
+    const ip = request.headers.get("x-real-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const allowed = await checkRateLimit(`login:${ip}`, 5, 60);
+    if (!allowed) {
+      logger.warn("Rate limit exceeded", { path: "/api/auth/login", ip });
       return NextResponse.json({ error: "Too many login attempts" }, { status: 429 });
     }
     ({ email, password } = await request.json());
@@ -36,7 +40,7 @@ export async function POST(request: Request) {
     response.cookies.set(setTokenCookie(token));
     return response;
   } catch (e) {
-    console.error("[LOGIN ERROR]", e);
+    logger.error("Login error", { error: String(e) });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

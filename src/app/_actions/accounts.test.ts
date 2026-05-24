@@ -14,13 +14,13 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
-      findMany  : vi.fn(),
+      findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */: vi.fn(),
     },
     transaction: {
-      updateMany  : vi.fn(),
+      updateMany /* eslint-disable-line @typescript-eslint/no-explicit-any */: vi.fn(),
     },
     bill: {
-      deleteMany  : vi.fn(),
+      deleteMany /* eslint-disable-line @typescript-eslint/no-explicit-any */: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -74,9 +74,7 @@ describe('Accounts Actions', () => {
       const fd = new FormData();
       fd.append('name', 'Checking');
       fd.append('type', 'checking');
-      fd.append('institution', 'TD');
-      fd.append('balance', '1500.50');
-      fd.append('color', '#ff0000');
+      fd.append('balance', '100');
       (prisma.account.create as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockRejectedValue(new Error('DB Error'));
       const res = await createAccount(fd);
       expect(res.success).toBe(false);
@@ -140,11 +138,11 @@ describe('Accounts Actions', () => {
   describe('getAccounts', () => {
     it('should return accounts list', async () => {
       const mockAccounts = [{ id: '1', name: 'Check' }];
-      (prisma.account.findMany   as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(mockAccounts);
+      (prisma.account.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */ as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).mockResolvedValue(mockAccounts);
       
       const res = await getAccounts();
       expect(res).toEqual(mockAccounts);
-      expect(prisma.account.findMany  ).toHaveBeenCalledWith({
+      expect(prisma.account.findMany /* eslint-disable-line @typescript-eslint/no-explicit-any */).toHaveBeenCalledWith({
         where: { householdId: 'hh-1' },
         orderBy: { createdAt: 'asc' },
       });
