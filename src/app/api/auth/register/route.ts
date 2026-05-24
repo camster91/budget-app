@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { safeEmail, safeString, safeNumber, safeDate, zodErrorResponse } from "@/lib/validate";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, signToken, setTokenCookie } from "@/lib/auth";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkRateLimit, getClientIP } from "@/lib/rateLimit";
 import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const ip = request.headers.get("x-real-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const ip = getClientIP(request);
     const allowed = await checkRateLimit(`register:${ip}`, 3, 60 * 60);
     if (!allowed) {
       logger.warn("Rate limit exceeded", { path: "/api/auth/register", ip });
