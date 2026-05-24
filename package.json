@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@capacitor/ios": "^6.2.1",
-    "@google/genai": "^2.0.1",
+    "@google/genai": "^2.6.0",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^5.22.0",
     "@radix-ui/react-dialog": "^1.1.15",
