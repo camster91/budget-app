@@ -24,7 +24,7 @@ async function main() {
   // Read the parsed CSV
   const fs = await import("fs");
   const csvData = fs.readFileSync(
-    "/home/camst/.hermes/cache/documents/tangerine_import.csv",
+    "/Users/biancabienaime/.hermes/cache/documents/tangerine_import.csv",
     "utf-8"
   );
 
