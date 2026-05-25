@@ -182,7 +182,16 @@ model Bill {
   isActive    Boolean  @default(true)
   paidAt      DateTime? // Last time bill was marked as paid
 
+  // Cost-type tracking
+  costType    String   @default("fixed") // fixed | variable | seasonal
+  amountLow   Int?     // Lowest amount paid (cents)
+  amountHigh  Int?     // Highest amount paid (cents)
+  average     Int?     // Rolling average of actual payments (cents)
+  sampleCount Int      @default(0)       // Number of payments informing average
+  alertThreshold Int    @default(20)      // Percent over average to trigger spike flag
+
   transactions Transaction[]
+  billPayments BillPayment[]
 
   household   Household @relation(fields: [householdId], references: [id])
   householdId String
@@ -191,6 +200,26 @@ model Bill {
   updatedAt DateTime @updatedAt
 
   @@index([householdId])
+}
+
+model BillPayment {
+  id        String   @id @default(uuid())
+  bill      Bill     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  billId    String
+  amount    Int      // Actual amount paid (cents), may differ from Bill.amount
+  dueDate   DateTime // The scheduled due date for this instance
+  paidAt    DateTime? // When it was actually paid (null = unpaid / upcoming)
+  note      String?  // e.g. "Spike — winter heating"
+  isSpike   Boolean  @default(false) // True when amount > Bill.average * (1 + alertThreshold/100)
+
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
+
+  createdAt DateTime @default(now())
+
+  @@index([billId])
+  @@index([householdId])
+  @@unique([billId, dueDate]) // One payment instance per due date
 }
 
 model Goal {
