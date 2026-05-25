@@ -222,13 +222,26 @@ async function handleBills(sub: string | null, householdId: string, request: Nex
   const body = await request.json().catch(() => ({}));
 
   if (sub === "list") {
-    const bills = await prisma.bill.findMany({ where: { householdId } });
-    return json({ success: true, data: bills });
+    const bills = await prisma.bill.findMany({
+      where: { householdId },
+      include: {
+        category: true,
+        _count: { select: { billPayments: true } },
+      },
+    });
+    const enriched = bills.map((b: any) => {
+      const history = b.average ? `${Math.round(((b.amount - b.average) / b.average) * 100)}% vs avg` : null;
+      return { ...b, deviationFromAverage: history };
+    });
+    return json({ success: true, data: enriched });
   }
 
   if (sub === "create") {
-    const { name, amount, dueDay, frequency = "monthly", categoryId, accountId } = body;
-    if (!name || !amount || !dueDay || !categoryId || !accountId) {
+    const {
+      name, amount, dueDay, frequency = "monthly", categoryId, accountId,
+      costType = "fixed", amountLow, amountHigh, alertThreshold = 20,
+    } = body;
+    if (!name || amount === undefined || !dueDay || !categoryId || !accountId) {
       return json({ success: false, error: "Missing required fields" }, 400);
     }
     const bill = await prisma.bill.create({
@@ -240,9 +253,79 @@ async function handleBills(sub: string | null, householdId: string, request: Nex
         categoryId,
         accountId,
         householdId,
+        costType,
+        amountLow: amountLow ? Math.round(amountLow) : null,
+        amountHigh: amountHigh ? Math.round(amountHigh) : null,
+        alertThreshold: Math.round(alertThreshold),
       },
+      include: { category: true },
     });
     return json({ success: true, data: bill });
+  }
+
+  if (sub === "pay") {
+    const { billId, amount, dueDate, note } = body;
+    if (!billId || amount === undefined || !dueDate) {
+      return json({ success: false, error: "Missing required fields" }, 400);
+    }
+
+    const bill = await prisma.bill.findUnique({ where: { id: billId } });
+    if (!bill || bill.householdId !== householdId) {
+      return json({ success: false, error: "Bill not found" }, 404);
+    }
+
+    const actualCents = Math.round(amount);
+    const threshold = 1 + bill.alertThreshold / 100;
+    const isSpike = bill.average && actualCents > bill.average * threshold;
+
+    const payment = await prisma.billPayment.create({
+      data: {
+        billId,
+        amount: actualCents,
+        dueDate: new Date(dueDate),
+        paidAt: new Date(),
+        note: isSpike ? `Spike — ${note || ""}` : note || null,
+        isSpike: !!isSpike,
+        householdId,
+      },
+    });
+
+    // Update rolling average and bounds
+    const newSampleCount = (bill.sampleCount || 0) + 1;
+    const oldAvg = bill.average || 0;
+    const newAverage = oldAvg === 0
+      ? actualCents
+      : Math.round((oldAvg * (newSampleCount - 1) + actualCents) / newSampleCount);
+    const newLow = bill.amountLow ? Math.min(bill.amountLow, actualCents) : actualCents;
+    const newHigh = bill.amountHigh ? Math.max(bill.amountHigh, actualCents) : actualCents;
+
+    await prisma.bill.update({
+      where: { id: billId },
+      data: {
+        average: newAverage,
+        sampleCount: newSampleCount,
+        amountLow: newLow,
+        amountHigh: newHigh,
+      },
+    });
+
+    return json({ success: true, data: { payment, averageUpdated: newAverage, isSpike } });
+  }
+
+  if (sub === "spikes") {
+    const { dateFrom, dateTo } = body;
+    const where: any = { householdId, isSpike: true };
+    if (dateFrom || dateTo) {
+      where.dueDate = {};
+      if (dateFrom) where.dueDate.gte = new Date(dateFrom);
+      if (dateTo) where.dueDate.lte = new Date(dateTo);
+    }
+    const spikes = await prisma.billPayment.findMany({
+      where,
+      include: { bill: true },
+      orderBy: { dueDate: "desc" },
+    });
+    return json({ success: true, data: spikes });
   }
 
   return json({ success: false, error: `Unknown sub: ${sub}` }, 400);
