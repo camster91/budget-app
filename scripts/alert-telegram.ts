@@ -6,8 +6,8 @@
 
 import { format } from "date-fns";
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; // # TODO(cam): Set TELEGRAM_BOT_TOKEN in environment
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID; // # TODO(cam): Set TELEGRAM_CHAT_ID in environment
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 type AlertLevel = "info" | "warning" | "error" | "critical";
 
