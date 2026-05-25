@@ -55,9 +55,10 @@ export async function POST(request: NextRequest) {
       default:
         return NextResponse.json({ success: false, error: `Unknown action: ${action}` }, { status: 400 });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error("[HERMES]", err);
-    return NextResponse.json({ success: false, error: err.message || "Server error" }, { status: 500 });
+    return NextResponse.json({ success: false, error: msg || "Server error" }, { status: 500 });
   }
 }
 
@@ -68,6 +69,7 @@ async function handleTransactions(sub: string | null, householdId: string, reque
 
   if (sub === "list") {
     const { dateFrom, dateTo, limit = 50, type } = body;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { householdId };
     if (dateFrom || dateTo) {
       where.date = {};
@@ -229,6 +231,7 @@ async function handleBills(sub: string | null, householdId: string, request: Nex
         _count: { select: { billPayments: true } },
       },
     });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const enriched = bills.map((b: any) => {
       const history = b.average ? `${Math.round(((b.amount - b.average) / b.average) * 100)}% vs avg` : null;
       return { ...b, deviationFromAverage: history };
@@ -314,6 +317,7 @@ async function handleBills(sub: string | null, householdId: string, request: Nex
 
   if (sub === "spikes") {
     const { dateFrom, dateTo } = body;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { householdId, isSpike: true };
     if (dateFrom || dateTo) {
       where.dueDate = {};
@@ -360,6 +364,7 @@ async function handleGoals(sub: string | null, householdId: string, request: Nex
   if (sub === "update") {
     const { id, name, targetAmount, currentAmount, targetDate, categoryId } = body;
     if (!id) return json({ success: false, error: "Missing id" }, 400);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
     if (targetAmount !== undefined) updateData.targetAmount = Math.round(targetAmount);
@@ -516,6 +521,7 @@ async function handlePdfImport(sub: string | null, householdId: string, request:
   return json({ success: false, error: `Unknown sub: ${sub}` }, 400);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function json(body: any, status = 200) {
   return NextResponse.json(body, { status });
 }
