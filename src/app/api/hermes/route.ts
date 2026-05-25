@@ -50,6 +50,8 @@ export async function POST(request: NextRequest) {
         return await handleDaily(sub, householdId, request);
       case "dashboard":
         return await handleDashboard(householdId);
+      case "import-pdf":
+        return await handlePdfImport(sub, householdId, request);
       default:
         return NextResponse.json({ success: false, error: `Unknown action: ${action}` }, { status: 400 });
     }
@@ -347,6 +349,88 @@ async function handleDashboard(householdId: string) {
       accounts: accounts.map(a => ({ id: a.id, name: a.name, type: a.type, balance: a.balance })),
     },
   });
+}
+
+// ─── PDF Import — No external deps, regex-based line parser ─────────────────
+
+async function handlePdfImport(sub: string | null, householdId: string, request: NextRequest) {
+  const body = await request.json().catch(() => ({}));
+
+  if (sub === "parse-text") {
+    const { lines, bank = "tangerine" } = body;
+    if (!lines || !Array.isArray(lines)) {
+      return json({ success: false, error: "Missing lines[]" }, 400);
+    }
+    if (bank.toLowerCase() !== "tangerine") {
+      return json({ success: false, error: "Unsupported bank (only tangerine)" }, 400);
+    }
+
+    // Tangerine pattern: "Mar 28, 2025 | Description | $amount"
+    const parsed: Array<{
+      date?: string; description: string; amount: number; type: "income" | "expense"; raw: string;
+    }> = [];
+
+    const MONTHS = new Set(["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"]);
+
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) continue;
+
+      // Look for date prefix: "Mar 28, 2025"
+      const dateMatch = line.match(/^([A-Za-z]{3}\s+\d{1,2},\s*\d{4})\s*\|\s*(.*)/);
+      if (!dateMatch) continue;
+
+      const dateStr = dateMatch[1].replace("/", " ").replace(/\s+/g, " ").trim();
+      const month = dateStr.split(" ")[0].toLowerCase().slice(0, 3);
+      if (!MONTHS.has(month)) continue;
+
+      const rest = dateMatch[2];
+      // Split last segment as amount by $ sign
+      const lastDollar = rest.lastIndexOf("$");
+      if (lastDollar === -1) continue;
+
+      const description = rest.slice(0, lastDollar).replace(/\|/g, " ").trim();
+      const amountStr = rest.slice(lastDollar + 1).replace(/,/g, "").trim();
+      const amount = Math.round(parseFloat(amountStr) * 100);
+      if (Number.isNaN(amount) || amount <= 0) continue;
+
+      // Tangerine: deposits = income, purchases/withdrawals = expense
+      const type: "income" | "expense" = description.toLowerCase().includes("deposit") ||
+        description.toLowerCase().includes("transfer in") ||
+        description.toLowerCase().includes("direct deposit")
+        ? "income" : "expense";
+
+      parsed.push({ date: dateStr, description, amount, type, raw: line });
+    }
+
+    return json({ success: true, data: { count: parsed.length, transactions: parsed } });
+  }
+
+  if (sub === "insert") {
+    const { transactions } = body; // Array of { date, description, amount, type }
+    if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
+      return json({ success: false, error: "Missing transactions[]" }, 400);
+    }
+    const created = [];
+    for (const t of transactions) {
+      const tx = await prisma.transaction.create({
+        data: {
+          amount: Math.round(t.amount),
+          description: t.description,
+          date: t.date ? new Date(t.date) : new Date(),
+          type: t.type === "income" ? "income" : "expense",
+          householdId,
+          source: "pdf-import",
+          isTransfer: false,
+        },
+        include: { category: true },
+      });
+      created.push(tx);
+    }
+    return json({ success: true, data: { inserted: created.length, transactions: created } });
+  }
+
+  return json({ success: false, error: `Unknown sub: ${sub}` }, 400);
 }
 
 function json(body: any, status = 200) {
