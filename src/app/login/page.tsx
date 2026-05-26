@@ -15,6 +15,8 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [mode, setMode] = useState<"login" | "recovery">("login");
+    const [recoveryCode, setRecoveryCode] = useState("");
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -35,6 +37,30 @@ export default function LoginPage() {
             router.refresh();
         } catch {
             setError(t("somethingWentWrong"));
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function handleRecovery(e: React.FormEvent) {
+        e.preventDefault();
+        setError("");
+        setLoading(true);
+        try {
+            const res = await fetch("/api/auth/recovery/redeem", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, code: recoveryCode }),
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                setError(data.error || "Invalid recovery code");
+                return;
+            }
+            router.push("/");
+            router.refresh();
+        } catch {
+            setError("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -68,55 +94,112 @@ export default function LoginPage() {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4 max-[374px]:space-y-3">
-                        <div className="space-y-1.5">
-                            <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("email")}</label>
-                            <input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                autoComplete="email"
-                                placeholder={t("emailPlaceholder")}
-                                className="w-full px-3 max-[374px]:px-2.5 py-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("password")}</label>
-                            <div className="relative">
+                    {mode === "login" ? (
+                        <form onSubmit={handleSubmit} className="space-y-4 max-[374px]:space-y-3">
+                            <div className="space-y-1.5">
+                                <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("email")}</label>
                                 <input
-                                    id="password"
-                                    type={showPassword ? "text" : "password"}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     required
-                                    autoComplete="current-password"
-                                    placeholder="••••••••"
-                                    className="w-full px-3 max-[374px]:px-2.5 py-3 pr-11 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    autoComplete="email"
+                                    placeholder={t("emailPlaceholder")}
+                                    className="w-full px-3 max-[374px]:px-2.5 py-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword((v) => !v)}
-                                    aria-label={showPassword ? "Hide password" : "Show password"}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
-                                >
-                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </button>
                             </div>
-                        </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-3.5 max-[374px]:py-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:opacity-90 transition disabled:opacity-50 mt-2"
-                        >
-                            {loading ? t("signingIn") : t("signIn")}
-                        </button>
-                    </form>
+                            <div className="space-y-1.5">
+                                <label htmlFor="password" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("password")}</label>
+                                <div className="relative">
+                                    <input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        autoComplete="current-password"
+                                        placeholder="••••••••"
+                                        className="w-full px-3 max-[374px]:px-2.5 py-3 pr-11 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((v) => !v)}
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                            </div>
 
-                    <p className="mt-6 max-[374px]:mt-4 text-center text-sm text-muted-foreground px-2">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-3.5 max-[374px]:py-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:opacity-90 transition disabled:opacity-50 mt-2"
+                            >
+                                {loading ? t("signingIn") : t("signIn")}
+                            </button>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleRecovery} className="space-y-4 max-[374px]:space-y-3">
+                            <div className="space-y-1.5">
+                                <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("email")}</label>
+                                <input
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    autoComplete="email"
+                                    placeholder={t("emailPlaceholder")}
+                                    className="w-full px-3 max-[374px]:px-2.5 py-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label htmlFor="recoveryCode" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Recovery Code</label>
+                                <input
+                                    id="recoveryCode"
+                                    type="text"
+                                    value={recoveryCode}
+                                    onChange={(e) => setRecoveryCode(e.target.value)}
+                                    required
+                                    placeholder="XXXX-XXXX-XXXX-XXXX"
+                                    className="w-full px-3 max-[374px]:px-2.5 py-3 rounded-xl bg-white/[0.05] border border-white/[0.1] text-white placeholder:text-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full py-3.5 max-[374px]:py-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-bold tracking-wide shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:opacity-90 transition disabled:opacity-50 mt-2"
+                            >
+                                {loading ? "Verifying..." : "Sign In with Recovery Code"}
+                            </button>
+                        </form>
+                    )}
+
+                    <div className="mt-5 text-center">
+                        {mode === "login" ? (
+                            <button
+                                type="button"
+                                onClick={() => setMode("recovery")}
+                                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                            >
+                                Lost your password? Use recovery code
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setMode("login")}
+                                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                            >
+                                Back to password sign in
+                            </button>
+                        )}
+                    </div>
+
+                    <p className="mt-5 max-[374px]:mt-4 text-center text-sm text-muted-foreground px-2 border-t border-white/[0.06] pt-4">
                         {t("noAccount")}{" "}
                         <Link href="/register" className="text-primary hover:text-primary/80 font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm">
                             {t("createOne")}

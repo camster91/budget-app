@@ -17,28 +17,34 @@ export async function getBudgets(period?: string) {
             orderBy: { createdAt: "desc" },
         });
 
-        const enrichedBudgets = await Promise.all(budgets.map(async (budget) => {
-            const startDate = new Date(budget.period + "-01");
-            const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+        const startDate = new Date(targetPeriod + "-01");
+        const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+        const categoryIds = budgets.map((b) => b.categoryId).filter(Boolean) as string[];
 
-            const agg = await prisma.transaction.aggregate({
-                where: {
-                    categoryId: budget.categoryId,
-                    date: { gte: startDate, lte: endDate },
-                    type: "expense",
-                    householdId: user.householdId
-                },
-                _sum: { amount: true },
-            });
+        const spendAgg = categoryIds.length > 0
+            ? await prisma.transaction.groupBy({
+                  by: ["categoryId"],
+                  where: {
+                      categoryId: { in: categoryIds },
+                      date: { gte: startDate, lte: endDate },
+                      type: "expense",
+                      householdId: user.householdId,
+                  },
+                  _sum: { amount: true },
+              })
+            : [];
 
-            const spent = agg._sum.amount || 0;
+        const spentByCategory = new Map(spendAgg.map((s) => [s.categoryId, s._sum.amount || 0]));
+
+        const enrichedBudgets = budgets.map((budget) => {
+            const spent = spentByCategory.get(budget.categoryId) || 0;
             return {
                 ...budget,
                 spent,
                 progress: (spent / budget.amount) * 100,
                 remaining: budget.amount - spent,
             };
-        }));
+        });
 
         return { success: true, data: enrichedBudgets };
     } catch (error) {
