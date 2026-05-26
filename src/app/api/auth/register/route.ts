@@ -9,7 +9,7 @@ import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   try {
-    const allowRegistration = process.env.ALLOW_REGISTRATION === "true";
+    const allowRegistration = process.env.ALLOW_REGISTRATION !== "false";
     const userCount = await prisma.user.count();
     if (!allowRegistration && userCount > 0) {
       return NextResponse.json(
