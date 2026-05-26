@@ -1,3 +1,5 @@
+import { Configuration, PlaidApi, PlaidEnvironments } from 'plaid';
+
 let plaidClient: PlaidApi | null = null;
 
 function getPlaidClient(): PlaidApi {
