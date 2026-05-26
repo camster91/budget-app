@@ -35,21 +35,22 @@ interface SettingsClientProps {
 }
 
 export function SettingsClient({ user, incomes, categories, createIncome, deleteIncome, updateCategoryBudgetCap }: SettingsClientProps) {
-    const [activeTab, setActiveTab] = useState<"profile" | "income" | "budgetCaps">("profile");
+    const [activeTab, setActiveTab] = useState<"profile" | "income" | "budgetCaps" | "security">("profile");
 
     return (
         <div className="space-y-8 max-w-3xl">
             <div>
                 <h2 className="text-3xl font-black tracking-tight text-gradient mb-2">Settings</h2>
-                <p className="text-muted-foreground">Manage your profile, income, and budget limits.</p>
+                <p className="text-muted-foreground">Manage your profile, income, security, and budget limits.</p>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 p-1 rounded-xl bg-white/[0.03] w-fit">
+            <div className="flex gap-2 p-1 rounded-xl bg-white/[0.03] w-fit flex-wrap">
                 {[
                     { key: "profile" as const, label: "Profile", icon: User },
                     { key: "income" as const, label: "Income", icon: Wallet },
                     { key: "budgetCaps" as const, label: "Budget Caps", icon: DollarSign },
+                    { key: "security" as const, label: "Security", icon: Shield },
                 ].map((tab) => (
                     <button
                         key={tab.key}
@@ -96,6 +97,16 @@ export function SettingsClient({ user, incomes, categories, createIncome, delete
                         exit={{ opacity: 0, y: -10 }}
                     >
                         <BudgetCapsSettings categories={categories} updateCategoryBudgetCap={updateCategoryBudgetCap} />
+                    </motion.div>
+                )}
+                {activeTab === "security" && (
+                    <motion.div
+                        key="security"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                    >
+                        <SecuritySettings user={user} />
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -238,7 +249,7 @@ function ProfileSettings({ user }: { user: { id: string; email: string; name: st
     return (
         <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-6 space-y-4">
             <div className="flex items-center gap-2 mb-2">
-                <Shield className="h-5 w-5 text-primary" />
+                <User className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-bold text-white/90">Profile</h3>
             </div>
             <div className="space-y-1">
@@ -344,6 +355,79 @@ function IncomeSettings({ incomes, createIncome, deleteIncome }: {
                         <p className="text-sm text-muted-foreground italic">No income sources yet. Add your first one above.</p>
                     )}
                 </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── Security Tab ────────────────────────────────
+function SecuritySettings({ user }: { user: { id: string; email: string; name: string | null } }) {
+    const [codes, setCodes] = useState<string[] | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState<{ ok?: boolean; msg?: string } | null>(null);
+
+    async function generateCodes() {
+        setLoading(true);
+        setStatus(null);
+        try {
+            const res = await fetch("/api/auth/recovery/generate", { method: "POST" });
+            const data = await res.json();
+            if (res.ok) {
+                setCodes(data.codes);
+                setStatus({ ok: true, msg: "Recovery codes generated. Save these somewhere safe — you will not see them again." });
+            } else {
+                setStatus({ ok: false, msg: data.error || "Failed to generate codes." });
+            }
+        } catch {
+            setStatus({ ok: false, msg: "Network error." });
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function copyToClipboard() {
+        if (!codes) return;
+        try {
+            await navigator.clipboard.writeText(codes.join("\n"));
+            setStatus({ ok: true, msg: "Copied to clipboard." });
+        } catch {
+            setStatus({ ok: false, msg: "Could not copy." });
+        }
+    }
+
+    return (
+        <div className="space-y-4">
+            <div className="glass-card rounded-2xl p-6 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                    <Shield className="h-5 w-5 text-primary" />
+                    <h3 className="text-lg font-bold text-white/90">Security</h3>
+                </div>
+
+                <div className="space-y-1">
+                    <p className="text-sm text-white/80">Recovery codes let you sign in if you forget your password.</p>
+                    <p className="text-xs text-muted-foreground">Clicking generate replaces any existing codes with 10 fresh ones.</p>
+                </div>
+
+                <Button variant="gradient" onClick={generateCodes} disabled={loading}>
+                    {loading ? "Generating..." : "Generate Recovery Codes"}
+                </Button>
+
+                {status && (
+                    <p className={`text-xs font-medium ${status.ok ? "text-emerald-400" : "text-rose-400"}`}>{status.msg}</p>
+                )}
+
+                {codes && (
+                    <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+                            {codes.map((code, i) => (
+                                <code key={i} className="font-mono text-sm text-white/90 tracking-wider">{code}</code>
+                            ))}
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={copyToClipboard}>
+                            Copy to clipboard
+                        </Button>
+                    </div>
+                )}
             </div>
         </div>
     );
