@@ -4,11 +4,16 @@ import { logger } from "@/lib/logger";
 import { getAuthUser } from "@/lib/auth";
 import { GoogleGenAI, Type } from "@google/genai";
 
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-  throw new Error("GEMINI_API_KEY environment variable is required");
+let ai: GoogleGenAI | null = null;
+function getAI(): GoogleGenAI {
+  if (ai) return ai;
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY environment variable is required");
+  }
+  ai = new GoogleGenAI({ apiKey });
+  return ai;
 }
-const ai = new GoogleGenAI({ apiKey });
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +62,7 @@ export async function POST(request: Request) {
             required: ["merchant", "total"],
         };
 
-        const response = await ai.models.generateContent({
+        const response = await getAI().models.generateContent({
             model: "gemini-2.5-flash",
             contents: `Parse this messy receipt OCR text into structured data. Fix obvious OCR typos.\n\nReceipt Text:\n${rawText}`,
             config: {
