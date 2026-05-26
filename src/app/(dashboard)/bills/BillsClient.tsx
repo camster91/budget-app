@@ -67,7 +67,7 @@ interface EditState {
     accountId: string;
 }
 
-export function BillsClient({ bills: initialBills, categories, accounts, paidBillIds = new Set() }: BillsClientProps) {
+export function BillsClient({ bills: initialBills, categories, accounts, paidBillIds = new Set(), paymentHistory }: BillsClientProps) {
     const router = useRouter();
     const [bills, setBills] = useState(initialBills);
     const [showForm, setShowForm] = useState(false);
@@ -407,6 +407,37 @@ export function BillsClient({ bills: initialBills, categories, accounts, paidBil
                             </motion.div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* ─── Payment History ─── */}
+            {paymentHistory && paymentHistory.length > 0 && (
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold tracking-tight text-white">Payment History</h3>
+                    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="border-b border-white/[0.08] bg-white/[0.03]">
+                                    <tr className="text-left text-muted-foreground text-xs font-bold uppercase tracking-wider">
+                                        <th className="px-4 py-3">Bill</th>
+                                        <th className="px-4 py-3">Date</th>
+                                        <th className="px-4 py-3">Amount</th>
+                                        <th className="px-4 py-3">Account</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/[0.04]">
+                                    {paymentHistory.map((p) => (
+                                        <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                                            <td className="px-4 py-3 font-medium text-white/90">{p.bill?.name || "Unknown"}</td>
+                                            <td className="px-4 py-3 text-muted-foreground">{new Date(p.date).toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric" })}</td>
+                                            <td className="px-4 py-3 font-mono text-white/90">{formatCurrency(p.amount)}</td>
+                                            <td className="px-4 py-3 text-muted-foreground">{p.account?.name || "—"}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
