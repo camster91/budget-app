@@ -1,5 +1,3 @@
-"use server";
-
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
@@ -78,69 +76,56 @@ export async function getPaydayRolloverStatus() {
     const user = await getAuthUser();
     if (!user) return { success: false, error: "Unauthorized" };
     try {
-        const incomes = await prisma.income.findMany({
-            where: { householdId: user.householdId }
-        });
-        if (incomes.length === 0) return { success: true, hasRollover: false, surplusAmount: 0, goals: [] };
-
-        const now = new Date();
-        const payDates = incomes.map(i => getNextPayDate(i, now));
-        const nextPayDate = payDates.reduce((a, b) => isBefore(a, b) ? a : b);
-        const primaryIncome = incomes[payDates.indexOf(nextPayDate)];
-        const periodStart = getPeriodStart(primaryIncome, nextPayDate);
-
-        const prevNextPayDate = periodStart;
-        const prevPeriodStart = getPeriodStart(primaryIncome, prevNextPayDate);
+        const today = new Date();
+        const nextPayDate = getNextPayDate(today);
+        const daysUntilPay = differenceInDays(nextPayDate, today);
+        const periodStart = getPeriodStart(today, nextPayDate);
 
         const bills = await prisma.bill.findMany({
-            where: { isActive: true, householdId: user.householdId },
+            where: { householdId: user.householdId, isActive: true },
+            include: { category: true, account: true },
         });
-        const prevBillsTotal = bills
-            .filter(b => isBillDueInPeriod(b, prevPeriodStart, prevNextPayDate))
-            .reduce((s, b) => s + b.amount, 0);
 
-        const prevPeriodSpending = await prisma.transaction.findMany({
+        const periodBills = bills.filter(b => isBillDueInPeriod(b, periodStart, nextPayDate));
+        const billsTotal = periodBills.reduce((sum, b) => sum + b.amount, 0);
+
+        const periodIncome = await prisma.transaction.aggregate({
             where: {
-                type: "expense",
-                date: { gte: prevPeriodStart, lt: prevNextPayDate },
-                isTransfer: false,
-                isDuplicate: false,
-                householdId: user.householdId
-            }
-        });
-        const prevSpent = prevPeriodSpending.reduce((s, t) => s + t.amount, 0);
-
-        const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
-        const prevDiscretionary = totalIncome - prevBillsTotal;
-        const prevSurplus = prevDiscretionary - prevSpent;
-
-        const sweeps = await prisma.transaction.findMany({
-            where: {
-                type: "expense",
-                description: { startsWith: "Swept surplus to Goal:" },
+                householdId: user.householdId,
+                type: "income",
                 date: { gte: periodStart },
-                householdId: user.householdId
-            }
+            },
+            _sum: { amount: true },
         });
-        const totalSwept = sweeps.reduce((s, t) => s + t.amount, 0);
-        const unsweptSurplus = prevSurplus - totalSwept;
+        const incomeTotal = periodIncome._sum.amount ?? 0;
 
-        const daysIntoNewPeriod = differenceInDays(now, periodStart);
-        const hasRollover = unsweptSurplus > 100 && daysIntoNewPeriod <= 7;
-
-        const goals = await prisma.goal.findMany({
-            where: { householdId: user.householdId }
+        const periodExpenses = await prisma.transaction.aggregate({
+            where: {
+                householdId: user.householdId,
+                type: "expense",
+                date: { gte: periodStart },
+            },
+            _sum: { amount: true },
         });
+        const expensesTotal = periodExpenses._sum.amount ?? 0;
+
+        const remaining = incomeTotal - billsTotal - expensesTotal;
+        const needsTopUp = remaining < 0;
 
         return {
             success: true,
-            hasRollover,
-            surplusAmount: Math.max(0, unsweptSurplus),
-            goals
+            daysUntilPay,
+            nextPayDate,
+            billsTotal,
+            incomeTotal,
+            expensesTotal,
+            remaining,
+            needsTopUp,
+            bills: periodBills,
         };
     } catch (error) {
-        console.error(error);
-        return { success: false, error: "Failed to load rollover status" };
+        console.error("[getPaydayRolloverStatus]", error);
+        return { success: false, error: "Failed to calculate rollover" };
     }
 }
 
@@ -149,13 +134,13 @@ export async function sweepSurplusToGoal(goalId: string, amount: number) {
     if (!user) return { success: false, error: "Unauthorized" };
     try {
         const goal = await prisma.goal.findUnique({
-            where: { id: goalId, householdId: user.householdId }
+            where: { id: goalId, householdId: user.householdId },
         });
         if (!goal) return { success: false, error: "Goal not found" };
 
         await prisma.goal.update({
             where: { id: goalId },
-            data: { currentAmount: { increment: amount } }
+            data: { currentAmount: { increment: amount } },
         });
 
         await prisma.transaction.create({
@@ -175,5 +160,20 @@ export async function sweepSurplusToGoal(goalId: string, amount: number) {
         return { success: true };
     } catch (error) {
         return { success: false, error: "Sweep failed" };
+    }
+}
+
+export async function getGoalContributions(goalId: string) {
+    const user = await getAuthUser();
+    if (!user) return { success: false, error: "Unauthorized" };
+    try {
+        const contributions = await prisma.goalContribution.findMany({
+            where: { goalId, householdId: user.householdId },
+            orderBy: { createdAt: "desc" },
+            take: 20,
+        });
+        return { success: true, contributions };
+    } catch (error) {
+        return { success: false, error: "Failed to load contributions" };
     }
 }

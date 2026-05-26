@@ -242,6 +242,20 @@ model Goal {
   @@index([householdId])
 }
 
+model GoalContribution {
+  id          String   @id @default(uuid())
+  amount      Int      // Amount contributed in cents
+  note        String?
+  goal        Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  goalId      String
+  household   Household @relation(fields: [householdId], references: [id])
+  householdId String
+  createdAt   DateTime @default(now())
+
+  @@index([goalId])
+  @@index([householdId])
+}
+
 // Multiple income sources
 model Income {
   id          String   @id @default(uuid())
