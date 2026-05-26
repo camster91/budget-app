@@ -11,7 +11,7 @@ import { format } from "date-fns";
 import { sendTelegramAlert } from "./alert-telegram";
 
 const APP_URL =
-  process.env.APP_URL ?? "https://budget.ashbi.ca"; // # TODO(cam): Set APP_URL if different
+  process.env.APP_URL ?? "https://budget.ashbi.ca";
 const HEALTH_PATH = "/api/health";
 const TIMEOUT_MS = 10_000;
 const MAX_RESPONSE_TIME_MS = 3_000;

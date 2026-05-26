@@ -35,8 +35,9 @@ function detectType(row: CSVRow, amount: number): "income" | "expense" {
         if (lower === 'income' || lower === 'credit' || lower === 'deposit') return 'income';
         if (lower === 'expense' || lower === 'debit' || lower === 'withdrawal') return 'expense';
     }
-    // Fallback: default to expense to be safe when no explicit type is found
-    return 'expense';
+    // Fallback: use amount sign as heuristic; default to expense for safety
+    if (amount < 0) return 'income';  // negative = credit/money in
+    return 'expense';                  // positive or zero = debit/money out
 }
 
 /**
@@ -65,10 +66,20 @@ export async function importCSVTransactions(data: CSVRow[], options: ImportOptio
             ? await prisma.category.findMany({ where: { householdId: user.householdId } }) 
             : [];
 
+        const validRows: {
+            amount: number;
+            description: string;
+            date: Date;
+            type: "income" | "expense";
+            isTransfer: boolean;
+            isDiscretionary: boolean;
+            categoryId: string | null;
+            householdId: string;
+        }[] = [];
+
         for (const [index, row] of data.entries()) {
-            const csvRowNumber = index + 1; // 1-based for user-facing messages
+            const csvRowNumber = index + 1;
             try {
-                // Map CSV headers to database fields
                 const description = row['Description'] || row['description'] || '';
                 const amountRaw = parseFloat(String(row['Amount'] || row['amount'] || '0'));
                 const amount = toCents(amountRaw);
@@ -99,24 +110,25 @@ export async function importCSVTransactions(data: CSVRow[], options: ImportOptio
                     categoryId = categorizeTransaction(description, categories) || '';
                 }
 
-                await prisma.transaction.create({
-                    data: {
-                        amount: Math.abs(amount),
-                        description,
-                        date,
-                        type,
-                        isTransfer: isTransferTransaction,
-                        isDiscretionary: determineDiscretionary(type, !!categoryId),
-                        categoryId: categoryId || null,
-                        householdId: user.householdId,
-                    },
+                validRows.push({
+                    amount: Math.abs(amount),
+                    description,
+                    date,
+                    type,
+                    isTransfer: isTransferTransaction,
+                    isDiscretionary: determineDiscretionary(type, !!categoryId),
+                    categoryId: categoryId || null,
+                    householdId: user.householdId,
                 });
-
-                importedCount++;
             } catch (e) {
-                console.error("Failed to save transaction row %d:", csvRowNumber, row, e);
-                errors.push({ row: csvRowNumber, error: `Failed to save transaction: ${e instanceof Error ? e.message : 'Unknown error'}` });
+                console.error("Failed to process transaction row %d:", csvRowNumber, row, e);
+                errors.push({ row: csvRowNumber, error: `Failed to process row: ${e instanceof Error ? e.message : 'Unknown error'}` });
             }
+        }
+
+        if (validRows.length > 0) {
+            const result = await prisma.transaction.createMany({ data: validRows });
+            importedCount = result.count;
         }
 
         revalidatePath("/transactions");
