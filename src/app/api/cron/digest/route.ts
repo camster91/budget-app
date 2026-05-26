@@ -3,11 +3,12 @@ import { format, subDays, startOfWeek, endOfWeek } from "date-fns";
 
 export const dynamic = "force-dynamic";
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // # TODO(cam): Set GITHUB_TOKEN
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_OWNER = process.env.GITHUB_OWNER;
 const GITHUB_REPO = process.env.GITHUB_REPO;
+
 if (!GITHUB_OWNER || !GITHUB_REPO) {
-  throw new Error("GITHUB_OWNER and GITHUB_REPO environment variables are required");
+  console.warn("[digest] GITHUB_OWNER and/or GITHUB_REPO not configured");
 }
 
 interface GitHubIssue {
