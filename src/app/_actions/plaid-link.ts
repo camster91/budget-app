@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
-import { plaidClient } from "@/lib/plaid";
+import { getPlaidClient } from "@/lib/plaid";
 import { encrypt } from "@/lib/encryption";
 import {
   CountryCode,
@@ -14,7 +14,7 @@ export async function createLinkToken() {
   const user = await getAuthUser();
   if (!user) return { success: false, error: "Unauthorized" };
   try {
-    const tokenRes = await plaidClient.linkTokenCreate({
+    const tokenRes = await getPlaidClient().linkTokenCreate({
       user: { client_user_id: user.userId },
       client_name: "Budget App",
       products: [Products.Transactions],
@@ -34,7 +34,7 @@ export async function exchangePublicToken(publicToken: string) {
   const user = await getAuthUser();
   if (!user) return { success: false, error: "Unauthorized" };
   try {
-    const exchangeRes = await plaidClient.itemPublicTokenExchange({
+    const exchangeRes = await getPlaidClient().itemPublicTokenExchange({
       public_token: publicToken,
     });
 

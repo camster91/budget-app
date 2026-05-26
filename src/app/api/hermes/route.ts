@@ -129,6 +129,10 @@ async function handleTransactions(sub: string | null, householdId: string, reque
   if (sub === "delete") {
     const { id } = body;
     if (!id) return json({ success: false, error: "Missing id" }, 400);
+    const existing = await prisma.transaction.findUnique({ where: { id } });
+    if (!existing || existing.householdId !== householdId) {
+      return json({ success: false, error: "Transaction not found" }, 404);
+    }
     await prisma.transaction.delete({ where: { id } });
     return json({ success: true });
   }

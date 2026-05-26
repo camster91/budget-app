@@ -4,9 +4,11 @@ import { logger } from "@/lib/logger";
 import { getAuthUser } from "@/lib/auth";
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY || "dummy",
-});
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  throw new Error("GEMINI_API_KEY environment variable is required");
+}
+const ai = new GoogleGenAI({ apiKey });
 
 export const dynamic = "force-dynamic";
 
@@ -69,9 +71,13 @@ export async function POST(request: Request) {
             throw new Error("No response from AI");
         }
 
-        const data = JSON.parse(response.text);
-
-        return NextResponse.json({ success: true, data });
+        try {
+            const data = JSON.parse(response.text);
+            return NextResponse.json({ success: true, data });
+        } catch (parseError) {
+            logger.error("AI Parse JSON Error:", parseError);
+            return NextResponse.json({ success: false, error: "Failed to parse AI response" }, { status: 500 });
+        }
     } catch (error) {
         logger.error("AI Parse Error:", error);
         return NextResponse.json({ success: false, error: "Failed to parse receipt" }, { status: 500 });

@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
-import { plaidClient } from "@/lib/plaid";
+import { getPlaidClient } from "@/lib/plaid";
 import { decrypt } from "@/lib/encryption";
 import { revalidatePath } from "next/cache";
 import { RemovedTransaction, Transaction as PlaidTransaction } from "plaid";
@@ -35,7 +35,7 @@ export async function syncPlaidTransactions(accountId: string) {
 
         // Iterate through each page of new transaction updates for item
         while (hasMore) {
-            const response = await plaidClient.transactionsSync({
+            const response = await getPlaidClient().transactionsSync({
                 access_token: accessToken,
                 cursor: cursor,
             });
