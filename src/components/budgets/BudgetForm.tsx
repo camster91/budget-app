@@ -23,6 +23,7 @@ export function BudgetForm({ categories = [], autoOpen = false, period }: Budget
     const [amount, setAmount] = useState("");
     const [categoryId, setCategoryId] = useState("");
     const [categoryName, setCategoryName] = useState("");
+    const [carryover, setCarryover] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
     const activePeriod = period || new Date().toISOString().slice(0, 7);
@@ -44,6 +45,7 @@ export function BudgetForm({ categories = [], autoOpen = false, period }: Budget
         const fd = new FormData();
         fd.append("amount", amount);
         fd.append("period", activePeriod);
+        fd.append("carryover", carryover ? "true" : "false");
         if (categoryId) fd.append("categoryId", categoryId);
         else fd.append("category", categoryName);
 
@@ -109,6 +111,19 @@ export function BudgetForm({ categories = [], autoOpen = false, period }: Budget
                             placeholder="500.00"
                             className="rounded-xl border-white/[0.1] bg-white/[0.05]"
                         />
+                    </div>
+
+                    <div className="flex items-center gap-2 py-2">
+                        <input
+                            id="carryover"
+                            type="checkbox"
+                            checked={carryover}
+                            onChange={(e) => setCarryover(e.target.checked)}
+                            className="h-4 w-4 rounded border-white/[0.1] bg-white/[0.05] text-primary focus-visible:ring-2 focus-visible:ring-primary"
+                        />
+                        <label htmlFor="carryover" className="text-sm text-white/80 cursor-pointer">
+                            Roll over unused budget to next month
+                        </label>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-4">

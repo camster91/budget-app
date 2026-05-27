@@ -29,6 +29,7 @@ model Household {
   noSpendEntries     NoSpendEntry[]
   wishlistItems      WishlistItem[]
   billPayments       BillPayment[]
+  goalContributions  GoalContribution[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -130,7 +131,8 @@ model Budget {
   id         String   @id @default(uuid())
   amount     Int
   period     String   // e.g., "2023-10"
-  
+  carryover  Boolean  @default(false)
+
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
 
@@ -238,6 +240,7 @@ model Goal {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  contributions GoalContribution[]
 
   @@index([householdId])
 }

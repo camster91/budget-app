@@ -17,6 +17,10 @@ interface Budget {
     spent: number;
     progress: number;
     remaining: number;
+    overspent?: number;
+    startingAmount?: number;
+    effectiveAmount?: number;
+    carryover: boolean;
     category: { id: string; name: string };
 }
 
@@ -154,10 +158,21 @@ export function BudgetsClient({ budgets: initialBudgets, categories, period }: B
                                     </CardHeader>
                                     <CardContent>
                                         <div className="flex items-end justify-between mb-4">
-                                            <div className="text-3xl font-bold text-white tracking-tight">{formatCurrency(b.amount)}</div>
+                                            <div>
+                                                <div className="text-3xl font-bold text-white tracking-tight">{formatCurrency(b.effectiveAmount || b.amount)}</div>
+                                                <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                                                    <span>Monthly Limit: {formatCurrency(b.amount)}</span>
+                                                    {b.startingAmount != null && b.startingAmount > 0 && (
+                                                        <span className="text-emerald-400">+ {formatCurrency(b.startingAmount)} rolled over</span>
+                                                    )}
+                                                </div>
+                                            </div>
                                             <div className="text-xs text-muted-foreground font-medium pb-1 flex items-center gap-2">
+                                                {b.carryover && (
+                                                    <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold">ROLLOVER ON</span>
+                                                )}
                                                 <div className="h-1 w-1 rounded-full bg-primary" />
-                                                Monthly Limit
+                                                Budget
                                             </div>
                                         </div>
                                         <div className="space-y-2">

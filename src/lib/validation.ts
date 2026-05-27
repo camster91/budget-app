@@ -24,6 +24,7 @@ export const createBudgetSchema = z.object({
     categoryId: z.string().uuid().optional(),
     category: z.string().min(1).optional(),
     period: z.string().regex(/^\d{4}-\d{2}$/, "Period must be YYYY-MM").default(() => new Date().toISOString().slice(0, 7)),
+    carryover: z.coerce.boolean().default(false),
 });
 
 export const createGoalSchema = z.object({
