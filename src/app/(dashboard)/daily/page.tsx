@@ -1,6 +1,6 @@
 import { DailyDashboard } from "@/components/daily/DailyDashboard";
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";

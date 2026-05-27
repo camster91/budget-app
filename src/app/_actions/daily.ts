@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { toCents } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import { formatCurrency } from "@/lib/utils";

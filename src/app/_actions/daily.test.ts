@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getDailySnapshot } from './daily';
 import { prisma } from '@/lib/prisma';
-import { getAuthUser } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 
-vi.mock('@/lib/auth', () => ({
+vi.mock('@/lib/getAuthUser', () => ({
   getAuthUser: vi.fn(),
 }));
 

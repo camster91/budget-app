@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { exportTransactionsToCSV } from "@/app/_actions/export";
 import { safeEmail, safeString, safeNumber, safeDate, zodErrorResponse } from "@/lib/validate";
 import { logger } from "@/lib/logger";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 
 export async function GET(req: Request) {
     const user = await getAuthUser();

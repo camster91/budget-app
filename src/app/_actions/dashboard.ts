@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 
 async function aggregateByType(householdId: string, type: string, gte?: Date, lte?: Date) {
     const where: Prisma.TransactionWhereInput = { 

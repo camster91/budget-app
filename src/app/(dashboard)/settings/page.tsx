@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { SettingsClient } from "./SettingsClient";
 import { createIncome, deleteIncome } from "@/app/_actions/incomes";
 import { updateCategoryBudgetCap } from "@/app/_actions/categories";

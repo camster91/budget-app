@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { safeEmail, safeString, safeNumber, safeDate, zodErrorResponse } from "@/lib/validate";
 import { logger } from "@/lib/logger";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { parseStatement } from "@/lib/parsers";
 
 export const dynamic = "force-dynamic";

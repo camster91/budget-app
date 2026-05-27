@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { NextRequest } from "next/server";
 
 const HERMES_KEY = process.env.HERMES_API_KEY;

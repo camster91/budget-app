@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 import { safeEmail, safeString, safeNumber, safeDate, zodErrorResponse } from "@/lib/validate";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
-import { getAuthUser, verifyPassword, hashPassword } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
+import { verifyPassword, hashPassword } from "@/lib/auth";
 
 export async function POST(request: Request) {
     const auth = await getAuthUser();

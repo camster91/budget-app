@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { getWeeklyReview, getMonthlyReview } from "@/app/_actions/review";
 import { getLearnedMerchantRules, type MerchantRule } from "@/app/_actions/patterns";
 import { getCategories } from "@/app/_actions/categories";

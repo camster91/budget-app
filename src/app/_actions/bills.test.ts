@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createBill, updateBill, deleteBill } from './bills';
 import { prisma } from '@/lib/prisma';
-import { getAuthUser } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 import { revalidatePath } from 'next/cache';
 
-vi.mock('@/lib/auth', () => ({
+vi.mock('@/lib/getAuthUser', () => ({
   getAuthUser: vi.fn(),
 }));
 

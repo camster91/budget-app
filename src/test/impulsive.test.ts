@@ -3,10 +3,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { purchaseWishlistItem } from '@/app/_actions/wishlist';
 import { addQuickSpend } from '@/app/_actions/daily';
 import { prisma } from '@/lib/prisma';
-import { getAuthUser } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 
 // Mock auth
-vi.mock('@/lib/auth', () => ({
+vi.mock('@/lib/getAuthUser', () => ({
   getAuthUser: vi.fn(),
 }));
 

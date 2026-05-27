@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { createCategorySchema, updateCategorySchema, updateCategoryBudgetCapSchema, validateFormData } from "@/lib/validation";
 import { toCents } from "@/lib/utils";
 

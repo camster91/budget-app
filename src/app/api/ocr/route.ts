@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { safeEmail, safeString, safeNumber, safeDate, zodErrorResponse } from "@/lib/validate";
 import { logger } from "@/lib/logger";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { GoogleGenAI, Type } from "@google/genai";
 
 let ai: GoogleGenAI | null = null;

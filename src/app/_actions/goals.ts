@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { createGoalSchema, updateGoalSchema, validateFormData } from "@/lib/validation";
 import { toCents } from "@/lib/utils";
 import { getNextPayDate, getPeriodStart, isBillDueInPeriod } from "@/lib/dateUtils";

@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { startOfDay, endOfDay, differenceInDays, isBefore } from "date-fns";
 import { getNextPayDate, getPeriodStart, isBillDueInPeriod } from "@/lib/dateUtils";
 import { formatDecimal } from "@/lib/locale";

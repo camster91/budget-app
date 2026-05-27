@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { fromCents } from "@/lib/utils";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 import { formatDecimal } from "@/lib/locale";
 

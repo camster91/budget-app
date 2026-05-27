@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { getTransactions } from "@/app/_actions/transactions";
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { TransactionsClient } from "./TransactionsClient";
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<{ dateFrom?: string; dateTo?: string; page?: string }> }) {

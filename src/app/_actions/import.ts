@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isTransfer } from "@/lib/utils/transactionUtils";
 import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { toCents } from "@/lib/utils";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

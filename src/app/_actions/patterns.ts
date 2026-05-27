@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { revalidatePath } from "next/cache";
 import { startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { formatCurrency } from "@/lib/utils";

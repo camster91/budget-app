@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from './route';
-import { getAuthUser } from '@/lib/auth';
+import { getAuthUser } from '@/lib/getAuthUser';
 import { GoogleGenAI } from '@google/genai';
 
-vi.mock('@/lib/auth', () => ({
+vi.mock('@/lib/getAuthUser', () => ({
   getAuthUser: vi.fn(),
 }));
 

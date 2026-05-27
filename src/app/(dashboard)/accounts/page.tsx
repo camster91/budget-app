@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { redirect } from "next/navigation";
 import { getAccounts } from "@/app/_actions/accounts";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { AccountsClient } from "./AccountsClient";
 import { PlaidLinker } from "@/components/plaid/PlaidLinker";
 import { createLinkToken, exchangePublicToken } from "@/app/_actions/plaid-link";

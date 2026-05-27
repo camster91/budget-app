@@ -1,7 +1,7 @@
 import { getMonthlyReview } from "@/app/_actions/review";
 import { safeEmail, safeString, safeNumber, safeDate, zodErrorResponse } from "@/lib/validate";
 import { logger } from "@/lib/logger";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 
 export const dynamic = "force-dynamic";
 

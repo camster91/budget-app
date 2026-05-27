@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { getBudgets } from "@/app/_actions/budgets";
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { BudgetsClient } from "./BudgetsClient";
 
 export default async function BudgetsPage({ searchParams }: { searchParams: Promise<{ period?: string }> }) {

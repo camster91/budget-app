@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, subWeeks, format } from "date-fns";
 
 export async function getWeeklyReview(date?: Date) {

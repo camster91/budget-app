@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { toCents } from "@/lib/utils";
 import { createIncomeSchema, updateIncomeSchema, validateFormData } from "@/lib/validation";
 import { revalidatePath } from "next/cache";

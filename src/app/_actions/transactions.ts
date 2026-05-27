@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 import { isTransfer } from "@/lib/utils/transactionUtils";
 import { categorizeTransaction } from "@/lib/categorization/rulesEngine";
 import { createTransactionSchema, updateTransactionSchema, validateFormData } from "@/lib/validation";

@@ -4,7 +4,7 @@ import { createIncome } from "@/app/_actions/incomes";
 import { createCategory } from "@/app/_actions/categories";
 import { createBill } from "@/app/_actions/bills";
 import { OnboardingClient } from "@/components/onboarding/OnboardingClient";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser } from "@/lib/getAuthUser";
 
 export const dynamic = "force-dynamic";
 
