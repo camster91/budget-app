@@ -79,9 +79,15 @@ export async function getPaydayRolloverStatus() {
     if (!user) return { success: false, error: "Unauthorized" };
     try {
         const today = new Date();
-        const nextPayDate = getNextPayDate(today);
+        const incomes = await prisma.income.findMany({
+            where: { isActive: true, householdId: user.householdId },
+        });
+        if (incomes.length === 0) return { success: false, error: "No income configured" };
+        const payDates = incomes.map(i => getNextPayDate({ frequency: i.frequency, startDate: i.startDate, dayOfMonth: i.dayOfMonth }, today));
+        const nextPayDate = payDates.reduce((a, b) => isBefore(a, b) ? a : b);
+        const primaryIncome = incomes[payDates.indexOf(nextPayDate)];
         const daysUntilPay = differenceInDays(nextPayDate, today);
-        const periodStart = getPeriodStart(today, nextPayDate);
+        const periodStart = getPeriodStart({ frequency: primaryIncome.frequency, startDate: primaryIncome.startDate, dayOfMonth: primaryIncome.dayOfMonth }, nextPayDate);
 
         const bills = await prisma.bill.findMany({
             where: { householdId: user.householdId, isActive: true },
