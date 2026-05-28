@@ -9,36 +9,33 @@ import {
     PiggyBank,
     Settings,
     LogOut,
-    Target,
-    FileText,
-    CreditCard,
-    Tag,
     Flame,
-    BarChart3,
-    Heart,
+    ChevronDown,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const t = useTranslations();
+    const [moreOpen, setMoreOpen] = useState(false);
 
-    const sidebarItems = [
-        { title: t("nav.dashboard"), href: "/", icon: LayoutDashboard },
+    const primaryItems = [
+        { title: "Command Center", href: "/", icon: LayoutDashboard },
         { title: t("nav.dailySpend"), href: "/daily", icon: Flame },
-        { title: t("nav.review"), href: "/review", icon: BarChart3 },
         { title: t("nav.transactions"), href: "/transactions", icon: Receipt },
         { title: t("nav.budgets"), href: "/budgets", icon: PiggyBank },
-        { title: t("nav.goals"), href: "/goals", icon: Target },
-        { title: t("nav.bills"), href: "/bills", icon: FileText },
-        { title: t("nav.accounts"), href: "/accounts", icon: CreditCard },
-        { title: t("nav.categories"), href: "/categories", icon: Tag },
-        { title: t("nav.wishlist"), href: "/wishlist", icon: Heart },
         { title: t("nav.settings"), href: "/settings", icon: Settings },
+    ];
+
+    const moreItems = [
+        { title: t("nav.bills"), href: "/bills" },
+        { title: t("nav.goals"), href: "/goals" },
+        { title: t("nav.accounts"), href: "/accounts" },
+        { title: t("nav.categories"), href: "/categories" },
+        { title: t("nav.wishlist"), href: "/wishlist" },
     ];
 
     async function handleLogout() {
@@ -47,64 +44,82 @@ export function Sidebar() {
     }
 
     return (
-        <div className="flex h-full w-64 flex-col glass border-r-0">
-            <div className="flex h-20 items-center px-8">
+        <div className="flex h-full w-56 flex-col glass border-r-0">
+            <div className="flex h-20 items-center px-6">
                 <Link href="/" className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-xl">
                     <div className="p-2 rounded-xl bg-primary/20 text-primary group-hover:scale-110 transition-transform duration-300">
-                        <PiggyBank className="h-6 w-6" />
+                        <PiggyBank className="h-5 w-5" />
                     </div>
-                    <span className="font-bold text-xl tracking-tight text-gradient">
+                    <span className="font-bold text-lg tracking-tight text-gradient">
                         {t("app.name")}
                     </span>
                 </Link>
             </div>
 
-            <div className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-                <p className="px-4 mb-4 text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60">
-                    {t("app.mainMenu")}
-                </p>
+            <div className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
                 <nav className="space-y-1">
-                    {sidebarItems.map((item, index) => {
-                        const isActive = pathname === item.href;
+                    {primaryItems.map((item) => {
+                        const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
                         return (
                             <Link
-                                key={index}
+                                key={item.href}
                                 href={item.href}
                                 className={cn(
-                                    "group relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300",
-                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                                    "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                                     isActive
-                                        ? "text-white bg-white/[0.05] shadow-[0_0_20px_rgba(255,255,255,0.05)]"
-                                        : "text-muted-foreground hover:text-white hover:bg-white/[0.02]"
+                                        ? "text-white bg-white/[0.08]"
+                                        : "text-muted-foreground hover:text-white hover:bg-white/[0.03]"
                                 )}
                             >
-                                {isActive && (
-                                    <motion.div
-                                        layoutId="active-pill"
-                                        className="absolute left-0 w-1 h-6 bg-primary rounded-full"
-                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                    />
-                                )}
-                                <item.icon className={cn(
-                                    "h-4 w-4 transition-colors duration-300",
-                                    isActive ? "text-primary" : "group-hover:text-primary/70"
-                                )} />
+                                <item.icon className="h-4 w-4 shrink-0" />
                                 {item.title}
                             </Link>
                         );
                     })}
                 </nav>
+
+                {/* More dropdown */}
+                <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                    <button
+                        onClick={() => setMoreOpen(!moreOpen)}
+                        className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-white hover:bg-white/[0.03] transition-all duration-200"
+                    >
+                        <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", moreOpen && "rotate-180")} />
+                        More
+                    </button>
+                    {moreOpen && (
+                        <div className="mt-1 ml-2 space-y-0.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                            {moreItems.map((item) => {
+                                const isActive = pathname.startsWith(item.href);
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={cn(
+                                            "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors",
+                                            isActive
+                                                ? "text-white bg-white/[0.05]"
+                                                : "text-muted-foreground hover:text-white hover:bg-white/[0.02]"
+                                        )}
+                                    >
+                                        {item.title}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
 
-            <div className="p-4 mt-auto">
-                <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-3 rounded-xl hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
+            <div className="px-3 py-4 border-t border-white/[0.06]">
+                <button
                     onClick={handleLogout}
+                    className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-white hover:bg-white/[0.03] transition-colors"
                 >
                     <LogOut className="h-4 w-4" />
                     {t("app.signOut")}
-                </Button>
+                </button>
             </div>
         </div>
     );
