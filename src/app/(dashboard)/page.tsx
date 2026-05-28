@@ -51,7 +51,7 @@ export default async function DashboardPage() {
                     {(d.transactions || []).length === 0 ? (
                         <div className="p-6 text-center text-sm text-muted-foreground">No transactions yet.</div>
                     ) : (
-(d.transactions || []).map((t: any)
+(d.transactions || []).map((t: any) => (
                             <div key={t.id} className="flex items-center gap-4 p-4">
                                 <div className="h-10 w-10 rounded-xl glass flex items-center justify-center shrink-0">
                                     <CreditCard className="h-5 w-5 text-muted-foreground" />
