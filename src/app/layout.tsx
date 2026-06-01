@@ -6,6 +6,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { OfflineSyncManager } from "@/components/OfflineSyncManager";
 import { QueryProvider } from "@/components/QueryProvider";
+import { CapacitorInit } from "@/components/CapacitorInit";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -54,6 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                             disableTransitionOnChange
                         >
                             <OfflineSyncManager />
+                            <CapacitorInit />
                             {children}
                         </ThemeProvider>
                     </QueryProvider>
