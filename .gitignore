@@ -58,3 +58,5 @@ next-env.d.ts
 # Extracted statements
 *_extracted.txt
 *_transactions.json
+budget-release.keystore
+android/keystore.properties
