@@ -1,0 +1,45 @@
+name: Deploy to Coolify (Full)
+
+on:
+  workflow_dispatch:
+
+env:
+  COOLIFY_URL: https://coolify.ashbi.ca
+  APP_UUID: ok08c00scw48cgo4kgsgkkww
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Trigger Coolify Deploy (fire-and-forget + poll)
+        run: |
+          set -uo pipefail
+          echo "Triggering deploy at $(date -u +%H:%M:%S)..."
+
+          # Fire the /start call with a short curl timeout. The actual deploy
+          # runs async on the Coolify side.
+          HTTP_CODE=$(curl --request POST "${{ env.COOLIFY_URL }}/api/v1/applications/${{ env.APP_UUID }}/start" \
+            -H "Authorization: Bearer *** secrets.COOLIFY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -k -s -m 10 -o /dev/null -w "%{http_code}" || echo "curl_exit_$?")
+          echo "Trigger HTTP: $HTTP_CODE"
+
+          # Get current build ID
+          BUILD_ID=$(curl -sS "https://budget.ashbi.ca/login" 2>/dev/null | grep -oE '"buildId":"[A-Za-z0-9_-]+' | head -1 | cut -d'"' -f4)
+          echo "Current build: ${BUILD_ID:-unknown}"
+
+          # Poll for up to 12 minutes
+          for i in $(seq 1 72); do
+            sleep 10
+            NEW_BUILD=$(curl -sS "https://budget.ashbi.ca/login?_=$i" 2>/dev/null | grep -oE '"buildId":"[A-Za-z0-9_-]+' | head -1 | cut -d'"' -f4)
+            if [ -n "$NEW_BUILD" ] && [ "$NEW_BUILD" != "$BUILD_ID" ]; then
+              echo "Build changed: $BUILD_ID -> $NEW_BUILD (after $((i*10))s)"
+              echo "Deployment successful!"
+              exit 0
+            fi
+          done
+
+          echo "WARNING: Build did not change after 12 minutes"
+          echo "Manual check: https://coolify.ashbi.ca"
+          exit 1
