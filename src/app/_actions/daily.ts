@@ -419,6 +419,7 @@ export async function deleteTransactionAndRevalidate(id: string) {
     try {
         await prisma.transaction.delete({ where: { id, householdId: user.householdId } });
         revalidatePath("/daily");
+        revalidatePath("/");
         return { success: true };
     } catch (error) {
         return { success: false, error: "Delete failed" };
