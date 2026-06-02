@@ -252,10 +252,13 @@ export function BillsClient({ bills: initialBills, categories, accounts, paidBil
                     {bills.map((bill) => {
                         const unpaidPayment = bill.billPayments?.[0];
                         const unpaidPaymentDate = unpaidPayment?.dueDate ? new Date(unpaidPayment.dueDate) : undefined;
+                        // If no unpaid BillPayment exists but the bill was paid recently (this period),
+                        // don't show a "next due" date that conflicts with reality.
                         const days = getDaysUntilDue(bill.dueDay, unpaidPaymentDate);
                         const status = getDueStatus(days);
                         const StatusIcon = status.icon;
-                        const nextDate = getNextDueDate(bill.dueDay, unpaidPaymentDate);
+                        const isPaid = bill.paidAt && !unpaidPaymentDate;
+                        const nextDate = isPaid ? null : getNextDueDate(bill.dueDay, unpaidPaymentDate);
                         const isEditing = editingId === bill.id;
 
                         return (
@@ -388,7 +391,9 @@ export function BillsClient({ bills: initialBills, categories, accounts, paidBil
                                                 </div>
                                                 <div className="mt-3 pt-3 border-t border-white/[0.05] flex items-center justify-between">
                                                     <p className="text-[10px] text-muted-foreground font-medium">
-                                                        Next due: {nextDate.toLocaleDateString("en-CA", { month: "long", day: "numeric" })}
+                                                        {nextDate
+                                                            ? `Next due: ${nextDate.toLocaleDateString("en-CA", { month: "long", day: "numeric" })}`
+                                                            : "Paid this period"}
                                                     </p>
                                                     <Button
                                                         variant="ghost"
