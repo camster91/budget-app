@@ -19,6 +19,9 @@ interface DashboardData {
     monthlyExpenses: number;
     savingsRate: number;
     incomeTrend: string;
+    expensesTrend: string;
+    savingsRateTrend: string;
+    netWorthTrend: string;
     transactions: DashboardTransaction[];
 }
 
@@ -27,7 +30,10 @@ const EMPTY_DASHBOARD: DashboardData = {
     monthlyIncome: 0,
     monthlyExpenses: 0,
     savingsRate: 0,
-    incomeTrend: "0%",
+    incomeTrend: "—",
+    expensesTrend: "—",
+    savingsRateTrend: "—",
+    netWorthTrend: "—",
     transactions: [],
 };
 
@@ -38,7 +44,6 @@ export default async function DashboardPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-2xl font-bold text-white mb-1">Overview</h2>
                 <p className="text-sm text-muted-foreground">
                     {new Date().toLocaleString("en-CA", { month: "long", year: "numeric" })}
                 </p>
@@ -47,10 +52,10 @@ export default async function DashboardPage() {
             {/* 4 stats */}
             <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                 {[
-                    { label: "Net Worth", value: d.netWorth, icon: Wallet, color: "text-primary" },
+                    { label: "Net Worth", value: d.netWorth, icon: Wallet, color: "text-primary", trend: d.netWorthTrend },
                     { label: "Income", value: d.monthlyIncome, icon: ArrowUpRight, color: "text-emerald-400", trend: d.incomeTrend },
-                    { label: "Expenses", value: d.monthlyExpenses, icon: ArrowDownRight, color: "text-rose-400" },
-                    { label: "Savings Rate", value: Math.round(d.savingsRate) + "%", icon: TrendingUp, color: "text-primary", isPercent: true },
+                    { label: "Expenses", value: d.monthlyExpenses, icon: ArrowDownRight, color: "text-rose-400", trend: d.expensesTrend },
+                    { label: "Savings Rate", value: Math.round(d.savingsRate) + "%", icon: TrendingUp, color: "text-primary", trend: d.savingsRateTrend, isPercent: true },
                 ].map((stat) => (
                     <div key={stat.label} className="glass-card rounded-xl p-5">
                         <div className="flex items-center justify-between mb-3">
@@ -60,8 +65,11 @@ export default async function DashboardPage() {
                         <div className="text-2xl font-bold text-white">
                             {typeof stat.value === "number" ? formatCurrency(stat.value) : stat.value}
                         </div>
-                        {stat.trend && (
+                        {stat.trend && stat.trend !== "—" && (
                             <p className="text-xs text-muted-foreground mt-1">{stat.trend} vs last month</p>
+                        )}
+                        {stat.trend && stat.trend === "—" && (
+                            <p className="text-xs text-muted-foreground mt-1">—</p>
                         )}
                     </div>
                 ))}

@@ -11,6 +11,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createBill, updateBill, deleteBill, markBillAsPaid } from "@/app/_actions/bills";
 import { toast } from "sonner";
 
+interface BillPayment {
+    id: string;
+    dueDate: Date;
+    paidAt: string | null;
+}
+
 interface Bill {
     id: string;
     name: string;
@@ -18,6 +24,7 @@ interface Bill {
     dueDay: number;
     category: { id: string; name: string };
     account: { id: string; name: string };
+    billPayments?: BillPayment[];
 }
 
 interface Category { id: string; name: string }
@@ -38,15 +45,16 @@ interface BillsClientProps {
     }[];
 }
 
-function getNextDueDate(dueDay: number): Date {
+function getNextDueDate(dueDay: number, unpaidPaymentDate?: Date): Date {
+    if (unpaidPaymentDate) return unpaidPaymentDate;
     const today = new Date();
     const thisMonth = new Date(today.getFullYear(), today.getMonth(), dueDay);
     if (thisMonth >= today) return thisMonth;
     return new Date(today.getFullYear(), today.getMonth() + 1, dueDay);
 }
 
-function getDaysUntilDue(dueDay: number): number {
-    const next = getNextDueDate(dueDay);
+function getDaysUntilDue(dueDay: number, unpaidPaymentDate?: Date): number {
+    const next = getNextDueDate(dueDay, unpaidPaymentDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return Math.round((next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -241,10 +249,12 @@ export function BillsClient({ bills: initialBills, categories, accounts, paidBil
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {bills.map((bill) => {
-                        const days = getDaysUntilDue(bill.dueDay);
+                        const unpaidPayment = bill.billPayments?.[0];
+                        const unpaidPaymentDate = unpaidPayment?.dueDate ? new Date(unpaidPayment.dueDate) : undefined;
+                        const days = getDaysUntilDue(bill.dueDay, unpaidPaymentDate);
                         const status = getDueStatus(days);
                         const StatusIcon = status.icon;
-                        const nextDate = getNextDueDate(bill.dueDay);
+                        const nextDate = getNextDueDate(bill.dueDay, unpaidPaymentDate);
                         const isEditing = editingId === bill.id;
 
                         return (

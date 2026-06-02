@@ -42,6 +42,7 @@ export async function getDashboardSummary() {
             monthlyIncome,
             monthlyExpenses,
             lastMonthIncome,
+            lastMonthExpenses,
             accounts,
             recentTransactions,
             categorySpending,
@@ -52,6 +53,7 @@ export async function getDashboardSummary() {
             aggregateByType(user.householdId, "income", thisMonthStart, thisMonthEnd),
             aggregateByType(user.householdId, "expense", thisMonthStart, thisMonthEnd),
             aggregateByType(user.householdId, "income", lastMonthStart, lastMonthEnd),
+            aggregateByType(user.householdId, "expense", lastMonthStart, lastMonthEnd),
             prisma.account.findMany({ 
                 where: { householdId: user.householdId },
                 select: { balance: true, type: true } 
@@ -169,6 +171,17 @@ export async function getDashboardSummary() {
                 ? ((monthlyIncome - lastMonthIncome) / lastMonthIncome) * 100
                 : 0;
 
+        const expensesTrend =
+            lastMonthExpenses > 0
+                ? ((monthlyExpenses - lastMonthExpenses) / lastMonthExpenses) * 100
+                : 0;
+
+        const lastMonthSavingsRate =
+            lastMonthIncome > 0
+                ? ((lastMonthIncome - lastMonthExpenses) / lastMonthIncome) * 100
+                : 0;
+        const savingsRateTrend = savingsRate - lastMonthSavingsRate;
+
         return {
             success: true,
             data: {
@@ -177,6 +190,9 @@ export async function getDashboardSummary() {
                 monthlyExpenses,
                 savingsRate,
                 incomeTrend: (incomeTrend >= 0 ? "+" : "") + new Intl.NumberFormat("en-CA", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(incomeTrend) + "%",
+                expensesTrend: (expensesTrend >= 0 ? "+" : "") + new Intl.NumberFormat("en-CA", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(expensesTrend) + "%",
+                savingsRateTrend: (savingsRateTrend >= 0 ? "+" : "") + new Intl.NumberFormat("en-CA", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(savingsRateTrend) + "pp",
+                netWorthTrend: "—" as string,
                 chartData,
                 transactions: recentTransactions,
                 spendingByCategory,
