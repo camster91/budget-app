@@ -16,7 +16,14 @@ export default async function BillsPage() {
     const [bills, categories, accounts, paidThisMonth, paymentHistory] = await Promise.all([
         prisma.bill.findMany({
             where: { householdId: user.householdId, isActive: true },
-            include: { category: true, account: true },
+            include: {
+                category: true,
+                account: true,
+                billPayments: {
+                    where: { paidAt: null },
+                    orderBy: { dueDate: 'asc' },
+                },
+            },
             orderBy: { dueDay: "asc" },
         }),
         prisma.category.findMany({

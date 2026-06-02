@@ -32,6 +32,7 @@ import { DeduplicationReviewDialog } from "./DeduplicationReviewDialog";
 import { Sparkles, Loader2, AlertTriangle, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function DailyDashboard({ initialAccounts }: { initialAccounts: any[] }) {
     const queryClient = useQueryClient();
     const [isDedupeOpen, setIsDedupeOpen] = useState(false);

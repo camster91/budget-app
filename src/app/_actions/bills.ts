@@ -82,10 +82,42 @@ export async function markBillAsPaid(id: string) {
             }
         });
 
+        // Mark the Bill.paidAt timestamp
         await prisma.bill.update({
             where: { id },
             data: { paidAt: new Date() },
         });
+
+        // Mark the current unpaid BillPayment as paid (drives the "Next due" UI)
+        const unpaidPayment = await prisma.billPayment.findFirst({
+            where: { billId: id, paidAt: null },
+            orderBy: { dueDate: "asc" },
+        });
+        if (unpaidPayment) {
+            await prisma.billPayment.update({
+                where: { id: unpaidPayment.id },
+                data: { paidAt: new Date(), amount: bill.amount },
+            });
+
+            // Update Bill's rolling average with the actual payment amount
+            if (bill.sampleCount > 0 && bill.average) {
+                const newSampleCount = bill.sampleCount + 1;
+                const newAverage = Math.round(
+                    (bill.average * bill.sampleCount + bill.amount) / newSampleCount
+                );
+                const newHigh = bill.amountHigh ? Math.max(bill.amountHigh, bill.amount) : bill.amount;
+                const newLow = bill.amountLow ? Math.min(bill.amountLow, bill.amount) : bill.amount;
+                await prisma.bill.update({
+                    where: { id },
+                    data: {
+                        average: newAverage,
+                        sampleCount: newSampleCount,
+                        amountHigh: newHigh,
+                        amountLow: newLow,
+                    },
+                });
+            }
+        }
 
         revalidatePath("/bills");
         revalidatePath("/daily");

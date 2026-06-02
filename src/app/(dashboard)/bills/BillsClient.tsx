@@ -11,6 +11,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createBill, updateBill, deleteBill, markBillAsPaid } from "@/app/_actions/bills";
 import { toast } from "sonner";
 
+interface BillPayment {
+    id: string;
+    dueDate: Date;
+    paidAt: string | null;
+}
+
 interface Bill {
     id: string;
     name: string;
@@ -18,6 +24,7 @@ interface Bill {
     dueDay: number;
     category: { id: string; name: string };
     account: { id: string; name: string };
+    billPayments?: BillPayment[];
 }
 
 interface Category { id: string; name: string }
@@ -38,21 +45,23 @@ interface BillsClientProps {
     }[];
 }
 
-function getNextDueDate(dueDay: number): Date {
+function getNextDueDate(dueDay: number, unpaidPaymentDate?: Date): Date {
+    if (unpaidPaymentDate) return unpaidPaymentDate;
     const today = new Date();
     const thisMonth = new Date(today.getFullYear(), today.getMonth(), dueDay);
     if (thisMonth >= today) return thisMonth;
     return new Date(today.getFullYear(), today.getMonth() + 1, dueDay);
 }
 
-function getDaysUntilDue(dueDay: number): number {
-    const next = getNextDueDate(dueDay);
+function getDaysUntilDue(dueDay: number, unpaidPaymentDate?: Date): number {
+    const next = getNextDueDate(dueDay, unpaidPaymentDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return Math.round((next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 function getDueStatus(days: number): { label: string; color: string; icon: LucideIcon } {
+    if (days < 0) return { label: `Overdue by ${-days}d`, color: "text-red-400", icon: AlertCircle };
     if (days === 0) return { label: "Due today", color: "text-red-400", icon: AlertCircle };
     if (days <= 3) return { label: `Due in ${days}d`, color: "text-orange-400", icon: AlertCircle };
     if (days <= 7) return { label: `Due in ${days}d`, color: "text-yellow-400", icon: Clock };
@@ -241,10 +250,15 @@ export function BillsClient({ bills: initialBills, categories, accounts, paidBil
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {bills.map((bill) => {
-                        const days = getDaysUntilDue(bill.dueDay);
+                        const unpaidPayment = bill.billPayments?.[0];
+                        const unpaidPaymentDate = unpaidPayment?.dueDate ? new Date(unpaidPayment.dueDate) : undefined;
+                        // If no unpaid BillPayment exists but the bill was paid recently (this period),
+                        // don't show a "next due" date that conflicts with reality.
+                        const days = getDaysUntilDue(bill.dueDay, unpaidPaymentDate);
                         const status = getDueStatus(days);
                         const StatusIcon = status.icon;
-                        const nextDate = getNextDueDate(bill.dueDay);
+                        const isPaid = bill.paidAt && !unpaidPaymentDate;
+                        const nextDate = isPaid ? null : getNextDueDate(bill.dueDay, unpaidPaymentDate);
                         const isEditing = editingId === bill.id;
 
                         return (
@@ -377,7 +391,9 @@ export function BillsClient({ bills: initialBills, categories, accounts, paidBil
                                                 </div>
                                                 <div className="mt-3 pt-3 border-t border-white/[0.05] flex items-center justify-between">
                                                     <p className="text-[10px] text-muted-foreground font-medium">
-                                                        Next due: {nextDate.toLocaleDateString("en-CA", { month: "long", day: "numeric" })}
+                                                        {nextDate
+                                                            ? `Next due: ${nextDate.toLocaleDateString("en-CA", { month: "long", day: "numeric" })}`
+                                                            : "Paid this period"}
                                                     </p>
                                                     <Button
                                                         variant="ghost"

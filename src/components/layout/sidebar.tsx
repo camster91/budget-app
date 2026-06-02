@@ -23,7 +23,7 @@ export function Sidebar() {
     const [moreOpen, setMoreOpen] = useState(false);
 
     const primaryItems = [
-        { title: "Command Center", href: "/", icon: LayoutDashboard },
+        { title: t("nav.dashboard"), href: "/", icon: LayoutDashboard },
         { title: t("nav.dailySpend"), href: "/daily", icon: Flame },
         { title: t("nav.transactions"), href: "/transactions", icon: Receipt },
         { title: t("nav.budgets"), href: "/budgets", icon: PiggyBank },

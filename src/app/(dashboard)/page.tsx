@@ -5,14 +5,45 @@ import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, CreditCard } from "lu
 
 export const dynamic = "force-dynamic";
 
+interface DashboardTransaction {
+    id: string;
+    description: string;
+    amount: number;
+    type: "income" | "expense";
+    category?: { name: string } | null;
+}
+
+interface DashboardData {
+    netWorth: number;
+    monthlyIncome: number;
+    monthlyExpenses: number;
+    savingsRate: number;
+    incomeTrend: string;
+    expensesTrend: string;
+    savingsRateTrend: string;
+    netWorthTrend: string;
+    transactions: DashboardTransaction[];
+}
+
+const EMPTY_DASHBOARD: DashboardData = {
+    netWorth: 0,
+    monthlyIncome: 0,
+    monthlyExpenses: 0,
+    savingsRate: 0,
+    incomeTrend: "—",
+    expensesTrend: "—",
+    savingsRateTrend: "—",
+    netWorthTrend: "—",
+    transactions: [],
+};
+
 export default async function DashboardPage() {
     const { data } = await getDashboardSummary();
-    const d: any = data || { netWorth: 0, monthlyIncome: 0, monthlyExpenses: 0, savingsRate: 0, incomeTrend: "0%", transactions: [] };
+    const d: DashboardData = (data as DashboardData | undefined) ?? EMPTY_DASHBOARD;
 
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-2xl font-bold text-white mb-1">Overview</h2>
                 <p className="text-sm text-muted-foreground">
                     {new Date().toLocaleString("en-CA", { month: "long", year: "numeric" })}
                 </p>
@@ -21,10 +52,10 @@ export default async function DashboardPage() {
             {/* 4 stats */}
             <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
                 {[
-                    { label: "Net Worth", value: d.netWorth, icon: Wallet, color: "text-primary" },
+                    { label: "Net Worth", value: d.netWorth, icon: Wallet, color: "text-primary", trend: d.netWorthTrend },
                     { label: "Income", value: d.monthlyIncome, icon: ArrowUpRight, color: "text-emerald-400", trend: d.incomeTrend },
-                    { label: "Expenses", value: d.monthlyExpenses, icon: ArrowDownRight, color: "text-rose-400" },
-                    { label: "Savings Rate", value: Math.round(d.savingsRate) + "%", icon: TrendingUp, color: "text-primary", isPercent: true },
+                    { label: "Expenses", value: d.monthlyExpenses, icon: ArrowDownRight, color: "text-rose-400", trend: d.expensesTrend },
+                    { label: "Savings Rate", value: Math.round(d.savingsRate) + "%", icon: TrendingUp, color: "text-primary", trend: d.savingsRateTrend, isPercent: true },
                 ].map((stat) => (
                     <div key={stat.label} className="glass-card rounded-xl p-5">
                         <div className="flex items-center justify-between mb-3">
@@ -34,8 +65,11 @@ export default async function DashboardPage() {
                         <div className="text-2xl font-bold text-white">
                             {typeof stat.value === "number" ? formatCurrency(stat.value) : stat.value}
                         </div>
-                        {stat.trend && (
+                        {stat.trend && stat.trend !== "—" && (
                             <p className="text-xs text-muted-foreground mt-1">{stat.trend} vs last month</p>
+                        )}
+                        {stat.trend && stat.trend === "—" && (
+                            <p className="text-xs text-muted-foreground mt-1">—</p>
                         )}
                     </div>
                 ))}
@@ -48,10 +82,10 @@ export default async function DashboardPage() {
                     <Link href="/transactions" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">View All</Link>
                 </div>
                 <div className="glass-card rounded-xl divide-y divide-white/[0.04] overflow-hidden">
-                    {(d.transactions || []).length === 0 ? (
+                    {d.transactions.length === 0 ? (
                         <div className="p-6 text-center text-sm text-muted-foreground">No transactions yet.</div>
                     ) : (
-(d.transactions || []).map((t: any) => (
+                        d.transactions.map((t) => (
                             <div key={t.id} className="flex items-center gap-4 p-4">
                                 <div className="h-10 w-10 rounded-xl glass flex items-center justify-center shrink-0">
                                     <CreditCard className="h-5 w-5 text-muted-foreground" />
