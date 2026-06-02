@@ -61,6 +61,7 @@ function getDaysUntilDue(dueDay: number, unpaidPaymentDate?: Date): number {
 }
 
 function getDueStatus(days: number): { label: string; color: string; icon: LucideIcon } {
+    if (days < 0) return { label: `Overdue by ${-days}d`, color: "text-red-400", icon: AlertCircle };
     if (days === 0) return { label: "Due today", color: "text-red-400", icon: AlertCircle };
     if (days <= 3) return { label: `Due in ${days}d`, color: "text-orange-400", icon: AlertCircle };
     if (days <= 7) return { label: `Due in ${days}d`, color: "text-yellow-400", icon: Clock };
