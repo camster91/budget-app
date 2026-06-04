@@ -472,10 +472,37 @@ async function handlePdfImport(sub: string | null, householdId: string, request:
   }
 
   if (sub === "insert") {
-    const { transactions } = body; // Array of { date, description, amount, type }
+    const { transactions, accountId: accountIdHint } = body; // Array of { date, description, amount, type }
     if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
       return json({ success: false, error: "Missing transactions[]" }, 400);
     }
+
+    // Auto-resolve account if not provided. Match the institution field against the
+    // known bank code prefixes: scotiabank-cc/pcfinancial-cc/tangerine-cc -> "Scotiabank";
+    // tangerine -> "Tangerine"; rbc-cc -> "RBC"; etc. The first match wins.
+    let resolvedAccountId: string | null = (typeof accountIdHint === "string" && accountIdHint) ? accountIdHint : null;
+    if (!resolvedAccountId) {
+      try {
+        const accts = await prisma.account.findMany({ where: { householdId } });
+        // Detect which institution(s) to match by inspecting the source field of the txns.
+        const sample = transactions.find(t => t.source || t.bank);
+        const bankCode = String(sample?.bank || sample?.source || "").toLowerCase();
+        const institutionMap: Record<string, string[]> = {
+          "scotiabank-cc": ["Scotiabank", "PC Financial"],
+          "pcfinancial-cc": ["Scotiabank", "PC Financial"],
+          "tangerine-cc": ["Scotiabank", "PC Financial", "Tangerine"],
+          "tangerine": ["Tangerine"],
+          "rbc-cc": ["RBC"],
+          "td-cc": ["TD"],
+          "cibc-cc": ["CIBC"],
+          "amex-cc": ["American Express", "Amex"],
+        };
+        const candidates = institutionMap[bankCode] || [];
+        const match = accts.find(a => a.institution && candidates.some(c => a.institution!.toLowerCase().includes(c.toLowerCase())));
+        if (match) resolvedAccountId = match.id;
+      } catch {/* ignore — leave resolvedAccountId null */}
+    }
+
     const created = [];
     for (const t of transactions) {
       const tx = await prisma.transaction.create({
@@ -485,14 +512,15 @@ async function handlePdfImport(sub: string | null, householdId: string, request:
           date: t.date ? new Date(t.date) : new Date(),
           type: t.type === "income" ? "income" : "expense",
           householdId,
-          source: "pdf-import",
+          source: t.source || "pdf-import",
           isTransfer: false,
+          accountId: resolvedAccountId,
         },
         include: { category: true },
       });
       created.push(tx);
     }
-    return json({ success: true, data: { inserted: created.length, transactions: created } });
+    return json({ success: true, data: { inserted: created.length, transactions: created, accountId: resolvedAccountId } });
   }
 
   return json({ success: false, error: `Unknown sub: ${sub}` }, 400);
