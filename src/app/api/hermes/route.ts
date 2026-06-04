@@ -453,49 +453,22 @@ async function handlePdfImport(sub: string | null, householdId: string, request:
     if (!lines || !Array.isArray(lines)) {
       return json({ success: false, error: "Missing lines[]" }, 400);
     }
-    if (bank.toLowerCase() !== "tangerine") {
-      return json({ success: false, error: "Unsupported bank (only tangerine)" }, 400);
+    const bankKey = String(bank).toLowerCase();
+
+    if (bankKey === "tangerine") {
+      return json(parseTangerine(lines));
+    }
+    if (bankKey === "scotiabank-cc" || bankKey === "pcfinancial-cc") {
+      return json(parseScotiabankCC(lines));
+    }
+    if (bankKey === "tangerine-cc") {
+      return json(parseTangerineCC(lines));
+    }
+    if (bankKey === "rbc-cc" || bankKey === "td-cc" || bankKey === "cibc-cc" || bankKey === "amex-cc") {
+      return json(parseGenericCC(lines));
     }
 
-    // Tangerine pattern: "Mar 28, 2025 | Description | $amount"
-    const parsed: Array<{
-      date?: string; description: string; amount: number; type: "income" | "expense"; raw: string;
-    }> = [];
-
-    const MONTHS = new Set(["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"]);
-
-    for (const raw of lines) {
-      const line = raw.trim();
-      if (!line) continue;
-
-      // Look for date prefix: "Mar 28, 2025"
-      const dateMatch = line.match(/^([A-Za-z]{3}\s+\d{1,2},\s*\d{4})\s*\|\s*(.*)/);
-      if (!dateMatch) continue;
-
-      const dateStr = dateMatch[1].replace("/", " ").replace(/\s+/g, " ").trim();
-      const month = dateStr.split(" ")[0].toLowerCase().slice(0, 3);
-      if (!MONTHS.has(month)) continue;
-
-      const rest = dateMatch[2];
-      // Split last segment as amount by $ sign
-      const lastDollar = rest.lastIndexOf("$");
-      if (lastDollar === -1) continue;
-
-      const description = rest.slice(0, lastDollar).replace(/\|/g, " ").trim();
-      const amountStr = rest.slice(lastDollar + 1).replace(/,/g, "").trim();
-      const amount = Math.round(parseFloat(amountStr) * 100);
-      if (Number.isNaN(amount) || amount <= 0) continue;
-
-      // Tangerine: deposits = income, purchases/withdrawals = expense
-      const type: "income" | "expense" = description.toLowerCase().includes("deposit") ||
-        description.toLowerCase().includes("transfer in") ||
-        description.toLowerCase().includes("direct deposit")
-        ? "income" : "expense";
-
-      parsed.push({ date: dateStr, description, amount, type, raw: line });
-    }
-
-    return json({ success: true, data: { count: parsed.length, transactions: parsed } });
+    return json({ success: false, error: `Unsupported bank: ${bankKey}. Supported: tangerine, scotiabank-cc, pcfinancial-cc, tangerine-cc, rbc-cc, td-cc, cibc-cc, amex-cc` }, 400);
   }
 
   if (sub === "insert") {
@@ -529,3 +502,186 @@ async function handlePdfImport(sub: string | null, householdId: string, request:
 function json(body: any, status = 200) {
   return NextResponse.json(body, { status });
 }
+
+// ─── Bank Statement Parsers ──────────────────────────────────────────────────
+// Each parser takes a lines[] of raw PDF text and returns an envelope:
+//   { success, data: { count, transactions: [{date, description, amount, type, raw, meta?}] } }
+//
+// All amounts are returned as positive cents for purchases and as negative cents
+// for payments / refunds. type=expense for purchases, type=income for refunds/interest.
+//   meta may include: post_date, account_last4, foreign_currency, fx_rate, kind: "purchase"|"payment"|"interest"|"fee"
+
+type ParsedTxn = {
+  date?: string;
+  description: string;
+  amount: number; // positive cents for purchases, negative for payments
+  type: "income" | "expense";
+  raw: string;
+  meta?: Record<string, unknown>;
+};
+
+function parseEnvelope(parsed: ParsedTxn[]) {
+  return { success: true, data: { count: parsed.length, transactions: parsed } };
+}
+
+// Tangerine Chequing (existing behaviour — moved to its own function for clarity)
+function parseTangerine(lines: string[]) {
+  const parsed: ParsedTxn[] = [];
+  const MONTHS = new Set(["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"]);
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    const dateMatch = line.match(/^([A-Za-z]{3}\s+\d{1,2},\s*\d{4})\s*\|\s*(.*)/);
+    if (!dateMatch) continue;
+    const dateStr = dateMatch[1].replace(/\s+/g, " ").trim();
+    const month = dateStr.split(" ")[0].toLowerCase().slice(0, 3);
+    if (!MONTHS.has(month)) continue;
+    const rest = dateMatch[2];
+    const lastDollar = rest.lastIndexOf("$");
+    if (lastDollar === -1) continue;
+    const description = rest.slice(0, lastDollar).replace(/\|/g, " ").trim();
+    const amountStr = rest.slice(lastDollar + 1).replace(/,/g, "").trim();
+    const amount = Math.round(parseFloat(amountStr) * 100);
+    if (Number.isNaN(amount) || amount <= 0) continue;
+    const isIncome = /deposit|transfer in|direct deposit/i.test(description);
+    parsed.push({
+      date: dateStr,
+      description,
+      amount,
+      type: isIncome ? "income" : "expense",
+      raw: line,
+      meta: { kind: isIncome ? "deposit" : "purchase" },
+    });
+  }
+  return parseEnvelope(parsed);
+}
+
+// Scotiabank / PC Financial Mastercard (also PC Insiders World Elite).
+// Format: dates on separate lines, multi-line description, $-prefixed amount.
+//   17/03
+//   17/03
+//   AMZN MKTP CA*B53UX9142   TORONTO      ON
+//   $34.26
+// Foreign txns insert two extra lines between desc and amount:
+//   06/04
+//   07/04
+//   UDI HOSTIN* OSTING 032   FERRIDAY     LA USD
+//    28.08 USA
+//   1.429843304
+//   $40.15
+function parseScotiabankCC(lines: string[]) {
+  const parsed: ParsedTxn[] = [];
+  const datePat = /^(\d{2})\/(\d{2})$/;
+  const moneyPat = /^-?\$[\d,]+\.\d{2}$/;
+  const foreignAmtPat = /^(\d+\.\d{1,2})\s*([A-Z]{3,4})?$/;
+  const fxRatePat = /^\d+\.\d{6,}$/;
+
+  // Detect account last4 from header line "XXXX XXXX XX83 9729" or "XXXX-XXXXXX-XX83-9729"
+  const accountMatch = lines.join("\n").match(/XXXX[ X-]*XX\d{2}\s*(\d{4})/);
+  const accountLast4 = accountMatch?.[1];
+
+  let i = 0;
+  while (i < lines.length) {
+    const l = lines[i].trim();
+    const tDate = l.match(datePat);
+    if (!tDate) { i++; continue; }
+
+    // Next line must also be a date (post date)
+    if (i + 1 >= lines.length) { i++; continue; }
+    const pDate = lines[i + 1].trim().match(datePat);
+    if (!pDate) { i++; continue; }
+
+    // Collect description lines + optional foreign currency + amount
+    const descParts: string[] = [];
+    let amt: string | null = null;
+    let foreignAmt: string | null = null;
+    let foreignCcy: string | null = null;
+    let fxRate: string | null = null;
+    let endReason: "amount" | "total" | "eof" = "eof";
+    let j = i + 2;
+    while (j < lines.length) {
+      const cur = lines[j].trim();
+      if (moneyPat.test(cur)) { amt = cur; endReason = "amount"; break; }
+      if (/^Total\b/i.test(cur) && /activity/i.test(cur)) { endReason = "total"; break; }
+      const fa = cur.match(foreignAmtPat);
+      if (fa && (fa[2] === "USD" || fa[2] === "USA" || fa[2] === "EUR" || fa[2] === "GBP")) {
+        foreignAmt = fa[1]; foreignCcy = "USD";
+      } else if (fxRatePat.test(cur)) {
+        fxRate = cur;
+      } else if (cur.length > 0 && cur.length < 120) {
+        descParts.push(cur);
+      }
+      j++;
+    }
+    if (!amt || endReason !== "amount") {
+      i = (amt && endReason === "amount") ? j + 1 : j;
+      continue;
+    }
+    const isNeg = amt.startsWith("-");
+    const amtCents = Math.round(Math.abs(parseFloat(amt.replace(/[$,-]/g, ""))) * 100);
+    if (Number.isNaN(amtCents) || amtCents === 0) { i = j + 1; continue; }
+    let desc = descParts.join(" ");
+    desc = desc.replace(/\s+/g, " ").trim();
+    // Strip trailing city/province/country tokens only when they are short
+    // alpha words (e.g. "TORONTO ON", "FERRIDAY LA"). Keep merchant refs and
+    // long words like "PAYMENT TNGBNK" or "PURCHASE INTEREST CHARGE" intact.
+    desc = desc.replace(/\s+([A-Z]{2,4}\s+[A-Z]{2,4})$/, "").trim();
+
+    const isPayment = isNeg || /PAYMENT|AUTOPAY|THANK YOU/i.test(desc);
+    const isInterest = /INTEREST CHARGE/i.test(desc);
+    const isFee = /FEE\b/i.test(desc);
+
+    // Reconstruct full transaction date. Statement period is on a separate page,
+    // so we accept the parsed mm/dd as-is and let the caller fill year from context.
+    parsed.push({
+      date: `${tDate[2]}/${tDate[1]}`, // mm/dd (year is added in the shell script from filename)
+      description: desc,
+      amount: isPayment || isInterest ? -amtCents : amtCents,
+      type: isPayment || isInterest ? "expense" : "expense", // CC interest is also a charge
+      raw: lines.slice(i, j + 1).join(" | "),
+      meta: {
+        post_date: `${pDate[2]}/${pDate[1]}`,
+        account_last4: accountLast4,
+        foreign_amount: foreignAmt,
+        foreign_currency: foreignCcy,
+        fx_rate: fxRate,
+        kind: isPayment ? "payment" : isInterest ? "interest" : isFee ? "fee" : "purchase",
+      },
+    });
+    i = j + 1;
+  }
+  return parseEnvelope(parsed);
+}
+
+// Tangerine Credit Card — fall back to Scotiabank parser (same statement layout since
+// Tangerine is now a Scotiabank subsidiary and uses an identical PDF template).
+function parseTangerineCC(lines: string[]) {
+  return parseScotiabankCC(lines);
+}
+
+// Generic CC parser for unknown banks — accepts a "DD/MM DD/MM DESC $AMT" or
+// "MM/DD MM/DD DESC $AMT" pattern on a single line. Returns best-effort output.
+function parseGenericCC(lines: string[]) {
+  const parsed: ParsedTxn[] = [];
+  const singlePat = /^(\d{1,2})[\/\.](\d{1,2})\s+(\d{1,2})[\/\.](\d{1,2})\s+(.+?)\s+(-?\$[\d,]+\.\d{2})\s*$/;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    const m = line.match(singlePat);
+    if (!m) continue;
+    const isNeg = m[6].startsWith("-");
+    const cents = Math.round(Math.abs(parseFloat(m[6].replace(/[$,-]/g, ""))) * 100);
+    const desc = m[5].replace(/\s+/g, " ").trim();
+    if (Number.isNaN(cents) || cents === 0) continue;
+    parsed.push({
+      date: `${m[2]}/${m[1]}`,
+      description: desc,
+      amount: isNeg ? -cents : cents,
+      type: "expense",
+      raw: line,
+      meta: { post_date: `${m[4]}/${m[3]}`, kind: isNeg ? "payment" : "purchase" },
+    });
+  }
+  return parseEnvelope(parsed);
+}
+
