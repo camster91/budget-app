@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { importCSVTransactions, type CSVRow } from "@/app/_actions/import";
 import { formatCurrency, cn } from "@/lib/utils";
 import { isTransfer } from "@/lib/utils/transactionUtils";
+import { SUPPORTED_BANKS, type BankCode } from "@/lib/parsers";
 import Papa from "papaparse";
 import { toast } from "sonner";
 
@@ -18,7 +19,6 @@ interface ImportModalProps {
 
 type ImportStep = "upload" | "parsing" | "preview" | "importing" | "complete";
 type FileType = "csv" | "pdf";
-type BankType = "tangerine" | "generic";
 
 interface PreviewTransaction {
   description: string;
@@ -95,7 +95,7 @@ export function ImportModal({ open, onOpenChange, categories = [] }: ImportModal
   const [step, setStep] = useState<ImportStep>("upload");
   const [file, setFile] = useState<File | null>(null);
   const [fileType, setFileType] = useState<FileType>("csv");
-  const [bank, setBank] = useState<BankType>("tangerine");
+  const [bank, setBank] = useState<BankCode>("tangerine");
   const [previewData, setPreviewData] = useState<PreviewTransaction[]>([]);
   const [allTransactions, setAllTransactions] = useState<CSVRow[]>([]);
   const [importResults, setImportResults] = useState<{ imported: number; errors?: unknown[] } | null>(null);
@@ -281,11 +281,14 @@ export function ImportModal({ open, onOpenChange, categories = [] }: ImportModal
               <label className="text-sm font-medium">Bank / Format</label>
               <select
                 value={bank}
-                onChange={(e) => setBank(e.target.value as BankType)}
+                onChange={(e) => setBank(e.target.value as BankCode)}
                 className="w-full p-2.5 bg-white/[0.04] border border-white/[0.1] rounded-xl text-sm text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                <option value="tangerine">Tangerine (PDF + CSV)</option>
-                <option value="generic">Generic Bank (CSV only)</option>
+                {SUPPORTED_BANKS.map((b) => (
+                  <option key={b.value} value={b.value}>
+                    {b.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -294,7 +297,13 @@ export function ImportModal({ open, onOpenChange, categories = [] }: ImportModal
               <input
                 type="file"
                 onChange={handleFileSelect}
-                accept={bank === "generic" ? ".csv" : ".csv,.pdf"}
+                accept={(() => {
+                  const entry = SUPPORTED_BANKS.find(b => b.value === bank);
+                  if (!entry) return ".csv,.pdf";
+                  if (entry.acceptsPdf && entry.acceptsCsv) return ".csv,.pdf";
+                  if (entry.acceptsPdf) return ".pdf";
+                  return ".csv";
+                })()}
                 className="hidden"
                 id="file-upload"
               />
@@ -308,7 +317,13 @@ export function ImportModal({ open, onOpenChange, categories = [] }: ImportModal
                 <div className="text-center">
                   <p className="text-sm font-medium text-white">Click to upload</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {bank === "tangerine" ? "CSV or PDF" : "CSV"} — max 10MB
+                    {(() => {
+                      const entry = SUPPORTED_BANKS.find(b => b.value === bank);
+                      if (!entry) return "CSV or PDF";
+                      if (entry.acceptsPdf && entry.acceptsCsv) return "CSV or PDF";
+                      if (entry.acceptsPdf) return "PDF";
+                      return "CSV";
+                    })()} — max 10MB
                   </p>
                 </div>
               </label>
@@ -320,7 +335,13 @@ export function ImportModal({ open, onOpenChange, categories = [] }: ImportModal
               <div className="flex items-start gap-2">
                 <FileText className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
                 <p className="text-xs text-muted-foreground">
-                  <span className="font-medium text-white">Tangerine PDF</span> — Download your statement as PDF from Tangerine online banking. Auto-parsed with merchant rules.
+                  <span className="font-medium text-white">Tangerine / Scotiabank / PC Financial Mastercard (PDF)</span> — Download your statement as PDF from your bank's online portal. Multi-line description, foreign-currency supported.
+                </p>
+              </div>
+              <div className="flex items-start gap-2">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-white">Tangerine Chequing (CSV)</span> — Export your chequing account as CSV from Tangerine online banking. Auto-parsed with merchant rules.
                 </p>
               </div>
               <div className="flex items-start gap-2">
