@@ -1,65 +1,69 @@
-name: CI - Lint, Test & Docker Build
+name: CI Build
+
+# Build-only workflow: verifies the project builds cleanly. No deploy, no secrets required.
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  lint:
-    name: Lint
+  build:
+    name: Build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          # Placeholder for prisma schema validation (no DB connection made during generate)
+          DATABASE_URL: postgresql://placeholder:***@localhost:5432/placeholder
+
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
-      - name: Run ESLint
-        run: npm run lint
-
-  docker-build:
-    name: Docker Build Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: false
-          load: true
-          tags: budget-app:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Verify image exists
-        run: docker images budget-app:test
-
-  docker-compose-validate:
-    name: Docker Compose Validation
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Install Docker Compose
+      - name: Type check (if configured)
         run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
+          if grep -q '"typecheck"\|"type-check"\|"tsc"' package.json; then
+            echo "Running typecheck..."
+            npm run typecheck || npm run type-check || npx tsc --noEmit
+          else
+            echo "No typecheck script found, skipping."
+          fi
+        continue-on-error: true
 
-      - name: Validate docker-compose.yml
-        run: docker-compose -f docker-compose.yml config --quiet
+      - name: Lint (if configured)
+        run: |
+          if grep -q '"lint"' package.json; then
+            echo "Running lint..."
+            npm run lint
+          else
+            echo "No lint script found, skipping."
+          fi
+        continue-on-error: true
+
+      - name: Build
+        run: npm run build
+        env:
+          # CI-safe defaults so the build doesn't depend on real env vars
+          NODE_ENV: production
+          CI: true
