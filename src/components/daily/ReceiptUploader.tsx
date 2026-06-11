@@ -45,15 +45,6 @@ export function ReceiptUploader({ pendingReceipts, onApprove, onReject, onParsed
         if (file) await processFile(file);
     };
 
-    async function processFile(file: File) {
-        setParseError(null);
-        setParseResult(null);
-        setRawFile(file);
-        const reader = new FileReader();
-        reader.onload = () => setPreview(reader.result as string);
-        reader.readAsDataURL(file);
-    }
-
     async function handleParse() {
         if (!rawFile) return;
         if (!isOcrSupported()) { setParseError("Your browser doesn't support OCR. Try Chrome or Firefox."); return; }
