@@ -1,37 +1,51 @@
-# Budget App
+# Pocket Budget
 
-A modern, privacy-first **Daily Spending Tracker** with a fuel-gauge budget concept, smart receipt OCR, streak gamification, and offline PWA support.
+A modern, privacy-first personal finance tracker with a fuel-gauge budget concept, on-device receipt OCR, streak gamification, and offline PWA support — now on Android via Capacitor 8.
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-budget.ashbi.ca-6366f1?style=for-the-badge)](https://budget.ashbi.ca)
+[![Live](https://img.shields.io/badge/Demo-budget.ashbi.ca-6366f1?style=for-the-badge)](https://budget.ashbi.ca)
+[![Platform](https://img.shields.io/badge/Android-APK-34A853?style=for-the-badge&logo=android)](https://github.com/camster91/budget-app/releases)
+[![Price](https://img.shields.io/badge/%241.99-Google_Play-4285F4?style=for-the-badge)](https://play.google.com)
+
+---
 
 ## ✨ Features
 
 ### Daily Budget Engine
-- **Fuel Gauge Concept**: Income − Bills = Daily Allowance
-- **Rollover Tracking**: Unused money rolls to tomorrow; overspending reduces it
-- **Smart Insights**: Pace alerts, bill countdown, projections
-- **No-Spend Mode**: Toggle locks all discretionary spending
+- **Fuel Gauge Concept** — Income minus bills equals your daily allowance. It updates in real time.
+- **Rollover Tracking** — Unused budget rolls forward. Overspending reduces tomorrow's allowance.
+- **Smart Alerts** — Get notified at 50%, 80%, and over-budget thresholds.
+- **No-Spend Mode** — Toggle to lock all discretionary spending for a self-imposed reset.
 
-### AI & Automation
-- **OCR Receipt Parsing**: Client-side Tesseract.js scans receipts → auto-extracts total/merchant/date
-- **Smart Deduplication**: Fingerprint matching prevents double entries
-- **Pattern Detection**: Recurring merchants, time-of-day peaks, weekend spikes
-- **Auto-Categorization**: Merchant name → category mapping
+### Receipt OCR (On-Device)
+- Snap a photo of any receipt — **Tesseract.js** extracts the total, merchant, and date on your phone.
+- No data leaves your device. No cloud OCR costs.
 
-### Gamification
-- **Streak Counter**: Under-budget day streaks
-- **Spending Score**: 0-100 grade (A-F) combining pace, surplus, bills, streaks
-- **Category Pie**: Donut chart of today’s spending by category
+### Streak Gamification
+- Build a streak every day you stay under budget.
+- Daily **Spending Score** (0–100, graded A–F) combining pace, surplus, and bill health.
+- Category spending shown as a donut chart.
 
-### Sync & Export
-- **Plaid Bank Sync**: Link bank accounts for automatic transaction sync
-- **CSV Export**: Tax-ready transaction downloads
-- **Weekly/Monthly Review**: ReCharts bar charts with MoM/WoW trends
+### Optional Bank Sync
+- **Plaid** integration for automatic transaction import.
+- Fully optional — manual entry always works.
+- Connect checking, savings, credit, and investment accounts.
 
-### Notifications & PWA
-- **Push Notifications**: Budget warnings (80% spent, over-budget, bill reminders)
-- **Progressive Web App**: Installable on mobile, works offline with service worker
-- **Onboarding Wizard**: 5-step walkthrough for new users
+### Dashboards
+- 6-month cash flow chart (Recharts area chart)
+- Spending by category (pie chart)
+- Net worth tracking
+- Budget health widget with progress bars
+
+### PWA & Offline
+- Installable on any Android device.
+- Service worker provides full offline access.
+- Sync when you reconnect.
+
+---
+
+## 💰 Pricing
+
+$1.99 one-time purchase on Google Play. No subscriptions. No ads. No data harvesting.
 
 ---
 
@@ -39,99 +53,105 @@ A modern, privacy-first **Daily Spending Tracker** with a fuel-gauge budget conc
 
 | Layer | Tech |
 |-------|------|
-| Framework | Next.js 16 + React 19 |
+| Framework | Next.js 16 (App Router) + React 19 |
 | Styling | Tailwind CSS v4 |
-| Database | PostgreSQL + Prisma |
-| Charts | ReCharts + Framer Motion |
+| Database | PostgreSQL + Prisma ORM |
+| Charts | Recharts + Framer Motion |
 | OCR | Tesseract.js (client-side) |
 | Bank Sync | Plaid |
-| Mobile | Capacitor (Android APK) |
+| Mobile | Capacitor 8 |
+| Auth | Custom JWT (httpOnly cookie) |
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Get Started
 
 ```bash
-# Clone and install
 git clone https://github.com/camster91/budget-app.git
 cd budget-app
 npm install
 
 # Environment
 cp .env.example .env.local
-# Edit DATABASE_URL and (optional) PLAID_CLIENT_ID / PLAID_SECRET
+# Set: DATABASE_URL, JWT_SECRET
+# Optional: PLAID_CLIENT_ID, PLAID_SECRET, PLAID_ENV
 
 # Database
 npx prisma db push
-npm run db:seed   # Demo data
+npm run db:seed
 
-# Dev server
-npm run dev     # http://localhost:3000
+# Dev
+npm run dev          # → http://localhost:3000
 ```
 
 ---
 
-## 📱 Build Android APK
-
-Requires: Android Studio + Android SDK (API 33+) + Java 17+
+## 📱 Android APK (Capacitor 8)
 
 ```bash
-# 1. Install Capacitor (one-time)
 npm install @capacitor/core @capacitor/cli @capacitor/android
+npm run build:capacitor   # Static export + Capacitor sync
+npm run cap:android       # Open in Android Studio
 
-# 2. Build static export + sync Android
-npm run build:capacitor
-
-# 3. Open Android Studio
-npm run cap:android
-
-# 4. In Android Studio:
-#    Build → Generate Signed Bundle / APK → APK
-#    OR Run on device with the green Play button
-
-# Debug APK location:
-#   android/app/build/outputs/apk/debug/app-debug.apk
+# In Android Studio: Build → Build Bundle(s) / APK(s) → Build APK(s)
+# Output: android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-**Quick script:**
+Or run the one-liner:
+
 ```bash
-bash scripts/build-apk.sh   # Automates steps 1-4
+bash scripts/build-apk.sh
 ```
 
 ---
 
-## 📂 Key Files
+## 📂 Project Map
 
-| Path | Purpose |
-|------|---------|
-| `src/app/(dashboard)/daily/page.tsx` | Main daily spend page |
-| `src/components/daily/` | All daily tracker UI |
+| Path | What It Does |
+|------|-------------|
+| `src/app/(dashboard)/daily/` | Main daily spend page |
+| `src/components/daily/` | Fuel gauge, receipt upload, streak display |
 | `src/app/_actions/daily.ts` | Budget calculation engine |
-| `src/app/_actions/patterns.ts` | Smart algorithms |
-| `src/lib/ocr.ts` | Client-side receipt OCR |
-| `public/manifest.json` | PWA manifest |
-| `public/sw.js` | Service worker (offline) |
-| `capacitor.config.ts` | Mobile app config |
+| `src/app/_actions/patterns.ts` | Pattern detection (recurring merchants, time peaks) |
+| `src/app/_actions/plaid-sync.ts` | Plaid transaction sync |
+| `src/app/_actions/plaid-link.ts` | Plaid link token management |
+| `src/lib/ocr.ts` | Client-side OCR wrapper |
+| `src/components/plaid/` | PlaidLinker UI (conditionally rendered) |
+| `public/sw.js` | Service worker (offline PWA) |
 | `prisma/schema.prisma` | Database schema |
+| `capacitor.config.ts` | Capacitor mobile config |
 
 ---
 
-## 🔐 Environment Variables
+## 🔐 Core Models
 
-```env
-DATABASE_URL=postgresql://user:pass@localhost:5432/budgetapp
-JWT_SECRET=your-secret-key
-PLAID_CLIENT_ID=your-plaid-client-id
-PLAID_SECRET=your-plaid-sandbox-secret
-PLAID_ENV=sandbox
-```
+- **Transaction** — type (income/expense), amount, date, category, account, receipt image
+- **Budget** — monthly budget per category with spending progress
+- **Account** — checking, savings, credit, investment, cash with balance tracking
+- **Bill** — recurring bill with due day (1–31), payee, amount
+- **Goal** — savings target with progress tracking and optional deadline
+- **Category** — income/expense type, color, icon, auto-match keyword rules
 
 ---
 
-## 📈 Roadmap Ideas
+## 📄 Store Listing
 
-- [ ] Category Budget Caps (✅ Done — set daily limits per category)
-- [ ] Theme Toggle (light/dark/system)
-- [ ] Family/Shared Budgets (multi-user)
-- [ ] Weekly Email Summaries
+See `store-listing.md` for Google Play copy, privacy policy, and submission checklist.
+
+---
+
+## 📈 Roadmap
+
+- [x] Daily budget engine with rollover
+- [x] Receipt OCR (Tesseract.js)
+- [x] Streak gamification & spending score
+- [x] Plaid bank sync
+- [x] Capacitor Android build
 - [ ] iOS Capacitor build
+- [ ] Family / shared budgets
+- [ ] Weekly email summaries
+- [ ] Light/dark theme toggle
+
+---
+
+MIT License. Built by [Ashbi Design](https://ashbi.ca).
