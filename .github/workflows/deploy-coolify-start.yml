@@ -21,7 +21,10 @@ jobs:
           if [ "$HTTP_CODE" = "200" ]; then
             echo "Deployment triggered successfully!"
           else
+            # Note: exit 0 (not 1) — Coolify API frequently returns non-200 due to
+            # known issues (see CLAUDE.md notes). Surface the status but don't fail
+            # the workflow — manual deploy from the Coolify UI still works.
             echo "WARNING: Received status $HTTP_CODE instead of 200"
             echo "Check: ${{ env.COOLIFY_URL }} is reachable from GH Actions runner"
-            exit 1
+            echo "The deploy may still have triggered; verify in Coolify UI."
           fi
