@@ -16,7 +16,7 @@ jobs:
       - name: Trigger Coolify Deploy
         run: |
           # Use `||` so curl failure (e.g. connect timeout) doesn't trip set -e.
-          HTTP_CODE=$(curl --max-time 300 --connect-timeout 10 --request POST "${{ env.COOLIFY_URL }}/api/v1/applications/${{ env.APP_UUID }}/start" -H "Authorization: Bearer *** -H "Content-Type: application/json" -k -s -o /dev/null -w "%{http_code}" 2>/dev/null) || HTTP_CODE="curl_failed"
+          HTTP_CODE=$(curl --max-time 300 --connect-timeout 10 --request POST "${{ env.COOLIFY_URL }}/api/v1/applications/${{ env.APP_UUID }}/start" -H "Authorization: Bearer ${COOLIFY_TOKEN}" -H "Content-Type: application/json" -k -s -o /dev/null -w "%{http_code}" 2>/dev/null) || HTTP_CODE="curl_failed"
           echo "HTTP status: $HTTP_CODE"
           if [ "$HTTP_CODE" = "200" ]; then
             echo "Deployment triggered successfully!"
